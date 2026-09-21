@@ -55,6 +55,7 @@ const KEPT_META: MetaKey[] = [
   'speech_rate',
   'audio_prefetch',
   'server_features',
+  'study_mode',
   'install_hint_shown',
   'storage_persisted',
 ]

@@ -1,4 +1,5 @@
 import type { StudySessionSnapshot } from '@/domain/studySession'
+import type { StudyMode } from '@/domain/types'
 import { db } from './schema'
 
 /** One sync run (S-15 sync log). */
@@ -51,6 +52,8 @@ export type MetaValues = {
   last_quick_add_deck: string
   /** "Learn extra new words": extra new cards allowed on one study day (`YYYY-MM-DD`). */
   extra_new: { study_day: string; count: number }
+  /** Study mode chosen on Today (S-04), passed to `/study?mode=`. */
+  study_mode: StudyMode
   /** The current or last study session, resumed within 30 min (S-11). */
   study_session: StudySessionSnapshot
   /** The one-time iOS install hint was shown and closed. */

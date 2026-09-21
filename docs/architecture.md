@@ -92,7 +92,8 @@ They are stored in `meta` because voices differ between devices. `meta` keys (ty
 `GET /api/meta`, kept for offline use), `last_quick_add_deck` (deck preselected in Quick add), `extra_new` (`{ study_day, count }`,
 extra new cards allowed today), `study_session` (snapshot of the current or last study session for resume within
 30 min and the summary; `domain/studySession.ts`), `install_hint_shown` (the one-time iOS install hint was closed),
-`storage_persisted` (answer of `navigator.storage.persist()`), `onboarding_done` (first-run onboarding finished on
+`storage_persisted` (answer of `navigator.storage.persist()`), `study_mode` (mode chip chosen on Today: `swipe`,
+`choice`, `listening` or `typing`; kept on sign-out like the other device preferences), `onboarding_done` (first-run onboarding finished on
 this device), `pending_account` (signed in, first-sync choice still open; §6.4), `account` (`{user_id, email, display_name, is_admin}` of the signed-in account, from login, register or
 `GET /api/auth/me`; `features/auth/account.ts`), `session_expired` (the server answered 401 for the stored account:
 S-15 shows "Sign in again", local data is kept). Writes to `meta` never create outbox entries.
@@ -223,7 +224,8 @@ flowchart TD
   device (`meta.voice_pref`). If none is chosen, the best available voice is used (`lib/speech/voices.ts`): the
   exact locale before other regions of the same language (`en-GB` before `en-US`; `en_GB` is accepted), then
   Premium > Enhanced > default, detected from the voice name or URI ("(Premium)", `com.apple.voice.premium.…`,
-  `…enhanced…`), then the system default voice. Rate is device-local (`meta.speech_rate`, 0.5–1.2, default 1.0).
+  `…enhanced…`), then the system default voice. Rate is device-local (`meta.speech_rate`, 0.5–1.2, default 1.0);
+  "Play slower" in listening mode plays one time at 0.7 (speech rate, or MP3 `playbackRate`).
 - `lib/speech/speech.ts` exposes `speak(text, { lang, rate, voiceURI })` (synchronous up to
   `speechSynthesis.speak`, so tap handlers keep their gesture) and the `Speaker` interface
   `play(card, lang, 'front' | 'example')`. Phase 1 uses the system-voice speaker; P3-T03 puts a speaker for cached
@@ -612,7 +614,8 @@ CREATE INDEX idx_log_user_reviewed     ON review_log(user_id, reviewed_at);
   "autoplay": "front",
   "reminder": { "enabled": false, "time": "20:00", "tz": "Europe/Riga" },
   "default_directions": "both",
-  "show_ipa_on_front": true
+  "show_ipa_on_front": true,
+  "listening_answer": "choose"
 }
 ```
 
@@ -760,7 +763,7 @@ translation ≤ 2000; IPA ≤ 200; notes ≤ 2000; each tag 1–50; ids and `upd
   service worker's precache (so the app still opens offline), and opens onboarding.
 - **Wipe** (`db/localData.ts`, sign-out and *Use account data*): clears decks, cards, states, reviews, settings and
   the outbox, and every `meta` key except the device-local preferences `theme`, `voice_pref`, `speech_rate`,
-  `audio_prefetch`, `install_hint_shown` and `storage_persisted`. `device_id` is removed too, so the device writes
+  `audio_prefetch`, `server_features`, `study_mode`, `install_hint_shown` and `storage_persisted`. `device_id` is removed too, so the device writes
   under a new id afterwards. It is the only physical delete in the client.
 
 ### 6.5 Backup format

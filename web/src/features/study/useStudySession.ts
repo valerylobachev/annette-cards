@@ -41,6 +41,8 @@ export function useStudySession(params: StudySessionParams, { onFinish, onUndoFa
   const [cardIds, setCardIds] = useState<string[]>([])
   const busy = useRef(false)
   const shownAt = useRef(0)
+  // Counts the cards shown; an undone card comes back on a new turn, so an exercise starts over for it.
+  const [turn, setTurn] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -71,6 +73,7 @@ export function useStudySession(params: StudySessionParams, { onFinish, onUndoFa
     async (next: StudySessionSnapshot) => {
       await saveStudySession(next)
       setSnapshot(next)
+      setTurn((count) => count + 1)
       shownAt.current = now()
       if (next.finished_at !== null) onFinish(next.id)
     },
@@ -142,6 +145,8 @@ export function useStudySession(params: StudySessionParams, { onFinish, onUndoFa
     phase,
     resumed,
     progress: snapshot ? sessionProgress(snapshot) : null,
+    /** Changes whenever another card (or the same card again, after undo) is shown. */
+    turn,
     /** The current card first, then the cards behind it. */
     upcoming: snapshot?.queue.slice(0, 3) ?? [],
     cards,

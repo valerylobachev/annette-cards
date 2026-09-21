@@ -208,7 +208,7 @@ export function FrontFace({ study, direction, showIpa }: { study: StudyCard; dir
 }
 
 /** The answer side: prompt small on top, the answer large, then example and notes; scrolls when long. */
-function BackFace({ study, direction }: { study: StudyCard; direction: Direction }) {
+export function BackFace({ study, direction }: { study: StudyCard; direction: Direction }) {
   const { card, deck } = study
   const forward = direction === 'forward'
   return (

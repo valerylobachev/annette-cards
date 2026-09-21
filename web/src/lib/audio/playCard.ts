@@ -1,5 +1,5 @@
 import type { Card } from '@/domain/types'
-import { type Speaker, type SpeakPart, type SpeakResult, speechSupported } from '@/lib/speech/speech'
+import { type PlayOptions, type Speaker, type SpeakPart, type SpeakResult, speechSupported } from '@/lib/speech/speech'
 import { cachedOrDownloaded } from './audioCache'
 
 /**
@@ -72,12 +72,15 @@ export function stopAudio(): void {
   element?.pause()
 }
 
-/** Starts a clip; `blocked` when the browser refuses to play without a user gesture. */
-async function playClip(blob: Blob): Promise<SpeakResult> {
+/** Starts a clip at `rate`; `blocked` when the browser refuses to play without a user gesture. */
+async function playClip(blob: Blob, rate: number): Promise<SpeakResult> {
   if (speechSupported()) speechSynthesis.cancel()
   const audio = audioElement()
   audio.pause()
   setSource(blob)
+  // Loading a new source resets `playbackRate` to `defaultPlaybackRate`, so both are set.
+  audio.defaultPlaybackRate = rate
+  audio.playbackRate = rate
   try {
     await audio.play()
     return 'done'
@@ -97,22 +100,25 @@ export async function playCardAudio(
   lang: string,
   system: Speaker,
   part: SpeakPart = 'front',
+  options: PlayOptions = {},
 ): Promise<PlayOutcome> {
   if (part === 'front' && card.audio_id) {
     unlockAudio()
     const response = await cachedOrDownloaded(card.audio_id)
     if (response) {
-      const result = await playClip(await response.blob())
+      const result = await playClip(await response.blob(), options.rate ?? 1)
       if (result === 'done') return { via: 'mp3', result }
     }
   }
   stopAudio()
-  return { via: 'speech', result: await system.play(card, lang, part) }
+  return { via: 'speech', result: await system.play(card, lang, part, options) }
 }
 
 /** A speaker that plays server audio in front of `system` (the `Speaker` extension point of Phase 1). */
 export function audioSpeaker(system: Speaker): Speaker {
-  return { play: async (card, lang, part) => (await playCardAudio(card, lang, system, part)).result }
+  return {
+    play: async (card, lang, part, options) => (await playCardAudio(card, lang, system, part, options)).result,
+  }
 }
 
 /** Tests only. */

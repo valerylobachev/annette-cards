@@ -12,12 +12,15 @@ import type { StudyCard } from '@/db/studySession'
 import { answerRatings } from '@/domain/rating'
 import type { QueueItem } from '@/domain/session'
 import type { SessionProgress } from '@/domain/studySession'
-import type { AnswerMode, Rating } from '@/domain/types'
+import type { AnswerMode, ListeningAnswer, Rating, StudyMode } from '@/domain/types'
 import { unlockAudio } from '@/lib/audio/playCard'
 import { languageName } from '@/lib/intl'
 import { unlock } from '@/lib/speech/speech'
 import { useSpeech } from '@/lib/speech/useSpeech'
 import { cn } from '@/lib/utils'
+import { ChoiceExercise } from './modes/ChoiceExercise'
+import type { ExerciseProps } from './modes/exercise'
+import { ListeningExercise } from './modes/ListeningExercise'
 import { TypingExercise } from './modes/TypingExercise'
 import { FrontFace, promptOf, SwipeCard, type SwipeCardHandle } from './SwipeCard'
 import { stackLayer, useStudyMotion } from './studyAnimations'
@@ -25,7 +28,7 @@ import { useStudySession } from './useStudySession'
 
 /**
  * S-11 Study session: start gate, top bar and the exercise of the chosen mode (`?mode=`): Mode A swipe cards with
- * answer buttons (the default) or Mode D typing.
+ * answer buttons (the default), Mode B multiple choice, Mode C listening or Mode D typing.
  */
 export function StudyPage() {
   const { t } = useTranslation()
@@ -75,7 +78,7 @@ export function StudyPage() {
 
   const [current, ...behind] = session.upcoming
   const currentCard = current && session.cards?.get(current.card_id)
-  const typing = search.mode === 'typing'
+  const mode = search.mode ?? 'swipe'
 
   return (
     <div className="mx-auto flex h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-[480px] flex-col overflow-hidden">
@@ -120,15 +123,17 @@ export function StudyPage() {
       {session.phase === 'studying' && session.progress && (
         <>
           <TopBar closeButton={closeButton} progress={session.progress} canUndo={session.canUndo} onUndo={undo} />
-          {typing ? (
+          {mode !== 'swipe' ? (
             <div className="flex min-h-0 flex-1 flex-col px-4 py-4">
               {current && currentCard && (
-                <TypingExercise
+                <Exercise
+                  mode={mode}
                   study={currentCard}
                   direction={current.direction}
-                  itemKey={`${current.card_id}:${current.direction}:${session.progress.done}`}
+                  itemKey={`${current.card_id}:${current.direction}:${session.turn}`}
                   autoplay={settings.autoplay}
-                  onAnswer={(rating, answeredAt) => void session.answer(rating, { mode: 'typing', answeredAt })}
+                  listeningAnswer={settings.listening_answer}
+                  onAnswer={(rating, options) => void session.answer(rating, options)}
                 />
               )}
             </div>
@@ -185,6 +190,17 @@ export function StudyPage() {
       />
     </div>
   )
+}
+
+/** The exercise of Modes B–D (S-11) for the current card. */
+function Exercise({
+  mode,
+  listeningAnswer,
+  ...props
+}: ExerciseProps & { mode: Exclude<StudyMode, 'swipe'>; listeningAnswer: ListeningAnswer }) {
+  if (mode === 'choice') return <ChoiceExercise {...props} />
+  if (mode === 'listening') return <ListeningExercise {...props} listeningAnswer={listeningAnswer} />
+  return <TypingExercise {...props} />
 }
 
 type StartGateProps = {

@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { ValidationError } from '@/domain/validation'
 import { resetDb } from '@/test/db'
-import { createCard, deleteCard, findDuplicate, listTags, updateCard } from './cards'
-import { createDeck, type DeckInput } from './decks'
+import { createCard, deleteCard, findDuplicate, listDistractorPool, listTags, updateCard } from './cards'
+import { archiveDeck, createDeck, type DeckInput } from './decks'
 import { cardStateEntityId } from './outbox'
 import { db } from './schema'
 
@@ -82,5 +82,25 @@ describe('listTags', () => {
     const deleted = await createCard({ deck_id: deck.id, front: 'c', back: 'c', tags: ['old'] })
     await deleteCard(deleted.id)
     expect(await listTags()).toEqual(['b2', 'verbs'])
+  })
+})
+
+describe('listDistractorPool', () => {
+  it('reads live cards of the deck and of active decks with the same studied language', async () => {
+    const english = await createDeck(deckInput)
+    const moreEnglish = await createDeck({ ...deckInput, name: 'More English' })
+    const archived = await createDeck({ ...deckInput, name: 'Old English' })
+    const polish = await createDeck({ ...deckInput, name: 'Polish', target_lang: 'pl-PL' })
+    const add = (deck_id: string, front: string) => createCard({ deck_id, front, back: `${front}-ru` })
+    await add(english.id, 'cat')
+    const gone = await add(english.id, 'dog')
+    await deleteCard(gone.id)
+    await add(moreEnglish.id, 'bird')
+    await add(archived.id, 'fish')
+    await add(polish.id, 'kot')
+    await archiveDeck(archived.id)
+
+    const fronts = (await listDistractorPool(english.id, 'en-GB')).map((card) => card.front).sort()
+    expect(fronts).toEqual(['bird', 'cat'])
   })
 })

@@ -301,11 +301,14 @@ notes` (names can differ; mapping is manual or automatic).
 
 **Main flow (listening):**
 1. Learner selects "Listening"; the word is spoken automatically (replay and slower replay available).
-2. Learner chooses the written word among four options (or types it, depending on settings).
+2. Learner chooses the written word among four options (or types it, setting "Listening mode answer"); listening
+   always asks for the studied word, whatever the card's direction.
 3. Rating as above; the review log records mode `listen`.
 
-**Alternatives:** Fewer than 4 cards in the deck → options are filled from other decks with the same language, or
-the mode is unavailable with a hint.
+**Alternatives:** Fewer than 4 cards in the deck → options are filled from other active decks with the same
+studied language. When no studied language has 4 different words, the Choice (and Listening, when answered by
+choosing) chip on Today is disabled with a hint. A session card whose language has fewer words gets the options
+that exist; with none it is asked by typing.
 
 ## UC-15 Typing mode
 

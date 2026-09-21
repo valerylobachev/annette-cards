@@ -1,12 +1,15 @@
 import { Link, useNavigate } from '@tanstack/react-router'
 import { ChevronRight, Flame } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { EmptyState } from '@/components/EmptyState'
 import { StorageWarning } from '@/components/StorageWarning'
 import { Button } from '@/components/ui/button'
-import { useToday } from '@/db/hooks'
+import { useMeta, useSettings, useToday } from '@/db/hooks'
+import { setMeta } from '@/db/meta'
 import type { TodayData } from '@/db/studyQueries'
 import { addExtraNew } from '@/db/studyQueries'
+import type { StudyMode } from '@/domain/types'
 import { useAccount } from '@/features/auth/account'
 import { QuickAddButton } from '@/features/cards/QuickAddSheet'
 import { PullToSync } from '@/features/sync/PullToSync'
@@ -15,15 +18,21 @@ import { now } from '@/lib/clock'
 import { relativeTime } from '@/lib/intl'
 import { cn } from '@/lib/utils'
 
-/** S-04 Today: what to study now, the streak and the decks with cards due (UC-08). No mode chips until Phase 4. */
+/** S-04 Today: what to study now with the mode chips, the streak and the decks with cards due (UC-08). */
 export function TodayPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const today = useToday()
   const name = useAccount()?.account?.display_name
+  const settings = useSettings()
+  const storedMode = useMeta('study_mode') ?? 'swipe'
 
   // Dexie answers within a few ms: render nothing instead of a skeleton (ui_ux.md S-04).
   if (!today) return null
+
+  const unavailable = unavailableModes(today.choiceAvailable, settings.listening_answer === 'choose')
+  const mode = unavailable.includes(storedMode) ? 'swipe' : storedMode
+  const modeSearch = mode === 'swipe' ? {} : { mode }
 
   const empty =
     !today.hasHistory &&
@@ -49,9 +58,9 @@ export function TodayPage() {
           />
         ) : (
           <>
-            <Hero today={today} />
+            <Hero today={today} modeSearch={modeSearch} chips={<ModeChips value={mode} unavailable={unavailable} />} />
             <StreakRow streak={today.streak} last7={today.last7} />
-            {today.decksDue.length > 0 && <DecksDue decksDue={today.decksDue} />}
+            {today.decksDue.length > 0 && <DecksDue decksDue={today.decksDue} modeSearch={modeSearch} />}
           </>
         )}
         <QuickAddButton />
@@ -60,14 +69,19 @@ export function TodayPage() {
   )
 }
 
-function Hero({ today }: { today: TodayData }) {
+/** The mode of the sessions started from Today: `{ mode }` in the `/study` search, nothing for swipe. */
+type ModeSearch = { mode?: StudyMode }
+
+type HeroProps = { today: TodayData; modeSearch: ModeSearch; chips: ReactNode }
+
+function Hero({ today, modeSearch, chips }: HeroProps) {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const hasCards = today.reviewsDue + today.newAvailable > 0
 
   async function learnExtra() {
     await addExtraNew(now())
-    navigate({ to: '/study' })
+    navigate({ to: '/study', search: modeSearch })
   }
 
   return (
@@ -79,7 +93,7 @@ function Hero({ today }: { today: TodayData }) {
             {t('today.newCount', { count: today.newAvailable })}
           </p>
           <p className="text-muted-foreground">{t('today.estimate', { count: today.estimateMin })}</p>
-          <Button size="xl" className="mt-2 w-full" onClick={() => navigate({ to: '/study' })}>
+          <Button size="xl" className="mt-2 w-full" onClick={() => navigate({ to: '/study', search: modeSearch })}>
             {t('today.start')}
           </Button>
         </>
@@ -97,14 +111,51 @@ function Hero({ today }: { today: TodayData }) {
           )}
           {today.practiceAvailable && (
             <Button size="xl" variant="secondary" className="w-full" asChild>
-              <Link to="/study" search={{ practice: 1 }}>
+              <Link to="/study" search={{ practice: 1, ...modeSearch }}>
                 {t('today.practice')}
               </Link>
             </Button>
           )}
         </>
       )}
+      {(hasCards || today.moreNewWaiting || today.practiceAvailable) && chips}
     </section>
+  )
+}
+
+const MODES: StudyMode[] = ['swipe', 'choice', 'listening', 'typing']
+
+/** Modes that cannot be offered: multiple choice, and listening with written options, need four words (UC-14). */
+function unavailableModes(choiceAvailable: boolean, listeningWithOptions: boolean): StudyMode[] {
+  if (choiceAvailable) return []
+  return listeningWithOptions ? ['choice', 'listening'] : ['choice']
+}
+
+/** The mode chips under Start (S-04); the choice is kept on this device (`meta.study_mode`). */
+function ModeChips({ value, unavailable }: { value: StudyMode; unavailable: StudyMode[] }) {
+  const { t } = useTranslation()
+  return (
+    <div className="flex flex-col gap-2">
+      <fieldset className="flex flex-wrap gap-2">
+        <legend className="sr-only">{t('study.modes.label')}</legend>
+        {MODES.map((mode) => (
+          <button
+            key={mode}
+            type="button"
+            aria-pressed={mode === value}
+            disabled={unavailable.includes(mode)}
+            onClick={() => void setMeta('study_mode', mode)}
+            className={cn(
+              'min-h-11 rounded-full border px-4 text-sm font-medium transition-colors disabled:opacity-50',
+              mode === value ? 'border-primary bg-primary text-primary-foreground' : 'bg-background active:bg-muted',
+            )}
+          >
+            {t(`study.modes.${mode}`)}
+          </button>
+        ))}
+      </fieldset>
+      {unavailable.length > 0 && <p className="text-sm text-muted-foreground">{t('study.modes.notEnoughCards')}</p>}
+    </div>
   )
 }
 
@@ -128,7 +179,7 @@ function StreakRow({ streak, last7 }: { streak: number; last7: boolean[] }) {
   )
 }
 
-function DecksDue({ decksDue }: { decksDue: TodayData['decksDue'] }) {
+function DecksDue({ decksDue, modeSearch }: { decksDue: TodayData['decksDue']; modeSearch: ModeSearch }) {
   const { t } = useTranslation()
   return (
     <section className="flex flex-col gap-2">
@@ -138,7 +189,7 @@ function DecksDue({ decksDue }: { decksDue: TodayData['decksDue'] }) {
           <li key={deck.id}>
             <Link
               to="/study"
-              search={{ deck: deck.id }}
+              search={{ deck: deck.id, ...modeSearch }}
               className="flex min-h-14 items-center gap-3 px-4 py-2 active:bg-muted"
             >
               <span className="min-w-0 flex-1 truncate">{deck.name}</span>

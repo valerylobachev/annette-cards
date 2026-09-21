@@ -1,5 +1,6 @@
-export const studyModes = ['swipe', 'choice', 'listening', 'typing'] as const
-export type StudyMode = (typeof studyModes)[number]
+import type { StudyMode } from '@/domain/types'
+
+export const studyModes: readonly StudyMode[] = ['swipe', 'choice', 'listening', 'typing']
 
 /**
  * `/study?deck=<id>&mode=swipe&practice=1` (ui_ux.md §3 deep links; `practice` = UC-16 practice mode).

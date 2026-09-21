@@ -35,7 +35,7 @@ afterEach(() => {
 describe('playCardAudio', () => {
   it('speaks a card without audio with the system voice', async () => {
     expect(await playCardAudio(card(null), 'en-GB', system)).toEqual({ via: 'speech', result: 'done' })
-    expect(system.play).toHaveBeenCalledWith(card(null), 'en-GB', 'front')
+    expect(system.play).toHaveBeenCalledWith(card(null), 'en-GB', 'front', {})
     expect(fetch).not.toHaveBeenCalled()
   })
 
@@ -77,7 +77,18 @@ describe('playCardAudio', () => {
 
   it('speaks examples with the system voice even when the card has audio', async () => {
     expect((await playCardAudio(card('a1'), 'en-GB', system, 'example')).via).toBe('speech')
-    expect(system.play).toHaveBeenCalledWith(card('a1'), 'en-GB', 'example')
+    expect(system.play).toHaveBeenCalledWith(card('a1'), 'en-GB', 'example', {})
     expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it('plays slower when asked: the clip at a lower playbackRate, else the system voice at that rate', async () => {
+    await playCardAudio(card('a1'), 'en-GB', system, 'front', { rate: 0.7 })
+    const audio = play.mock.contexts[0] as HTMLAudioElement
+    expect(audio.playbackRate).toBe(0.7)
+    await playCardAudio(card('a1'), 'en-GB', system)
+    expect(audio.playbackRate).toBe(1)
+
+    await playCardAudio(card(null), 'en-GB', system, 'front', { rate: 0.7 })
+    expect(system.play).toHaveBeenCalledWith(card(null), 'en-GB', 'front', { rate: 0.7 })
   })
 })

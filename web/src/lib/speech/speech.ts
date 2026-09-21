@@ -7,6 +7,8 @@ export type SpeakResult = 'done' | 'blocked' | 'failed'
 export type SpeakOptions = { lang: string; rate?: number; voiceURI?: string }
 
 export const DEFAULT_SPEECH_RATE = 1
+/** "Play slower" in listening mode (S-11 Mode C): speech rate and MP3 `playbackRate`. */
+export const SLOW_RATE = 0.7
 export const SPEECH_RATE_RANGE = { min: 0.5, max: 1.2, step: 0.1 } as const
 
 export function speechSupported(): boolean {
@@ -71,15 +73,27 @@ export type SpeakPart = 'front' | 'example'
  * speaker that plays cached audio for `card.audio_id` and falls back to this one.
  */
 export type Speaker = {
-  play: (card: Pick<Card, 'front' | 'example' | 'audio_id'>, lang: string, part: SpeakPart) => Promise<SpeakResult>
+  play: (
+    card: Pick<Card, 'front' | 'example' | 'audio_id'>,
+    lang: string,
+    part: SpeakPart,
+    options?: PlayOptions,
+  ) => Promise<SpeakResult>
 }
+
+/** `rate` replaces the device's speech rate for one playback ("Play slower"). */
+export type PlayOptions = { rate?: number }
 
 export type SpeechPrefs = { rate: number; voicePref: Record<string, string> }
 
 /** The system-voice speaker (Web Speech API) with this device's rate and voice choices. */
 export function systemSpeaker({ rate, voicePref }: SpeechPrefs): Speaker {
   return {
-    play: (card, lang, part) =>
-      speak(part === 'front' ? card.front : (card.example ?? ''), { lang, rate, voiceURI: voicePref[lang] }),
+    play: (card, lang, part, options) =>
+      speak(part === 'front' ? card.front : (card.example ?? ''), {
+        lang,
+        rate: options?.rate ?? rate,
+        voiceURI: voicePref[lang],
+      }),
   }
 }

@@ -14,6 +14,7 @@ export const DEFAULT_SETTINGS: Settings = {
   reminder: { enabled: false, time: '20:00', tz: 'Europe/Riga' },
   default_directions: 'both',
   show_ipa_on_front: true,
+  listening_answer: 'choose',
 }
 
 /** Stored settings may be partial (older version, another device); missing fields fall back to defaults. */

@@ -47,4 +47,10 @@ test('typing: exact answer moves on, near miss waits for Continue, undo restores
   await expect(page.getByText('черепаха', { exact: true })).toBeVisible()
   await expect(progress).toHaveText('1 / 4')
   await expect(answer).toHaveValue('')
+
+  // The restored card can be answered again.
+  await answer.fill('żółw')
+  await answer.press('Enter')
+  await expect(page.getByText('собака', { exact: true })).toBeVisible()
+  await expect(progress).toHaveText('2 / 5')
 })

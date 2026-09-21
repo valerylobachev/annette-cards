@@ -68,6 +68,8 @@ export type CardState = SyncStamp &
 /** 1 Again, 2 Hard, 3 Good, 4 Easy. */
 export type Rating = 1 | 2 | 3 | 4
 export type ReviewMode = 'swipe' | 'choice' | 'listen' | 'typing'
+/** Study modes of S-11 (`/study?mode=`): swipe cards, multiple choice, listening, typing. */
+export type StudyMode = 'swipe' | 'choice' | 'listening' | 'typing'
 
 export type ReviewLog = SyncStamp & {
   id: string
@@ -90,6 +92,8 @@ export type UiLanguage = 'en' | 'ru'
 export type AnswerMode = 'simple' | 'detailed'
 /** S-14: Off / Front / Front and answer. */
 export type Autoplay = 'off' | 'front' | 'front_and_back'
+/** How listening mode is answered (S-14): written options or typing. */
+export type ListeningAnswer = 'choose' | 'type'
 
 /** The synced settings document (architecture.md §5.5). */
 export type Settings = {
@@ -107,6 +111,8 @@ export type Settings = {
   default_directions: Directions
   /** Show the IPA on the front of a study card (decision D3). */
   show_ipa_on_front: boolean
+  /** Listening mode answer (P4-T02). */
+  listening_answer: ListeningAnswer
 }
 
 /** Tables whose rows are pushed to the server by the sync engine. */

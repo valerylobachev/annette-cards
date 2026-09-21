@@ -288,11 +288,11 @@ playback, cross-device audio, two-tap AI add and the quota message verified by t
 ### 4.1 Study modes
 Tasks: [P4-T01](../dev/impl/phase-04-polish/task-01-typing-mode.md) · [P4-T02](../dev/impl/phase-04-polish/task-02-choice-listening-modes.md)
 
-- [ ] Multiple choice with smart distractors
-- [ ] Listening mode (auto-play, slower replay, choose/type)
+- [x] Multiple choice with smart distractors
+- [x] Listening mode (auto-play, slower replay, choose/type)
 - [x] Typing mode: normalization, Damerau–Levenshtein tolerance, diacritics-insensitive near miss, diff highlight
-- [ ] Mode selector on Today; mode stored in review log
-- [ ] (added) `listening_answer` setting (choose / type)
+- [x] Mode selector on Today; mode stored in review log
+- [x] (added) `listening_answer` setting (choose / type)
 
 ### 4.2 Statistics
 Task: [P4-T03](../dev/impl/phase-04-polish/task-03-statistics.md)

@@ -34,6 +34,15 @@ describe('settings repository', () => {
     })
   })
 
+  it('fills listening_answer for a row written before it existed, and stores a change with an outbox entry', async () => {
+    await db.settings.put({ id: 'user', new_per_day: 20, updated_at: 1, updated_by: 'old-device' })
+    expect((await getSettings()).listening_answer).toBe('choose')
+
+    await db.outbox.clear()
+    expect((await updateSettings({ listening_answer: 'type' })).listening_answer).toBe('type')
+    expect(await db.outbox.toArray()).toMatchObject([{ entity: 'settings', entity_id: 'user' }])
+  })
+
   it('stores only the fields that were set', async () => {
     await updateSettings({ new_per_day: 20 })
     const row = await db.settings.get('user')

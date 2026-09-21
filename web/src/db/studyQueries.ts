@@ -1,3 +1,4 @@
+import { choiceAvailable } from '@/domain/distractors'
 import { buildPracticeQueue } from '@/domain/practice'
 import { buildSession, type QueueItem, type SessionInput } from '@/domain/session'
 import { currentStreak, last7Days } from '@/domain/streak'
@@ -59,6 +60,8 @@ export type TodayData = TodaySummary & {
   last7: boolean[]
   /** Any answer was ever given (otherwise Today shows only the new-card count). */
   hasHistory: boolean
+  /** Multiple choice and listening with options can be offered (`choiceAvailable`, UC-14). */
+  choiceAvailable: boolean
 }
 
 /** Everything Today (S-04) shows, at `now`. The streak counts every non-undone answer, practice included. */
@@ -75,5 +78,6 @@ export async function loadToday(now: number): Promise<TodayData> {
     streak: currentStreak(studyDays, today),
     last7: last7Days(studyDays, today),
     hasHistory: studyDays.size > 0,
+    choiceAvailable: choiceAvailable(input.decks, input.cards),
   }
 }

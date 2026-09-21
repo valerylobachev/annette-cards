@@ -103,7 +103,12 @@
     "changesNextSession": "Changes apply to the next session.",
     "serverVersion": "Server version",
     "attributions": "Recordings (Wikimedia Commons)",
-    "noAttributions": "No recordings saved on this device."
+    "noAttributions": "No recordings saved on this device.",
+    "listeningAnswer": "Listening mode answer",
+    "listeningAnswers": {
+      "choose": "Choose",
+      "type": "Type"
+    }
   },
   "languages": {
     "en": "English",
@@ -443,6 +448,21 @@
       "correctAnswer": "Correct answer",
       "placeholder": "Type the answer",
       "answerLabel": "Your answer"
+    },
+    "modes": {
+      "label": "Study mode",
+      "swipe": "Swipe",
+      "choice": "Choice",
+      "listening": "Listening",
+      "typing": "Typing",
+      "notEnoughCards": "Choice and listening need at least 4 different words in one language."
+    },
+    "choice": {
+      "options": "Answers"
+    },
+    "listening": {
+      "play": "Play the word again",
+      "slower": "Play slower"
     }
   },
   "today": {

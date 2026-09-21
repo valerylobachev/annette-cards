@@ -103,7 +103,12 @@
     "changesNextSession": "Изменения применятся со следующей сессии.",
     "serverVersion": "Версия сервера",
     "attributions": "Записи (Wikimedia Commons)",
-    "noAttributions": "На этом устройстве нет сохранённых записей."
+    "noAttributions": "На этом устройстве нет сохранённых записей.",
+    "listeningAnswer": "Ответ в режиме «На слух»",
+    "listeningAnswers": {
+      "choose": "Выбрать",
+      "type": "Ввести"
+    }
   },
   "languages": {
     "en": "English",
@@ -477,6 +482,21 @@
       "correctAnswer": "Правильный ответ",
       "placeholder": "Введите ответ",
       "answerLabel": "Ваш ответ"
+    },
+    "modes": {
+      "label": "Режим занятия",
+      "swipe": "Карточки",
+      "choice": "Выбор",
+      "listening": "На слух",
+      "typing": "Ввод",
+      "notEnoughCards": "Для выбора и режима «На слух» нужно хотя бы 4 разных слова на одном языке."
+    },
+    "choice": {
+      "options": "Варианты ответа"
+    },
+    "listening": {
+      "play": "Повторить слово",
+      "slower": "Медленнее"
     }
   },
   "today": {

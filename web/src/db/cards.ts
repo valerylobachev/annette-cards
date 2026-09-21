@@ -182,6 +182,25 @@ export async function findDuplicate(deck_id: string, front: string, excludeId?: 
     .first()
 }
 
+/**
+ * Candidates for multiple-choice options (P4-T02): non-deleted cards of the deck and of the other active
+ * (non-archived, non-deleted) decks studying `targetLang`. Read-only.
+ */
+export async function listDistractorPool(deckId: string, targetLang: string): Promise<Card[]> {
+  const decks = await db.decks
+    .filter(
+      (deck) =>
+        deck.id === deckId ||
+        (deck.target_lang === targetLang && deck.deleted_at === null && deck.archived_at === null),
+    )
+    .primaryKeys()
+  return db.cards
+    .where('deck_id')
+    .anyOf(decks)
+    .filter((card) => card.deleted_at === null)
+    .toArray()
+}
+
 /** Distinct tags of non-deleted cards, sorted, for autocomplete. */
 export async function listTags(): Promise<string[]> {
   const tags = new Set<string>()

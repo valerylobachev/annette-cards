@@ -8,7 +8,7 @@ import { useMeta } from '@/db/hooks'
 import { setMeta } from '@/db/meta'
 import { updateSettings } from '@/db/settings'
 import { SETTINGS_LIMITS } from '@/domain/settings'
-import type { AnswerMode, Directions } from '@/domain/types'
+import type { AnswerMode, Directions, ListeningAnswer } from '@/domain/types'
 import { useAccount } from '@/features/auth/account'
 import { SyncIndicator } from '@/features/sync/SyncIndicator'
 import { type UiLanguage, uiLanguages } from '@/i18n'
@@ -110,6 +110,17 @@ function StudyGroup() {
             label: t(`settings.answerModes.${value}`),
           }))}
           onChange={(answer_mode) => save({ answer_mode })}
+        />
+      </SettingsRow>
+      <SettingsRow label={t('settings.listeningAnswer')} stacked>
+        <Segmented<ListeningAnswer>
+          label={t('settings.listeningAnswer')}
+          value={settings.listening_answer}
+          options={(['choose', 'type'] as const).map((value) => ({
+            value,
+            label: t(`settings.listeningAnswers.${value}`),
+          }))}
+          onChange={(listening_answer) => save({ listening_answer })}
         />
       </SettingsRow>
       <SettingsRow label={t('settings.showIpa')} htmlFor="show-ipa">

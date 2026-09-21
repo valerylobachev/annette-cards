@@ -152,8 +152,11 @@ continues in the background" and "Continue".
   thumb zone). If nothing is due: text "Nothing due. Next reviews in 3 h" and secondary actions "Learn extra new
   words" (shown when new cards are waiting beyond today's limit; +10 for today, then the session starts) and
   "Practice difficult words" (shown when the practice queue has cards).
-- Mode selector under Start (chips): Swipe (default), Choice, Listening, Typing. **Phase 4** (decision D4): Phase 1
-  has only Swipe and no chips.
+- Mode selector under Start (chips): Swipe (default), Choice, Listening, Typing (decision D4: added in Phase 4).
+  The choice is kept on this device (`meta.study_mode`) and applies to Start, "Learn extra new words", "Practice
+  difficult words" and the "Decks due" rows (`/study?mode=…`). Choice, and Listening while it is answered by
+  choosing, are disabled with the hint "Choice and listening need at least 4 different words in one language" when
+  no studied language of the active decks has 4 different words; a disabled stored mode falls back to Swipe.
 - **Streak** row: flame icon, "12 days", 7-day dots.
 - **Decks due** list (compact): deck name, language flag code (EN/PL), due count; tap → start session for that
   deck only.
@@ -315,14 +318,23 @@ unknown deck id or an empty queue shows an empty state instead.
 
 #### Mode B — Multiple choice
 
-Prompt on top (word or translation), four options as large buttons. Correct → green, short delay (600 ms), next.
-Wrong → chosen red, correct green, card details shown; "Continue" button. Distractors: other cards from the same
-deck, preferring the same tags and similar length.
+Prompt on top (the studied word for *forward*, the translation for *reverse*), four options as large buttons
+(≥ 44 px, shuffled): the answer and three distractors. Correct → green, short delay (600 ms), next (Good). Wrong →
+chosen red, correct green, the card turns to its answer side (translation, example, notes); "Continue" (Again).
+Distractors (`domain/distractors.ts`): other cards of the same deck first, then cards sharing the most tags, then
+the most similar length, ties at random; the target and values equal to the answer or to another option (after
+`normalizeFront`) are skipped. When the deck has too few, cards of the other active decks with the same studied
+language fill in. A card whose language offers fewer options still gets the ones that exist; with none at all it
+is asked by typing (Mode D).
 
 #### Mode C — Listening
 
-Large speaker button (auto-plays), "Play slower" button (rate 0.7). Answer by choosing among four written options
-(default) or by typing (setting). Result as in modes B/D.
+The studied word is played when the card appears (server clip or system voice; the session's Start tap unlocked
+audio on iOS), with a large replay button and "Play slower" (speech rate 0.7, or MP3 `playbackRate` 0.7).
+Listening always asks for the **studied word**, whatever the card's direction (the answer is logged for that
+direction with `mode = 'listen'`). Answer by choosing among four written words (default) or by typing (setting
+"Listening mode answer"); typing is checked as in Mode D (near miss → Hard). After the answer the card shows the
+word, its translation and example. Without other words to offer, the answer is typed.
 
 #### Mode D — Typing
 
@@ -339,7 +351,6 @@ of the translation. The input stays mounted between cards, so the iPhone keyboar
   forward), "Continue".
 - "I don't know" link = Again, shown like a wrong answer.
 
-Until P4-T02 adds the mode chips on Today, typing is opened with `/study?mode=typing` (and `&deck=<id>`).
 
 **Session end:** automatically when the queue is empty → S-12.
 
@@ -379,7 +390,7 @@ steps of 10, day start 00:00–23:00); retention is a slider 0.80–0.95.
 
 - **Account & sync** → S-15 (a row with the account's name and email, or "Sign in to back up and sync").
 - **Study:** new words per day, max reviews per day, directions default, answer mode (Simple 2 buttons /
-  Detailed 4 buttons), show IPA on front, day starts at (hour), desired retention (slider 0.80–0.95 with hint),
+  Detailed 4 buttons), listening mode answer (Choose / Type), show IPA on front, day starts at (hour), desired retention (slider 0.80–0.95 with hint),
   FSRS weights (Phase 4: "Optimize" button, last optimized date).
 - **Audio:** autoplay (Off / Front / Front and answer), speech rate, "Download audio for offline" (this device:
   after each sync, clips of active decks are saved), **Voices** → S-16.
