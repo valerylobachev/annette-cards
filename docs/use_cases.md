@@ -103,7 +103,8 @@ This document describes how people use Annette Cards. Screen references (S-xx) p
 1. Learner taps "Sign out" in Account & sync.
 2. If the outbox has unsynced changes, the client attempts a sync; if it fails, a warning shows the count of
    unsynced changes with options "Sign out anyway" / "Cancel".
-3. Server revokes the session; client clears IndexedDB and cached audio; onboarding screen opens.
+3. Server revokes the session; client clears IndexedDB (keeping device preferences such as theme and voices) and
+   cached files except the app itself; onboarding screen opens.
 
 **Alternatives:**
 - Wrong credentials → `invalid_credentials`; after 10 attempts/min → `rate_limited`.
@@ -116,7 +117,8 @@ This document describes how people use Annette Cards. Screen references (S-xx) p
 **Preconditions:** Device has local decks created in local-only mode; Learner signs in or registers.
 
 **Main flow:**
-1. Client asks the server for account data counts (`GET /api/sync/summary`).
+1. Client asks the server for account data counts (`GET /api/sync/summary`). "Local data" means at least one deck
+   that is not deleted; a device that already synced with this account skips the question.
 2. Server account empty → client pushes all local data, then pulls. Done.
 3. Both sides have data → S-03 shows counts and options.
 4. Learner chooses **Merge**: client pushes all local rows, then pulls everything; both datasets coexist.

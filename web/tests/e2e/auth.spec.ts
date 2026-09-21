@@ -11,7 +11,9 @@ test.beforeEach(async ({ context }) => {
 test('an admin invites someone who registers with the link', async ({ page, browser }) => {
   await setUpApp(page)
   await signIn(page, ADMIN.email, ADMIN.password)
-  await expect(page).toHaveURL(/\/settings\/account/)
+  // The admin's account has no decks, so after the first sync the empty device opens onboarding.
+  await expect(page).toHaveURL(/\/welcome/)
+  await page.goto('/settings/account')
   await expect(page.getByText(ADMIN.email)).toBeVisible()
 
   await page.getByRole('button', { name: 'Create invite' }).click()
@@ -33,7 +35,8 @@ test('an admin invites someone who registers with the link', async ({ page, brow
   await form.getByLabel('Email').fill(email)
   await form.getByLabel('Password', { exact: true }).fill('anna password 1')
   await form.getByRole('button', { name: 'Create account' }).click()
-  await expect(other).toHaveURL(/\/settings\/account/)
+  await expect(other).toHaveURL(/\/welcome/)
+  await other.goto('/settings/account')
   await expect(other.getByText(email)).toBeVisible()
   await invitee.close()
 

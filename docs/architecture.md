@@ -92,7 +92,7 @@ They are stored in `meta` because voices differ between devices. `meta` keys (ty
 extra new cards allowed today), `study_session` (snapshot of the current or last study session for resume within
 30 min and the summary; `domain/studySession.ts`), `install_hint_shown` (the one-time iOS install hint was closed),
 `storage_persisted` (answer of `navigator.storage.persist()`), `onboarding_done` (first-run onboarding finished on
-this device), `account` (`{user_id, email, display_name, is_admin}` of the signed-in account, from login, register or
+this device), `pending_account` (signed in, first-sync choice still open; §6.4), `account` (`{user_id, email, display_name, is_admin}` of the signed-in account, from login, register or
 `GET /api/auth/me`; `features/auth/account.ts`), `session_expired` (the server answered 401 for the stored account:
 S-15 shows "Sign in again", local data is kept). Writes to `meta` never create outbox entries.
 
@@ -668,12 +668,31 @@ translation ≤ 2000; IPA ≤ 200; notes ≤ 2000; each tag 1–50; ids and `upd
 
 - Sync runs on app start, on `visibilitychange` to visible, on `online`, 2 s after local changes (debounced),
   and via a manual button.
-- **First sign-in on a device with local data** (created in local-only mode):
-  - The client asks `GET /api/sync/summary` for the account's deck and card counts (S-03 shows them).
-  - Server account empty → push everything.
-  - Both non-empty → user chooses: *Merge* (push local, then pull), *Use server data* (clear local, pull), or
-    *Cancel*.
-- **Sign-out** warns when the outbox is not empty, then clears IndexedDB and Cache Storage.
+- **After every sign-in or registration** the client opens S-03 (`/first-sync`, `features/sync/firstSync.ts`). The
+  signed-in account waits in `meta.pending_account`; it becomes `meta.account` (which lets the engine sync) only
+  once the first sync is settled, so nothing is pushed before the user chose. *Local data* = at least one deck that
+  is not deleted.
+  - This device already synced with this account (`sync_cursor` set and the same `user_id`, e.g. "Sign in again"
+    after the session expired) → normal sync.
+  - Otherwise the client asks `GET /api/sync/summary` for the account's counts:
+    - no local data → leftovers are wiped (e.g. a UI language picked during onboarding would otherwise replace the
+      account's whole settings document), then pull;
+    - local data and an empty account (`decks = 0`) → every local row is queued once (`enqueueAll`), pushed, then
+      pulled;
+    - both non-empty → S-03 shows both counts and the user chooses *Merge* (queue every local row, push, pull),
+      *Use account data* (after a confirm sheet: wipe local data, pull) or *Cancel* (`POST /api/auth/logout`,
+      local data untouched).
+  - A progress bar shows rows sent and received against an estimate (rows to push, plus the account's decks and
+    three rows per card); it stays below 100 % until the sync ends. Then Today opens (onboarding if the device is
+    still empty).
+- **Sign-out** (S-15): with unsynced changes and a connection the client syncs first; if changes remain (or it is
+  offline) a confirm sheet shows their count ("Sign out anyway" / "Cancel"). Then it stops syncing, calls
+  `POST /api/auth/logout` (a network failure is ignored), wipes local data and deletes Cache Storage except the
+  service worker's precache (so the app still opens offline), and opens onboarding.
+- **Wipe** (`db/localData.ts`, sign-out and *Use account data*): clears decks, cards, states, reviews, settings and
+  the outbox, and every `meta` key except the device-local preferences `theme`, `voice_pref`, `speech_rate`,
+  `audio_prefetch`, `install_hint_shown` and `storage_persisted`. `device_id` is removed too, so the device writes
+  under a new id afterwards. It is the only physical delete in the client.
 
 ### 6.5 Backup format
 

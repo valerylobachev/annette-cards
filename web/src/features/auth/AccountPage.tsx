@@ -1,4 +1,4 @@
-import { Link, useRouter } from '@tanstack/react-router'
+import { Link, useNavigate, useRouter } from '@tanstack/react-router'
 import { ChevronLeft } from 'lucide-react'
 import { type FormEvent, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -16,6 +16,7 @@ import { SettingsGroup } from '../settings/SettingsList'
 import { SyncSection } from '../sync/SyncSection'
 import { type AccountInfo, markSessionExpired, useAccount } from './account'
 import { InvitesSection } from './InvitesSection'
+import { signOut, unsyncedBeforeSignOut } from './signOut'
 
 /** S-15 Account & sync: sign-in prompt, or the account, the sync block, password change and admin invites. */
 export function AccountPage() {
@@ -38,6 +39,7 @@ export function AccountPage() {
           <AccountGroup account={state.account} />
           {!state.sessionExpired && <SyncSection />}
           {state.account.is_admin && !state.sessionExpired && <InvitesSection />}
+          <SignOutButton />
         </>
       )}
     </div>
@@ -56,6 +58,44 @@ function SignedOut() {
         <Link to="/register">{t('auth.register')}</Link>
       </Button>
     </section>
+  )
+}
+
+/** Sign out (UC-03): syncs first when possible; unsynced changes need a confirmation because they would be lost. */
+function SignOutButton() {
+  const { t } = useTranslation()
+  const navigate = useNavigate()
+  const [busy, setBusy] = useState(false)
+  const [unsynced, setUnsynced] = useState(0)
+
+  async function finish() {
+    setBusy(true)
+    await signOut()
+    await navigate({ to: '/welcome', replace: true })
+  }
+
+  async function start() {
+    setBusy(true)
+    const remaining = await unsyncedBeforeSignOut()
+    setBusy(false)
+    if (remaining > 0) setUnsynced(remaining)
+    else await finish()
+  }
+
+  return (
+    <>
+      <Button size="xl" variant="destructive" disabled={busy} onClick={() => void start()}>
+        {t('account.signOut')}
+      </Button>
+      <ConfirmSheet
+        open={unsynced > 0}
+        onOpenChange={(open) => !open && setUnsynced(0)}
+        title={t('account.signOutUnsynced', { count: unsynced })}
+        description={t('account.signOutUnsyncedHint')}
+        confirmLabel={t('account.signOutAnyway')}
+        onConfirm={() => void finish()}
+      />
+    </>
   )
 }
 

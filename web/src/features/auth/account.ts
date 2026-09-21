@@ -12,12 +12,10 @@ export async function getAccount(): Promise<AccountInfo | null> {
 
 /** Stores the account after sign-in, registration or a successful `me`, and clears a session-expired mark. */
 export async function setAccount(me: MeResponse): Promise<AccountInfo> {
-  const account: AccountInfo = {
-    user_id: me.id,
-    email: me.email,
-    display_name: me.display_name,
-    is_admin: me.is_admin,
-  }
+  return saveAccount({ user_id: me.id, email: me.email, display_name: me.display_name, is_admin: me.is_admin })
+}
+
+export async function saveAccount(account: AccountInfo): Promise<AccountInfo> {
   await db.transaction('rw', db.meta, async () => {
     await setMeta('account', account)
     await deleteMeta('session_expired')

@@ -21,6 +21,9 @@ afterEach(async () => {
   await act(() => i18n.changeLanguage('en'))
 })
 
+const EMPTY_IDS = { decks: [], cards: [], card_states: [], review_log: [], settings: false }
+const EMPTY_PUSH = { applied: EMPTY_IDS, skipped: EMPTY_IDS, rejected: [], server_time: Date.now() }
+
 function signInButton() {
   return within(screen.getByRole('form', { name: 'Sign in' })).getByRole('button', { name: 'Sign in' })
 }
@@ -35,21 +38,26 @@ async function signInAs(account = ME) {
 }
 
 describe('sign in (S-02)', () => {
-  it('stores the account and opens Account & sync', async () => {
-    const api = mockApi([{ method: 'POST', path: '/api/auth/login', body: ME }])
+  it('stores the account after the first sync; an empty account on a new device leads to onboarding', async () => {
+    const api = mockApi([
+      { method: 'POST', path: '/api/auth/login', body: ME },
+      { path: '/api/sync/summary', body: { decks: 0, cards: 0 } },
+      { method: 'POST', path: '/api/sync/push', body: EMPTY_PUSH },
+      { path: '/api/sync/pull', body: { changes: {}, cursor: 0, has_more: false } },
+    ])
     const router = renderApp('/signin')
     await userEvent.type(await screen.findByLabelText('Email'), 'anna@example.com')
     await userEvent.type(screen.getByLabelText('Password'), 'correct horse battery')
     await userEvent.click(signInButton())
 
-    await waitFor(() => expect(router.state.location.pathname).toBe('/settings/account'))
-    expect(await screen.findByText('anna@example.com')).toBeInTheDocument()
+    await waitFor(() => expect(router.state.location.pathname).toBe('/welcome'))
     expect(await getMeta('account')).toEqual({
       user_id: 'user-1',
       email: 'anna@example.com',
       display_name: 'Anna',
       is_admin: false,
     })
+    expect(await getMeta('pending_account')).toBeUndefined()
     expect(sentBodies(api, '/api/auth/login')[0]).toMatchObject({
       email: 'anna@example.com',
       password: 'correct horse battery',

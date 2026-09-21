@@ -32,6 +32,8 @@ export type MetaValues = {
   /** Device clock minus server clock, stored while it exceeds 5 minutes (S-15 warning). */
   clock_skew_ms: number
   account: AccountInfo | null
+  /** Signed in, but the first-sync choice (S-03) is still open: the account is stored once it is made. */
+  pending_account: AccountInfo
   /** The server answered 401 for the stored account: "Sign in again" is shown; local data is kept. */
   session_expired: boolean
   /** Selected voice URI per BCP-47 language. */

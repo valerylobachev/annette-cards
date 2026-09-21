@@ -572,7 +572,12 @@
     "signOutOthers": "Sign out other devices",
     "signOutOthersConfirm": "Sign out other devices?",
     "signOutOthersHint": "Every other device signed in to this account will have to sign in again.",
-    "othersSignedOut": "Other devices signed out"
+    "othersSignedOut": "Other devices signed out",
+    "signOut": "Sign out",
+    "signOutUnsynced_one": "{{count}} change is not synced",
+    "signOutUnsynced_other": "{{count}} changes are not synced",
+    "signOutUnsyncedHint": "Signing out removes this device’s data. Changes that were not synced will be lost.",
+    "signOutAnyway": "Sign out anyway"
   },
   "invites": {
     "section": "Invites",
@@ -653,5 +658,20 @@
       "offline": "Offline: changes are kept and synced later",
       "error": "Sync failed"
     }
+  },
+  "firstSync": {
+    "checking": "Checking your account…",
+    "thisDevice": "On this device",
+    "inAccount": "In your account",
+    "counts": "{{decks}}, {{cards}}",
+    "merge": "Merge (recommended)",
+    "mergeHint": "Keep both: the words on this device are added to your account, and the account’s words come here.",
+    "useAccount": "Use account data",
+    "useAccountHint": "Remove the words on this device and download the account’s.",
+    "useAccountConfirm": "Remove the data on this device?",
+    "useAccountConfirmHint": "Decks, cards and progress stored only on this device will be deleted. The account’s data replaces them.",
+    "syncing": "Syncing your data…",
+    "continuesLater": "Your account is connected; syncing continues in the background.",
+    "retry": "Try again"
   }
 }

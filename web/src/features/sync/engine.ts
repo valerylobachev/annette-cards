@@ -18,9 +18,12 @@ const MAX_PUSH_ROUNDS = 5
 const RETRY_BASE_MS = 5_000
 const RETRY_MAX_MS = 5 * 60 * 1000
 
-type EngineState = { running: boolean }
+/** Rows sent and received by the running sync (the S-03 progress bar). */
+export type SyncProgress = { pushed: number; toPush: number; pulled: number }
 
-let state: EngineState = { running: false }
+type EngineState = { running: boolean; progress: SyncProgress | null }
+
+let state: EngineState = { running: false, progress: null }
 const listeners = new Set<() => void>()
 let current: Promise<void> | null = null
 let runAgain = false
@@ -77,20 +80,26 @@ export function syncNow(reason: SyncReason): Promise<void> {
 async function runOnce(reason: SyncReason): Promise<void> {
   if (!(await canSync())) return
   clearTimeout(retryTimer)
-  setState({ running: true })
+  let progress: SyncProgress = { pushed: 0, toPush: 0, pulled: 0 }
+  const report = (next: Partial<SyncProgress>) => {
+    progress = { ...progress, ...next }
+    setState({ running: true, progress })
+  }
+  setState({ running: true, progress })
   const started_at = now()
   let pushed = 0
   let pulled = 0
   const rejected: SyncLogEntry['rejected'] = []
   try {
     for (let round = 0; round < MAX_PUSH_ROUNDS; round++) {
-      const result = await pushOutbox()
+      const before = pushed
+      const result = await pushOutbox((sent, total) => report({ pushed: before + sent, toPush: before + total }))
       pushed += result.pushed
       rejected.push(...result.rejected)
       if (round === 0 && result.serverTime !== null) await recordClockSkew(result.serverTime)
       if ((await db.outbox.count()) === 0) break
     }
-    pulled = await pullAll()
+    pulled = await pullAll((received) => report({ pulled: received }))
     // Cards left in decks deleted elsewhere are deleted now; they are pushed on the next (debounced) sync.
     await deleteCardsOfDeletedDecks()
     const finished_at = now()
@@ -104,8 +113,13 @@ async function runOnce(reason: SyncReason): Promise<void> {
     else scheduleRetry()
     if (import.meta.env.DEV) console.warn(`sync (${reason}) failed: ${error_code}`)
   } finally {
-    setState({ running: false })
+    setState({ running: false, progress: null })
   }
+}
+
+/** Resolves when no sync is running (before a local wipe, which must not race a pull). */
+export async function waitForIdle(): Promise<void> {
+  while (current) await current
 }
 
 /** After a failed sync, try again in 5 s, 10 s, 20 s … up to 5 min (triggers such as `online` may come first). */
@@ -133,5 +147,5 @@ export function resetEngine() {
   failures = 0
   runAgain = false
   current = null
-  state = { running: false }
+  state = { running: false, progress: null }
 }

@@ -11,8 +11,7 @@ import { apiErrorCode, callApi } from '@/lib/api'
 import { errorMessage } from '@/lib/apiErrors'
 import { useOnline } from '@/lib/useOnline'
 import { Segmented } from '../settings/SettingsList'
-import { syncNow } from '../sync/engine'
-import { setAccount } from './account'
+import { beginFirstSync } from '../sync/firstSync'
 
 export type AuthMode = 'signin' | 'register'
 
@@ -23,27 +22,19 @@ function deviceLabel(): string {
   return /iPhone|iPad|Android|Macintosh|Windows|Linux/.exec(navigator.userAgent)?.[0] ?? 'Browser'
 }
 
-type Props = {
-  mode: AuthMode
-  invite?: string
-  /** Where to continue after success; P2-T07 replaces it with the first-sync flow. */
-  onSignedIn?: (me: MeResponse) => Promise<void> | void
-}
+type Props = { mode: AuthMode; invite?: string }
 
 /** S-02 Sign in / Register (UC-02, UC-03): a segmented control switches between the two forms (and routes). */
-export function AuthPage({ mode, invite, onSignedIn }: Props) {
+export function AuthPage({ mode, invite }: Props) {
   const { t } = useTranslation()
   const router = useRouter()
   const navigate = useNavigate()
   const online = useOnline()
 
+  /** The account is stored once the first sync is settled (S-03). */
   async function done(me: MeResponse) {
-    await setAccount(me)
-    if (onSignedIn) await onSignedIn(me)
-    else {
-      void syncNow('signin')
-      await navigate({ to: '/settings/account', replace: true })
-    }
+    await beginFirstSync(me)
+    await navigate({ to: '/first-sync', replace: true })
   }
 
   return (

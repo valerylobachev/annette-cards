@@ -80,3 +80,23 @@ export async function outboxCount(page: Page): Promise<number> {
       }),
   )
 }
+
+/** Rows of one object store of the page's app (soft-deleted ones included). */
+export async function readAll(page: Page, store: string): Promise<Record<string, unknown>[]> {
+  return page.evaluate(
+    (name) =>
+      new Promise<Record<string, unknown>[]>((resolve, reject) => {
+        const request = indexedDB.open('annette')
+        request.onerror = () => reject(request.error)
+        request.onsuccess = () => {
+          const all = request.result.transaction(name).objectStore(name).getAll()
+          all.onsuccess = () => {
+            request.result.close()
+            resolve(all.result)
+          }
+          all.onerror = () => reject(all.error)
+        }
+      }),
+    store,
+  )
+}

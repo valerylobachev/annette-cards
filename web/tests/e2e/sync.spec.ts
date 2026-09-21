@@ -29,9 +29,9 @@ test('a change is pushed within seconds; offline changes wait and sync when back
   const account = await createAccount(playwright, 'pusher')
   await setUpApp(page)
   await signIn(page, account.email, account.password)
-  await expect(page).toHaveURL(/\/settings\/account/)
+  await expect(page).toHaveURL(/\/welcome/)
 
-  await page.getByRole('link', { name: 'Decks' }).click()
+  await page.goto('/decks')
   await createDeck(page, 'Synced deck')
   await expect.poll(() => outboxCount(page), { timeout: 5_000 }).toBe(0)
   await page.getByRole('link', { name: 'Today' }).click()

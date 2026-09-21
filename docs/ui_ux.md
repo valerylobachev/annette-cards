@@ -123,7 +123,7 @@ Next is disabled until a studied language is chosen; a custom goal accepts whole
 - Sign in: email, password (show/hide), "Sign in" button, error text under the form.
 - Register: invite code (prefilled from `?invite=` link), display name, email, password with a length hint ("At
   least 10 characters" until it is long enough); "Create account" is enabled once every field is filled.
-- After success → S-15 (P2-T07: first sync; on a device with local data → S-03).
+- After success → S-03 (first sync; the choice appears only when both this device and the account have data).
 
 **States:** offline → form disabled with "Connect to the internet to sign in"; errors mapped from codes
 (`invalid_credentials`, `invite_invalid`, `invite_expired`, `email_taken`, `rate_limited`, `network`, …).
@@ -132,9 +132,13 @@ Next is disabled until a studied language is chosen; a custom goal accepts whole
 
 **Purpose:** resolve local vs server data on first sign-in (UC-04).
 
-Shown only if both local and server data exist. Shows counts ("On this device: 2 decks, 340 cards · In your
-account: 3 decks, 1 210 cards") and three options: **Merge** (recommended), **Use account data** (local data will
-be removed — confirm sheet), **Cancel**. Progress view with determinate bar during initial sync.
+Opened after every sign-in or registration (architecture.md §6.4). "Checking your account…", then the choice only
+if both this device and the account have data: counts ("On this device: 2 decks, 340 cards · In your account: 3
+decks, 1 210 cards") and three options: **Merge** (recommended), **Use account data** (local data will be removed —
+confirm sheet), **Cancel** (signs out again, back to the previous screen). Otherwise, and after a choice, a
+determinate bar "Syncing your data…" (below 100 % until done), then Today (or onboarding when the device is still
+empty). Errors: the check failed → message with "Try again" / "Cancel"; the first sync failed → message "syncing
+continues in the background" and "Continue".
 
 ### S-04 Today (home)
 
@@ -374,7 +378,8 @@ signed in, with an "Export a backup" button.
 Signed out: explanation "Sign in to back up and sync", buttons Sign in / Register. Signed in: display name,
 email, last sync time, pending changes count, **Sync now**, sync log (last 10 runs with status), Change password
 (sheet: current and new password; other devices are signed out), "Sign out other devices" (confirm sheet),
-**Sign out** (warns about unsynced changes). Admin only: **Invites** — list with code, note, status badge (Active /
+**Sign out** (syncs first when online; if changes remain, a confirm sheet "3 changes are not synced" with "Sign out
+anyway" / "Cancel"; then the device's data is removed and onboarding opens). Admin only: **Invites** — list with code, note, status badge (Active /
 Used / Expired) and "Used by …" or the expiry; "Create invite" (sheet: note, expires in 1–90 days, default 7) then a
 sheet with the link `<origin>/register?invite=CODE`, Copy and Share (when the device can share); Revoke (confirm
 sheet) on active invites.

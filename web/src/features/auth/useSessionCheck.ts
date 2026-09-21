@@ -8,8 +8,8 @@ import { getAccount, markSessionExpired, setAccount } from './account'
  * renews the session cookie). A 401 marks the session expired ("Sign in again"); local data stays untouched.
  */
 export async function checkSession(): Promise<void> {
-  if (!navigator.onLine || !(await getAccount())) return
   try {
+    if (!navigator.onLine || !(await getAccount())) return
     await setAccount(await callApi(() => me()))
   } catch (error) {
     if (isUnauthorized(error)) await markSessionExpired()

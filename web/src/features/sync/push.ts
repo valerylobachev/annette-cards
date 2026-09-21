@@ -27,9 +27,11 @@ export function pushBatches(rows: OutboxRow[], size = PUSH_BATCH): OutboxRow[][]
  * are on the server (a skipped row comes back on pull), rejected ones would be refused again and are reported
  * instead. At least one request is made, even with an empty outbox, to read the server clock.
  */
-export async function pushOutbox(): Promise<PushResult> {
+export async function pushOutbox(onProgress?: (pushed: number, total: number) => void): Promise<PushResult> {
   const device_id = await getDeviceId()
   const batches = pushBatches(await readOutboxRows())
+  const total = batches.reduce((sum, batch) => sum + batch.length, 0)
+  let sent = 0
   const result: PushResult = { pushed: 0, rejected: [], serverTime: null }
   for (const batch of batches.length > 0 ? batches : [[]]) {
     const response = await callApi(() => push({ device_id, changes: pushChanges(batch) }))
@@ -37,6 +39,8 @@ export async function pushOutbox(): Promise<PushResult> {
     result.pushed += batch.length - response.rejected.length
     result.rejected.push(...response.rejected)
     result.serverTime = response.server_time
+    sent += batch.length
+    onProgress?.(sent, total)
   }
   return result
 }
