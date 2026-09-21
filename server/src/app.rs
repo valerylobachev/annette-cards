@@ -90,9 +90,18 @@ fn api_routes() -> OpenApiRouter<Arc<AppState>> {
 }
 
 fn sync_routes() -> OpenApiRouter<Arc<AppState>> {
-    OpenApiRouter::new()
+    let push = OpenApiRouter::new()
         .routes(routes!(sync::handlers::push))
-        .layer(DefaultBodyLimit::max(sync::handlers::PUSH_BODY_LIMIT))
+        .layer(DefaultBodyLimit::max(sync::handlers::PUSH_BODY_LIMIT));
+    let restore = OpenApiRouter::new()
+        .routes(routes!(sync::handlers::restore))
+        .layer(DefaultBodyLimit::max(sync::handlers::RESTORE_BODY_LIMIT));
+    OpenApiRouter::new()
+        .routes(routes!(sync::handlers::pull))
+        .routes(routes!(sync::handlers::summary))
+        .routes(routes!(sync::handlers::export))
+        .merge(push)
+        .merge(restore)
 }
 
 /// The OpenAPI spec, printed by the `openapi` subcommand and served at `/api/openapi.json`.

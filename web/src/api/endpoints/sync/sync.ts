@@ -6,20 +6,182 @@
  * OpenAPI spec version: 0.1.0
  */
 import {
-  useMutation
+  useMutation,
+  useQuery
 } from '@tanstack/react-query';
 import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
   MutationFunction,
   QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
   UseMutationOptions,
-  UseMutationResult
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult
 } from '@tanstack/react-query';
 
 import type {
   ErrorBody,
+  PullParams,
+  PullResponse,
   PushRequest,
-  PushResponse
+  PushResponse,
+  SummaryResponse
 } from '../../model';
+
+
+
+
+
+const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
+  const result = { queryKey } as T & { queryKey: K };
+  for (const key of Object.keys(query)) {
+    // The explicit queryKey always wins, matching the previous
+    // `{ ...query, queryKey }` spread where it was set last.
+    if (key === 'queryKey') continue;
+    Object.defineProperty(result, key, {
+      enumerable: true,
+      configurable: true,
+      get: () => (query as Record<string, unknown>)[key],
+    });
+  }
+  return result;
+};
+
+export type pullResponse200 = {
+  data: PullResponse
+  status: 200
+}
+
+export type pullResponse401 = {
+  data: ErrorBody
+  status: 401
+}
+
+export type pullResponseSuccess = (pullResponse200) & {
+  headers: Headers;
+};
+export type pullResponseError = (pullResponse401) & {
+  headers: Headers;
+};
+
+export type pullResponse = (pullResponseSuccess | pullResponseError)
+
+export const getPullUrl = (params?: PullParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/sync/pull?${stringifiedParams}` : `/api/sync/pull`
+}
+
+/**
+ * @summary Downloads the user's rows changed after `cursor`, in `server_seq` order; repeat with the returned cursor while
+`has_more`.
+ */
+export const pull = async (params?: PullParams, options?: RequestInit): Promise<pullResponse> => {
+
+  const res = await fetch(getPullUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: pullResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as pullResponse
+}
+
+
+
+
+
+export const getPullQueryKey = (params?: PullParams,) => {
+    return [
+    `/api/sync/pull`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getPullQueryOptions = <TData = Awaited<ReturnType<typeof pull>>, TError = ErrorBody>(params?: PullParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof pull>>, TError, TData>>, fetch?: RequestInit}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getPullQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof pull>>> = ({ signal }) => pull(params, { signal, ...fetchOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof pull>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type PullQueryResult = NonNullable<Awaited<ReturnType<typeof pull>>>
+export type PullQueryError = ErrorBody
+
+
+export function usePull<TData = Awaited<ReturnType<typeof pull>>, TError = ErrorBody>(
+ params: undefined |  PullParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof pull>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof pull>>,
+          TError,
+          Awaited<ReturnType<typeof pull>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePull<TData = Awaited<ReturnType<typeof pull>>, TError = ErrorBody>(
+ params?: PullParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof pull>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof pull>>,
+          TError,
+          Awaited<ReturnType<typeof pull>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePull<TData = Awaited<ReturnType<typeof pull>>, TError = ErrorBody>(
+ params?: PullParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof pull>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Downloads the user's rows changed after `cursor`, in `server_seq` order; repeat with the returned cursor while
+`has_more`.
+ */
+
+export function usePull<TData = Awaited<ReturnType<typeof pull>>, TError = ErrorBody>(
+ params?: PullParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof pull>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getPullQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
 
 
 
@@ -148,3 +310,129 @@ export const usePush = <TError = ErrorBody,
       > => {
       return useMutation(getPushMutationOptions(options), queryClient);
     }
+    export type summaryResponse200 = {
+  data: SummaryResponse
+  status: 200
+}
+
+export type summaryResponse401 = {
+  data: ErrorBody
+  status: 401
+}
+
+export type summaryResponseSuccess = (summaryResponse200) & {
+  headers: Headers;
+};
+export type summaryResponseError = (summaryResponse401) & {
+  headers: Headers;
+};
+
+export type summaryResponse = (summaryResponseSuccess | summaryResponseError)
+
+export const getSummaryUrl = () => {
+
+
+
+
+  return `/api/sync/summary`
+}
+
+/**
+ * @summary Counts of the account's decks and cards, for the first sign-in choice (S-03).
+ */
+export const summary = async ( options?: RequestInit): Promise<summaryResponse> => {
+
+  const res = await fetch(getSummaryUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: summaryResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as summaryResponse
+}
+
+
+
+
+
+export const getSummaryQueryKey = () => {
+    return [
+    `/api/sync/summary`
+    ] as const;
+    }
+
+
+export const getSummaryQueryOptions = <TData = Awaited<ReturnType<typeof summary>>, TError = ErrorBody>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof summary>>, TError, TData>>, fetch?: RequestInit}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getSummaryQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof summary>>> = ({ signal }) => summary({ signal, ...fetchOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof summary>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type SummaryQueryResult = NonNullable<Awaited<ReturnType<typeof summary>>>
+export type SummaryQueryError = ErrorBody
+
+
+export function useSummary<TData = Awaited<ReturnType<typeof summary>>, TError = ErrorBody>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof summary>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof summary>>,
+          TError,
+          Awaited<ReturnType<typeof summary>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useSummary<TData = Awaited<ReturnType<typeof summary>>, TError = ErrorBody>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof summary>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof summary>>,
+          TError,
+          Awaited<ReturnType<typeof summary>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useSummary<TData = Awaited<ReturnType<typeof summary>>, TError = ErrorBody>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof summary>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Counts of the account's decks and cards, for the first sign-in choice (S-03).
+ */
+
+export function useSummary<TData = Awaited<ReturnType<typeof summary>>, TError = ErrorBody>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof summary>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getSummaryQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+

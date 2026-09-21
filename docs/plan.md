@@ -199,11 +199,11 @@ Tasks: [P2-T03](../dev/impl/phase-02-backend-sync/task-03-sync-push.md) · [P2-T
 - [x] Migrations: `sync_seq`, `decks`, `cards`, `card_states`, `review_log`, `user_settings` with indexes
 - [x] `server_seq` allocation inside transactions
 - [x] Push: validation, ownership checks, LWW merge per entity, dependency order, applied/skipped/rejected
-- [ ] Pull: cursor paging across entities ordered by `server_seq`
-- [ ] Export endpoint (JSON) and restore into an empty account
-- [ ] Property-style tests: two simulated devices with interleaved edits converge to the same state
+- [x] Pull: cursor paging across entities ordered by `server_seq`
+- [x] Export endpoint (JSON) and restore into an empty account
+- [x] Property-style tests: two simulated devices with interleaved edits converge to the same state
 - [x] (added) Request body limit 2 MB and field length limits on push (architecture §9); `practice` column in `review_log`
-- [ ] (added) `GET /api/sync/summary` returning account counts for the first sign-in choice (S-03)
+- [x] (added) `GET /api/sync/summary` returning account counts for the first sign-in choice (S-03)
 
 ### 2.3 Sync (client)
 Tasks: [P2-T05](../dev/impl/phase-02-backend-sync/task-05-auth-screens.md) · [P2-T06](../dev/impl/phase-02-backend-sync/task-06-sync-engine.md) · [P2-T07](../dev/impl/phase-02-backend-sync/task-07-first-signin-signout.md)

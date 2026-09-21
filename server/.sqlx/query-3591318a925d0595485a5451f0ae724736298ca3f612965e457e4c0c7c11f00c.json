@@ -1,0 +1,62 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT data, updated_at, updated_by, server_seq FROM user_settings WHERE user_id = ? AND server_seq > ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "data",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "user_settings",
+            "name": "data"
+          }
+        }
+      },
+      {
+        "name": "updated_at",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "user_settings",
+            "name": "updated_at"
+          }
+        }
+      },
+      {
+        "name": "updated_by",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "user_settings",
+            "name": "updated_by"
+          }
+        }
+      },
+      {
+        "name": "server_seq",
+        "ordinal": 3,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "user_settings",
+            "name": "server_seq"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "3591318a925d0595485a5451f0ae724736298ca3f612965e457e4c0c7c11f00c"
+}

@@ -7,7 +7,8 @@ backend. Import your word lists from CSV/TSV, swipe through cards, hear every wo
 algorithm decide when you should see each word again.
 
 > **Status:** Phase 1 (local MVP) implemented and verified by automated tests: the app works fully offline;
-> the real-iPhone acceptance check is pending. Backend and sync come in Phase 2 (see [`docs/plan.md`](docs/plan.md)).
+> the real-iPhone acceptance check is pending. Phase 2 is in progress: the server has accounts, invites and the sync,
+> export and restore API; the app does not use them yet (see [`docs/plan.md`](docs/plan.md)).
 
 ## Features
 

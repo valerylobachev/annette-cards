@@ -1,0 +1,170 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id AS \"id!\", card_id, direction AS \"direction: Direction\", rating, mode AS \"mode: ReviewMode\",\n                  state_before, reviewed_at, duration_ms, practice AS \"practice: bool\", updated_at, updated_by,\n                  deleted_at, server_seq\n           FROM review_log WHERE user_id = ? AND server_seq > ? ORDER BY server_seq LIMIT ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "review_log",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "card_id",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "review_log",
+            "name": "card_id"
+          }
+        }
+      },
+      {
+        "name": "direction: Direction",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "review_log",
+            "name": "direction"
+          }
+        }
+      },
+      {
+        "name": "rating",
+        "ordinal": 3,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "review_log",
+            "name": "rating"
+          }
+        }
+      },
+      {
+        "name": "mode: ReviewMode",
+        "ordinal": 4,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "review_log",
+            "name": "mode"
+          }
+        }
+      },
+      {
+        "name": "state_before",
+        "ordinal": 5,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "review_log",
+            "name": "state_before"
+          }
+        }
+      },
+      {
+        "name": "reviewed_at",
+        "ordinal": 6,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "review_log",
+            "name": "reviewed_at"
+          }
+        }
+      },
+      {
+        "name": "duration_ms",
+        "ordinal": 7,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "review_log",
+            "name": "duration_ms"
+          }
+        }
+      },
+      {
+        "name": "practice: bool",
+        "ordinal": 8,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "review_log",
+            "name": "practice"
+          }
+        }
+      },
+      {
+        "name": "updated_at",
+        "ordinal": 9,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "review_log",
+            "name": "updated_at"
+          }
+        }
+      },
+      {
+        "name": "updated_by",
+        "ordinal": 10,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "review_log",
+            "name": "updated_by"
+          }
+        }
+      },
+      {
+        "name": "deleted_at",
+        "ordinal": 11,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "review_log",
+            "name": "deleted_at"
+          }
+        }
+      },
+      {
+        "name": "server_seq",
+        "ordinal": 12,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "review_log",
+            "name": "server_seq"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": [
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "6e02bc1fe9ccd2980edfc2560df92fb663d3856f37aff590706b97c8fcd857e5"
+}

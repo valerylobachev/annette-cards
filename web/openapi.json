@@ -444,6 +444,42 @@
         }
       }
     },
+    "/api/export": {
+      "get": {
+        "tags": [
+          "backup"
+        ],
+        "summary": "The whole account as a backup file (architecture.md §6.5), the same format as the app's local backup.",
+        "operationId": "export",
+        "responses": {
+          "200": {
+            "description": "Backup JSON, sent as the attachment `annette-export-YYYY-MM-DD.json` (UTC date)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Backup"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      }
+    },
     "/api/health": {
       "get": {
         "tags": [
@@ -475,6 +511,82 @@
         }
       }
     },
+    "/api/import/json": {
+      "post": {
+        "tags": [
+          "backup"
+        ],
+        "summary": "Restores a backup into an account that has no decks. Rows get new ids and sync to every device.",
+        "operationId": "restore",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Backup"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Rows written",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RestoreResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_format` (not a backup, bad rows or references) or `unsupported_version` (written by a newer app)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`account_not_empty`: the account has decks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "`payload_too_large`: over 20 MB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      }
+    },
     "/api/meta": {
       "get": {
         "tags": [
@@ -494,6 +606,64 @@
             }
           }
         }
+      }
+    },
+    "/api/sync/pull": {
+      "get": {
+        "tags": [
+          "sync"
+        ],
+        "summary": "Downloads the user's rows changed after `cursor`, in `server_seq` order; repeat with the returned cursor while\n`has_more`.",
+        "operationId": "pull",
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Return rows with `server_seq` greater than this (default 0: everything).",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Page size, 1–1000 (default 500).",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One page of changes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PullResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/sync/push": {
@@ -561,10 +731,107 @@
           }
         ]
       }
+    },
+    "/api/sync/summary": {
+      "get": {
+        "tags": [
+          "sync"
+        ],
+        "summary": "Counts of the account's decks and cards, for the first sign-in choice (S-03).",
+        "operationId": "summary",
+        "responses": {
+          "200": {
+            "description": "Decks and cards that are not deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SummaryResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      }
     }
   },
   "components": {
     "schemas": {
+      "Backup": {
+        "type": "object",
+        "description": "A full backup (architecture.md §6.5), the same format as the client's local backup.",
+        "required": [
+          "format",
+          "version",
+          "exported_at",
+          "app_version",
+          "decks",
+          "cards",
+          "card_states",
+          "review_log",
+          "settings"
+        ],
+        "properties": {
+          "app_version": {
+            "type": "string",
+            "description": "Version of the app (here: the server) that wrote the backup."
+          },
+          "card_states": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CardStateDto"
+            }
+          },
+          "cards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CardDto"
+            }
+          },
+          "decks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeckDto"
+            }
+          },
+          "exported_at": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "format": {
+            "type": "string",
+            "description": "Always `annette-cards-backup`."
+          },
+          "review_log": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReviewLogDto"
+            }
+          },
+          "settings": {
+            "description": "The fields of the settings document that were set (§5.5)."
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Format version, currently 1."
+          }
+        }
+      },
       "CardDto": {
         "type": "object",
         "required": [
@@ -1101,6 +1368,29 @@
           }
         }
       },
+      "PullResponse": {
+        "type": "object",
+        "required": [
+          "changes",
+          "cursor",
+          "has_more"
+        ],
+        "properties": {
+          "changes": {
+            "$ref": "#/components/schemas/Changes",
+            "description": "Changed rows, soft-deleted ones included, each entity in `server_seq` order."
+          },
+          "cursor": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Pass as `cursor` to the next pull."
+          },
+          "has_more": {
+            "type": "boolean",
+            "description": "Another page follows."
+          }
+        }
+      },
       "PushRequest": {
         "type": "object",
         "required": [
@@ -1199,6 +1489,34 @@
           }
         }
       },
+      "RestoreResponse": {
+        "type": "object",
+        "description": "What a restore wrote.",
+        "required": [
+          "decks",
+          "cards",
+          "card_states",
+          "review_log"
+        ],
+        "properties": {
+          "card_states": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "cards": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "decks": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "review_log": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
       "ReviewLogDto": {
         "type": "object",
         "description": "One answer. Append-only: after the first push only `deleted_at` (undo) may change.",
@@ -1289,6 +1607,26 @@
           },
           "updated_by": {
             "type": "string"
+          }
+        }
+      },
+      "SummaryResponse": {
+        "type": "object",
+        "description": "Account data counts for the first sign-in choice (S-03, decision D6).",
+        "required": [
+          "decks",
+          "cards"
+        ],
+        "properties": {
+          "cards": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Cards that are not deleted, in decks that are not deleted."
+          },
+          "decks": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Decks that are not deleted."
           }
         }
       },

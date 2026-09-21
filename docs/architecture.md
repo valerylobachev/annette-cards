@@ -292,6 +292,7 @@ All endpoints are under `/api`, JSON, timestamps in ms since epoch. Auth = sessi
 | POST | `/api/auth/password` | yes | Change password |
 | POST | `/api/sync/push` | yes | Upload local changes |
 | GET | `/api/sync/pull?cursor=&limit=` | yes | Download changes after cursor |
+| GET | `/api/sync/summary` | yes | Counts of non-deleted decks and cards, for the first sign-in choice (S-03) |
 | POST | `/api/cards/{id}/audio` | yes | Generate/fetch audio (`source`: `tts` \| `commons`) |
 | DELETE | `/api/cards/{id}/audio` | yes | Remove audio from card |
 | GET | `/api/audio/{id}` | yes | MP3 bytes, `Cache-Control: private, max-age=31536000, immutable` |
@@ -332,11 +333,28 @@ expiry to now + TTL at most once an hour (on the first request an hour after the
 | `invite_used` | 409 | Revoke an invite that was already used |
 | `origin_mismatch` | 403 | Unsafe request without this site's `Origin` |
 | `rate_limited` | 429 | More than 10 login/register attempts a minute from one IP |
+| `payload_too_large` | 413 | Body over the route's limit (push 2 MB, restore 20 MB) |
+| `account_not_empty` | 409 | Restore into an account that has decks |
+| `unsupported_version` | 400 | Restore of a backup written by a newer app |
+| `invalid_format` | 400 | Restore of something that is not a valid backup |
 
 **Register.** `POST /api/auth/register` takes `{invite_code, display_name, email, password, device_label?}` and
 answers like login (`MeResponse` + cookie). The code is matched case-insensitively. Display name: 1–100
 characters after trimming. The invite check, the new user, marking the invite used and the session are one
 transaction (`BEGIN IMMEDIATE`), so a failed registration leaves the invite usable.
+
+**Export and restore** (backup format §6.5):
+
+- `GET /api/export` → the backup JSON with `Content-Disposition: attachment;
+  filename="annette-export-YYYY-MM-DD.json"` (UTC date). `app_version` is the server version.
+- `POST /api/import/json` with a backup as the body (limit 20 MB) → `{decks, cards, card_states, review_log}` counts
+  of written rows. Only into an account without non-deleted decks, else 409 `account_not_empty`. A newer `version`
+  → 400 `unsupported_version`; no format marker, a row of the wrong shape, a reference outside the file or a row
+  the push validation refuses → 400 `invalid_format`, and nothing is written. Rows get new UUIDv7 ids (references
+  follow), `updated_at = now` and `updated_by = "server-import"`, and go through the push insert path with its
+  checks, in one transaction; every device then pulls them.
+- `GET /api/sync/summary` → `{decks, cards}`: decks with `deleted_at IS NULL`, and cards with `deleted_at IS NULL`
+  in such decks.
 
 **Admin invites** (admin session required; others get 403 `forbidden`):
 
@@ -591,6 +609,11 @@ sequenceDiagram
 `{ "data": { …§5.5, only the fields that were set… }, "updated_at": …, "updated_by": "…" }` or `null`. A card state
 is named `"{card_id}:{direction}"` in `applied`, `skipped` and `rejected`; settings as `"settings"`.
 
+**Pull** returns up to `limit` (default 500, clamped to 1–1000) of the user's rows with `server_seq > cursor`, across
+all entities in `server_seq` order, soft-deleted rows included; `settings` is the settings row if it changed
+after the cursor. `cursor` in the response is the largest `server_seq` returned (the request's cursor when the page
+is empty); `has_more` means another page follows. An updated row comes again with its new `server_seq`, once.
+
 Push is processed in one SQLite transaction (`BEGIN IMMEDIATE`) per request. Entities are applied in dependency
 order: decks → cards → card_states → review_log → settings, so a card may reference a deck from the same batch.
 Every applied row gets `user_id` from the session (a client value is ignored) and a new `server_seq`. Per row:
@@ -613,6 +636,7 @@ translation ≤ 2000; IPA ≤ 200; notes ≤ 2000; each tag 1–50; ids and `upd
 - Sync runs on app start, on `visibilitychange` to visible, on `online`, 2 s after local changes (debounced),
   and via a manual button.
 - **First sign-in on a device with local data** (created in local-only mode):
+  - The client asks `GET /api/sync/summary` for the account's deck and card counts (S-03 shows them).
   - Server account empty → push everything.
   - Both non-empty → user chooses: *Merge* (push local, then pull), *Use server data* (clear local, pull), or
     *Cancel*.
@@ -646,6 +670,8 @@ A full backup (UC-24, UC-25) is one JSON document. The client writes it locally 
   restore does not impose, for example, a default UI language that was never chosen.
 - Restored rows are stamped with this device (`updated_at = now`) and outboxed, so they sync like new edits.
   Cards without a state for an active direction get a New state.
+- **Server restore** (`POST /api/import/json`, §5.3) works like *Add as new decks* into an empty account: new ids,
+  rows stamped `updated_by = "server-import"`, settings from the file (if any) written as a new edit.
 - Deck CSV export uses the import format (README "Import format"), tags joined by spaces, with a UTF-8 BOM.
 
 ## 7. Audio pipeline (server)

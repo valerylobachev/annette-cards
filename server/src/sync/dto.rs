@@ -207,3 +207,58 @@ pub struct PushResponse {
     /// Server clock, for the client's clock-skew warning.
     pub server_time: i64,
 }
+
+#[derive(Debug, Clone, Deserialize, utoipa::IntoParams)]
+#[into_params(parameter_in = Query)]
+pub struct PullParams {
+    /// Return rows with `server_seq` greater than this (default 0: everything).
+    pub cursor: Option<i64>,
+    /// Page size, 1–1000 (default 500).
+    pub limit: Option<i64>,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, ToSchema)]
+pub struct PullResponse {
+    /// Changed rows, soft-deleted ones included, each entity in `server_seq` order.
+    pub changes: Changes,
+    /// Pass as `cursor` to the next pull.
+    pub cursor: i64,
+    /// Another page follows.
+    pub has_more: bool,
+}
+
+/// Account data counts for the first sign-in choice (S-03, decision D6).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+pub struct SummaryResponse {
+    /// Decks that are not deleted.
+    pub decks: i64,
+    /// Cards that are not deleted, in decks that are not deleted.
+    pub cards: i64,
+}
+
+/// A full backup (architecture.md §6.5), the same format as the client's local backup.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
+pub struct Backup {
+    /// Always `annette-cards-backup`.
+    pub format: String,
+    /// Format version, currently 1.
+    pub version: i64,
+    pub exported_at: i64,
+    /// Version of the app (here: the server) that wrote the backup.
+    pub app_version: String,
+    pub decks: Vec<DeckDto>,
+    pub cards: Vec<CardDto>,
+    pub card_states: Vec<CardStateDto>,
+    pub review_log: Vec<ReviewLogDto>,
+    /// The fields of the settings document that were set (§5.5).
+    pub settings: serde_json::Value,
+}
+
+/// What a restore wrote.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+pub struct RestoreResponse {
+    pub decks: usize,
+    pub cards: usize,
+    pub card_states: usize,
+    pub review_log: usize,
+}

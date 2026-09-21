@@ -1,0 +1,206 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT card_id, direction AS \"direction: Direction\", state, due, stability, difficulty, elapsed_days,\n                  scheduled_days, learning_steps, reps, lapses, last_review, updated_at, updated_by, deleted_at,\n                  server_seq\n           FROM card_states WHERE user_id = ? AND server_seq > ? ORDER BY server_seq LIMIT ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "card_id",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "card_states",
+            "name": "card_id"
+          }
+        }
+      },
+      {
+        "name": "direction: Direction",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "card_states",
+            "name": "direction"
+          }
+        }
+      },
+      {
+        "name": "state",
+        "ordinal": 2,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "card_states",
+            "name": "state"
+          }
+        }
+      },
+      {
+        "name": "due",
+        "ordinal": 3,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "card_states",
+            "name": "due"
+          }
+        }
+      },
+      {
+        "name": "stability",
+        "ordinal": 4,
+        "type_info": "Float",
+        "origin": {
+          "Table": {
+            "table": "card_states",
+            "name": "stability"
+          }
+        }
+      },
+      {
+        "name": "difficulty",
+        "ordinal": 5,
+        "type_info": "Float",
+        "origin": {
+          "Table": {
+            "table": "card_states",
+            "name": "difficulty"
+          }
+        }
+      },
+      {
+        "name": "elapsed_days",
+        "ordinal": 6,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "card_states",
+            "name": "elapsed_days"
+          }
+        }
+      },
+      {
+        "name": "scheduled_days",
+        "ordinal": 7,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "card_states",
+            "name": "scheduled_days"
+          }
+        }
+      },
+      {
+        "name": "learning_steps",
+        "ordinal": 8,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "card_states",
+            "name": "learning_steps"
+          }
+        }
+      },
+      {
+        "name": "reps",
+        "ordinal": 9,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "card_states",
+            "name": "reps"
+          }
+        }
+      },
+      {
+        "name": "lapses",
+        "ordinal": 10,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "card_states",
+            "name": "lapses"
+          }
+        }
+      },
+      {
+        "name": "last_review",
+        "ordinal": 11,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "card_states",
+            "name": "last_review"
+          }
+        }
+      },
+      {
+        "name": "updated_at",
+        "ordinal": 12,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "card_states",
+            "name": "updated_at"
+          }
+        }
+      },
+      {
+        "name": "updated_by",
+        "ordinal": 13,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "card_states",
+            "name": "updated_by"
+          }
+        }
+      },
+      {
+        "name": "deleted_at",
+        "ordinal": 14,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "card_states",
+            "name": "deleted_at"
+          }
+        }
+      },
+      {
+        "name": "server_seq",
+        "ordinal": 15,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "card_states",
+            "name": "server_seq"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "df6f62424e92627926e6e0be2bde872cb344d73a8afb0d1eb9a1450758ad61ef"
+}

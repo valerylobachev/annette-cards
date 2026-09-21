@@ -1,0 +1,21 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT COUNT(*) FROM cards c JOIN decks d ON d.id = c.deck_id\n         WHERE c.user_id = ? AND d.user_id = c.user_id AND c.deleted_at IS NULL AND d.deleted_at IS NULL",
+  "describe": {
+    "columns": [
+      {
+        "name": "COUNT(*)",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "41586fb2575b21a3e1e03e9793c02e6dcd580239bc0ff11a89241eb512530088"
+}
