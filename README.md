@@ -6,7 +6,8 @@ Annette Cards is a Duocards-style flashcard app built as an offline-first Progre
 backend. Import your word lists from CSV/TSV, swipe through cards, hear every word pronounced, and let the FSRS
 algorithm decide when you should see each word again.
 
-> **Status:** Phase 0 complete; Phase 1 (Local MVP) in progress (see [`docs/plan.md`](docs/plan.md)).
+> **Status:** Phase 1 (local MVP) implemented and verified by automated tests: the app works fully offline;
+> the real-iPhone acceptance check is pending. Backend and sync come in Phase 2 (see [`docs/plan.md`](docs/plan.md)).
 
 ## Features
 

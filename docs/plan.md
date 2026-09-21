@@ -154,6 +154,25 @@ Acceptance task: [P1-T14](../dev/impl/phase-01-local-mvp/task-14-phase-acceptanc
 - UI fully usable in Russian and English.
 - E2E tests (WebKit) cover onboarding, import, study session, undo.
 
+Automated verification (2026-09-21, P1-T14):
+- [x] `just lint`, `just test`, `just e2e` (WebKit + Chromium) green
+- [x] E2E: onboarding EN/RU (`onboarding.spec.ts`), 300-row import (`import.spec.ts`), swipe + buttons and undo
+  (`study.spec.ts`), offline against the production build (`offline.spec.ts`)
+- [x] Next day with a mocked clock matches `buildSession` (`next-day.spec.ts`)
+- [x] Every screen in RU and EN without raw keys or horizontal overflow; screenshots reviewed (`i18n.spec.ts`);
+  en/ru key and plural-form parity (`i18n.test.ts`)
+- [x] `just build`: the release binary serves the PWA; in WebKit onboarding works, the service worker precaches
+  the shell and the app reloads with the binary stopped
+
+Real iPhone checklist (owner; tick when done, then add `- [x] Acceptance verified on <date>`):
+- [ ] Open over HTTPS (`just dev-https` or a deployed preview), Add to Home Screen, launch standalone
+- [ ] Onboarding in Russian; storage persistence requested
+- [ ] Airplane mode on; import a 300-word CSV via Files
+- [ ] Study a session with swipes; audio via the system voice (the Start gate unlocks speech); undo once
+- [ ] Force-close the app, reopen → progress intact, Today counts consistent
+- [ ] Next day: the due queue contains the expected cards
+- [ ] Switch the UI to English; all screens readable; switch back
+
 ---
 
 ## Phase 2 — Backend and sync

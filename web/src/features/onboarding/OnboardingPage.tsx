@@ -118,7 +118,7 @@ export function OnboardingPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-[480px] flex-col gap-6 px-4 pt-6 pb-4">
+    <div className="mx-auto flex min-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-[480px] flex-col gap-6 overflow-x-clip px-4 pt-6 pb-4">
       <div
         role="img"
         aria-label={t('onboarding.stepOf', { step: index + 1, total: steps.length })}
@@ -270,7 +270,7 @@ function LanguagesStep({ targetLang, nativeLang, onTargetLang, onNativeLang, foo
   return (
     <section className="flex flex-1 flex-col gap-4">
       <h1 className="text-2xl font-semibold">{t('onboarding.languagesTitle')}</h1>
-      <fieldset className="flex flex-col gap-3">
+      <fieldset className="flex min-w-0 flex-col gap-3">
         <legend className="mb-2 font-medium">{t('onboarding.learning')}</legend>
         <div className="flex flex-col divide-y rounded-2xl border bg-card">{PINNED_STUDY_LANGUAGES.map(option)}</div>
         <Input

@@ -79,7 +79,7 @@ export function DecksListPage() {
   const archived = visible.filter((row) => row.deck.archived_at !== null)
 
   return (
-    <div className="mx-auto flex w-full max-w-[720px] flex-col pt-4">
+    <div className="mx-auto flex w-full max-w-[720px] flex-col pt-4 pb-24">
       <header className="flex min-h-11 items-center gap-1 px-4">
         <h1 className="flex-1 text-2xl font-semibold">{t('screens.decks.title')}</h1>
         <Button

@@ -28,7 +28,7 @@ export function TodayPage() {
     today.nextDueAt === null
 
   return (
-    <div className="mx-auto flex w-full max-w-[720px] flex-col gap-6 px-4 pt-4">
+    <div className="mx-auto flex w-full max-w-[720px] flex-col gap-6 px-4 pt-4 pb-24">
       <header className="flex min-h-11 items-center">
         <h1 className="text-2xl font-semibold">{t('today.greeting')}</h1>
       </header>
