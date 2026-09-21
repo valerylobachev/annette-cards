@@ -1,8 +1,3 @@
-import { PlaceholderPage } from '@/components/PlaceholderPage'
-
+export { AccountPage } from '../auth/AccountPage'
 export { SettingsPage } from './SettingsPage'
 export { VoicesPage } from './VoicesPage'
-
-export function AccountPage() {
-  return <PlaceholderPage titleKey="screens.account.title" back />
-}

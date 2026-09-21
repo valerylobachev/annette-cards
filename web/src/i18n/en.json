@@ -100,7 +100,8 @@
     "version": "Version",
     "installApp": "Install on iPhone",
     "licenses": "Open-source licenses",
-    "changesNextSession": "Changes apply to the next session."
+    "changesNextSession": "Changes apply to the next session.",
+    "serverVersion": "Server version"
   },
   "languages": {
     "en": "English",
@@ -537,6 +538,94 @@
     },
     "startImportHint": "A CSV or TSV list of words and translations",
     "startManualHint": "Type your first word now",
-    "startEmptyHint": "Add words later"
+    "startEmptyHint": "Add words later",
+    "haveAccount": "I have an account"
+  },
+  "auth": {
+    "mode": "Sign in or register",
+    "signIn": "Sign in",
+    "register": "Register",
+    "offline": "Connect to the internet to sign in.",
+    "email": "Email",
+    "password": "Password",
+    "signInAction": "Sign in",
+    "inviteCode": "Invite code",
+    "displayName": "Your name",
+    "createAccount": "Create account",
+    "passwordHint": "At least {{min}} characters",
+    "passwordOk": "Long enough",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
+  },
+  "account": {
+    "signedOut": "Sign in to back up and sync your words between your devices.",
+    "section": "Account",
+    "signInToSync": "Sign in to back up and sync",
+    "sessionExpired": "Your session has ended. Sign in again to keep syncing; your words stay on this device.",
+    "signInAgain": "Sign in again",
+    "changePassword": "Change password",
+    "changePasswordHint": "Your other devices will be signed out.",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "passwordChanged": "Password changed",
+    "signOutOthers": "Sign out other devices",
+    "signOutOthersConfirm": "Sign out other devices?",
+    "signOutOthersHint": "Every other device signed in to this account will have to sign in again.",
+    "othersSignedOut": "Other devices signed out"
+  },
+  "invites": {
+    "section": "Invites",
+    "create": "Create invite",
+    "createHint": "A single-use link for one person.",
+    "empty": "No invites yet.",
+    "note": "Who is it for? (optional)",
+    "expiresIn": "Expires in",
+    "days_one": "{{count}} day",
+    "days_other": "{{count}} days",
+    "usedBy": "Used by {{email}}",
+    "expires": "Expires {{when}}",
+    "expired": "Expired",
+    "status": {
+      "active": "Active",
+      "used": "Used",
+      "expired": "Expired"
+    },
+    "revoke": "Revoke",
+    "revokeCode": "Revoke invite {{code}}",
+    "revokeConfirm": "Revoke this invite?",
+    "revokeHint": "The link will stop working.",
+    "createdTitle": "Invite created",
+    "createdHint": "Send this link to the person you invite. It works once.",
+    "link": "Invite link",
+    "copy": "Copy link",
+    "copied": "Link copied",
+    "copyFailed": "Could not copy the link",
+    "share": "Share",
+    "shareText": "Join me in Annette Cards"
+  },
+  "offline": {
+    "availableOnline": "Available online"
+  },
+  "errors": {
+    "invalid_credentials": "Wrong email or password.",
+    "invite_invalid": "This invite code is not valid or was already used.",
+    "invite_expired": "This invite has expired. Ask for a new one.",
+    "email_taken": "An account with this email already exists. Sign in instead.",
+    "rate_limited": "Too many attempts. Wait a minute and try again.",
+    "password_too_short": "The password must have at least 10 characters.",
+    "validation_failed": "Some fields are not valid. Check them and try again.",
+    "unauthorized": "Your session has ended. Sign in again.",
+    "forbidden": "You are not allowed to do this.",
+    "invite_used": "This invite was already used.",
+    "origin_mismatch": "The request was blocked. Reload the app and try again.",
+    "payload_too_large": "Too much data in one request.",
+    "account_not_empty": "Your account already has data.",
+    "unsupported_version": "This file needs a newer version of the app.",
+    "invalid_format": "This file is not a valid backup.",
+    "not_found": "Not found.",
+    "internal_error": "Something went wrong on the server. Try again later.",
+    "service_unavailable": "The server is unavailable. Try again later.",
+    "network": "Cannot reach the server. Check your connection.",
+    "unknown": "Something went wrong. Try again."
   }
 }

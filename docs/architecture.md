@@ -90,7 +90,9 @@ They are stored in `meta` because voices differ between devices. `meta` keys (ty
 extra new cards allowed today), `study_session` (snapshot of the current or last study session for resume within
 30 min and the summary; `domain/studySession.ts`), `install_hint_shown` (the one-time iOS install hint was closed),
 `storage_persisted` (answer of `navigator.storage.persist()`), `onboarding_done` (first-run onboarding finished on
-this device). Writes to `meta` never create outbox entries.
+this device), `account` (`{user_id, email, display_name, is_admin}` of the signed-in account, from login, register or
+`GET /api/auth/me`; `features/auth/account.ts`), `session_expired` (the server answered 401 for the stored account:
+S-15 shows "Sign in again", local data is kept). Writes to `meta` never create outbox entries.
 
 `theme` (`system` | `light` | `dark`) is applied as `data-theme` on `<html>` (the `dark` variant in `index.css`;
 `system` removes the attribute and follows `prefers-color-scheme`). Because IndexedDB is asynchronous, the value is
@@ -224,7 +226,10 @@ flowchart TD
   settings document stores only fields that were set (defaults are merged on read), so `ui_language` is present
   only after the learner chose a language; until then the device's detection applies. The last language is also
   cached in `localStorage` (`annette.uiLanguage`) for the first render.
-- Server errors are codes; the client maps them to translation keys (`errors.<code>`).
+- Server errors are codes; the client maps them to translation keys (`errors.<code>`, `lib/apiErrors.ts`; an unknown
+  code shows `errors.unknown`, an unreachable server `errors.network`). UI code calls the generated client through
+  `callApi` (`lib/api.ts`), which returns the data of a 2xx response and throws `ApiError { status, code }`
+  otherwise. Only auth, admin invites, server metadata and (from P2-T06) the sync engine call the API.
 - Dates and numbers via `Intl` with the UI locale.
 
 ### 4.7 PWA
@@ -269,7 +274,7 @@ rate limiter (route-specific) → handler → service → sqlx. In debug builds 
 The layers are assembled in `app.rs` (`router`), the security pieces live in `security.rs`.
 
 - **Origin check** (`security::check_origin`): POST, PUT, PATCH and DELETE under `/api` need an `Origin` header
-  equal to `ANNETTE_PUBLIC_URL` (or, with `ANNETTE_DEV_ORIGINS`, `http://localhost:5173` / `http://127.0.0.1:5173`);
+  equal to `ANNETTE_PUBLIC_URL` (or, with `ANNETTE_DEV_ORIGINS`, the Vite dev server on port 5173);
   otherwise 403 `origin_mismatch`.
 - **Rate limits** (`security::limit_per_ip`): a token bucket per client IP (`X-Forwarded-For` from Caddy, else the
   TCP peer). `POST /api/auth/login` and `/api/auth/register` share 10 requests per minute (burst 10, one more
@@ -717,7 +722,7 @@ recipes load it).
 | `ANNETTE_BIND` | `127.0.0.1:8080` | Listen address |
 | `ANNETTE_DATABASE_URL` | `sqlite://data/annette.db` | SQLite path |
 | `ANNETTE_PUBLIC_URL` | — | Public origin: the Origin check and invite links printed by the CLI |
-| `ANNETTE_DEV_ORIGINS` | `true` in debug builds, `false` in release | Also accept API writes from the Vite dev server (`localhost:5173`, `127.0.0.1:5173`) |
+| `ANNETTE_DEV_ORIGINS` | `true` in debug builds, `false` in release | Also accept API writes from the Vite dev server (`http://localhost:5173`, `http://127.0.0.1:5173`, `https://localhost:5173`) |
 | `ANNETTE_SESSION_TTL_DAYS` | `90` | Sliding session lifetime |
 | `ANNETTE_AZURE_TTS_KEY` / `_REGION` | — | Enables TTS |
 | `ANNETTE_COMMONS_ENABLED` | `true` | Enables Wikimedia lookup |

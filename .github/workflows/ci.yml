@@ -24,8 +24,15 @@ jobs:
       - run: pnpm biome check
       - run: pnpm tsc --noEmit
       - run: pnpm vitest run
+      # The sign-in and sync E2E tests start the Rust server (playwright.config.ts).
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: server
       - run: pnpm playwright install --with-deps webkit chromium
       - run: pnpm playwright test
+        env:
+          SQLX_OFFLINE: "true"
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

@@ -1,4 +1,4 @@
-import { useNavigate } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { Loader2, Volume2 } from 'lucide-react'
 import { motion, useReducedMotion } from 'motion/react'
 import { type ReactNode, useState } from 'react'
@@ -19,6 +19,7 @@ import {
 } from '@/domain/languages'
 import { SETTINGS_LIMITS } from '@/domain/settings'
 import { ValidationError } from '@/domain/validation'
+import { useAccount } from '@/features/auth/account'
 import { type UiLanguage, uiLanguages } from '@/i18n'
 import { fieldErrorMessages } from '@/lib/fieldErrors'
 import { languageName } from '@/lib/intl'
@@ -208,6 +209,8 @@ function StepButtons({ onBack, children }: { onBack: () => void; children?: Reac
 
 function WelcomeStep({ onStart }: { onStart: () => void }) {
   const { t, i18n } = useTranslation()
+  // "I have an account" (UC-01 alt 2a) is hidden once this device is signed in.
+  const signedOut = useAccount()?.account === null
 
   function changeLanguage(ui_language: UiLanguage) {
     void i18n.changeLanguage(ui_language)
@@ -228,10 +231,16 @@ function WelcomeStep({ onStart }: { onStart: () => void }) {
           onChange={changeLanguage}
         />
       </div>
-      {/* "I have an account" (→ S-02) appears with sign-in in Phase 2. */}
-      <Button size="xl" className="w-full" onClick={onStart}>
-        {t('onboarding.getStarted')}
-      </Button>
+      <div className="flex flex-col gap-2">
+        <Button size="xl" className="w-full" onClick={onStart}>
+          {t('onboarding.getStarted')}
+        </Button>
+        {signedOut && (
+          <Button size="xl" variant="outline" className="w-full" asChild>
+            <Link to="/signin">{t('onboarding.haveAccount')}</Link>
+          </Button>
+        )}
+      </div>
     </section>
   )
 }

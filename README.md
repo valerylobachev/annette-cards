@@ -68,7 +68,9 @@ Invite someone with `(cd server && cargo run -- invite --note Anna --days 7)`: i
 for scripts. On the VPS, run the same subcommands on the `annette-cards` binary. Run them from `server/` so the
 relative database path in `server/.env` resolves to the same file as the server's.
 
-Open `http://localhost:5173`. To test on an iPhone during development, run `just dev-https` (Vite over HTTPS on
+Open `http://localhost:5173`. Signing in needs a browser that keeps the `Secure` session cookie there: Chromium
+does on `http://localhost`, Safari only over HTTPS, so for Safari run `just dev-https` and open
+`https://localhost:5173`. To test on an iPhone during development, run `just dev-https` (Vite over HTTPS on
 the LAN with a self-signed certificate) and open `https://<mac-ip>:5173` in Safari — service workers require
 HTTPS.
 

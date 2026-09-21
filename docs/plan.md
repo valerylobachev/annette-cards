@@ -208,15 +208,16 @@ Tasks: [P2-T03](../dev/impl/phase-02-backend-sync/task-03-sync-push.md) · [P2-T
 ### 2.3 Sync (client)
 Tasks: [P2-T05](../dev/impl/phase-02-backend-sync/task-05-auth-screens.md) · [P2-T06](../dev/impl/phase-02-backend-sync/task-06-sync-engine.md) · [P2-T07](../dev/impl/phase-02-backend-sync/task-07-first-signin-signout.md)
 
-- [ ] Auth screens (S-02) and Account & sync (S-15) incl. admin invites section
+- [x] Auth screens (S-02) and Account & sync (S-15) incl. admin invites section
 - [ ] Sync engine: triggers (start, visible, online, debounced change, manual), push batches, pull loop, cursor
 - [ ] LWW merge into Dexie; outbox clearing; error log; clock skew warning
 - [ ] First sign-in flow with local data (S-03): merge / use account / cancel
 - [ ] Sign-out with unsynced-changes warning and local wipe
 - [ ] Sync indicator component
 - [ ] E2E: two browser contexts sync edits and study progress
-- [ ] (added) Shared Offline hint component; server version in Settings → About; pull-down on Today triggers sync
-- [ ] (added) "I have an account" button on onboarding
+- [x] (added) Shared Offline hint component; server version in Settings → About
+- [ ] (added) Pull-down on Today triggers sync
+- [x] (added) "I have an account" button on onboarding
 
 ### 2.4 Deployment
 Tasks: [P2-T08](../dev/impl/phase-02-backend-sync/task-08-deploy-artifacts.md) · [P2-T09](../dev/impl/phase-02-backend-sync/task-09-vps-provisioning.md)

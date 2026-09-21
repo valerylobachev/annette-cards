@@ -31,8 +31,13 @@ pub enum LogFormat {
     Json,
 }
 
-/// Origins of `just dev` / `just dev-web` (Vite on port 5173), accepted when `dev_origins` is set.
-pub const DEV_ORIGINS: [&str; 2] = ["http://localhost:5173", "http://127.0.0.1:5173"];
+/// Origins of `just dev` / `just dev-web` (Vite on port 5173) and of `just dev-https` opened on the Mac itself,
+/// accepted when `dev_origins` is set. (Safari keeps the `Secure` session cookie only over HTTPS, even on localhost.)
+pub const DEV_ORIGINS: [&str; 3] = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://localhost:5173",
+];
 
 impl Default for Config {
     fn default() -> Self {

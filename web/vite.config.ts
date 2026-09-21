@@ -54,8 +54,9 @@ export default defineConfig({
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
   server: {
-    // 127.0.0.1, not localhost: on macOS localhost may resolve to IPv6 while the server binds IPv4
-    proxy: { '/api': 'http://127.0.0.1:8080' },
+    // 127.0.0.1, not localhost: on macOS localhost may resolve to IPv6 while the server binds IPv4.
+    // The sync E2E tests point a second dev server at their own API server (playwright.config.ts).
+    proxy: { '/api': process.env.API_PROXY_TARGET ?? 'http://127.0.0.1:8080' },
   },
   test: {
     environment: 'jsdom',

@@ -1,7 +1,7 @@
 import type { StudySessionSnapshot } from '@/domain/studySession'
 import { db } from './schema'
 
-/** Signed-in account shown in Settings (Phase 2). */
+/** The signed-in account (S-15), stored on this device only. */
 export type AccountInfo = { user_id: string; email: string; display_name: string; is_admin: boolean }
 
 /**
@@ -13,6 +13,8 @@ export type MetaValues = {
   sync_cursor: number
   last_sync_at: number
   account: AccountInfo | null
+  /** The server answered 401 for the stored account: "Sign in again" is shown; local data is kept. */
+  session_expired: boolean
   /** Selected voice URI per BCP-47 language. */
   voice_pref: Record<string, string>
   speech_rate: number

@@ -99,7 +99,7 @@ language, directions from `settings.default_directions`) and `onboarding_done` a
 **Steps (horizontal pager with dots, "Next"/"Back"):**
 
 1. **Welcome** — app name, one-line value proposition, UI language switch (RU/EN), buttons "Get started" and
-   "I have an account" (→ S-02; appears with sign-in in Phase 2).
+   "I have an account" (→ S-02; hidden once this device is signed in).
 2. **Languages** — "I'm learning" (searchable list; EN and PL pinned at top, with locale variant chips en-GB /
    en-US) and "My language" (default Russian).
 3. **Daily goal** — new words per day: 5 / 10 / 15 / 25 / custom (default 15). Short explanation of spaced
@@ -117,15 +117,16 @@ Next is disabled until a studied language is chosen; a custom goal accepts whole
 
 **Purpose:** account access (UC-02, UC-03).
 
-**Layout:** segmented control "Sign in" | "Register".
+**Layout:** segmented control "Sign in" | "Register"; `/signin` and `/register` are the two sides (switching keeps
+`?invite=`).
 
 - Sign in: email, password (show/hide), "Sign in" button, error text under the form.
-- Register: invite code (prefilled from `?invite=` link), display name, email, password with strength hint,
-  "Create account".
-- After success on a device with local data → S-03.
+- Register: invite code (prefilled from `?invite=` link), display name, email, password with a length hint ("At
+  least 10 characters" until it is long enough); "Create account" is enabled once every field is filled.
+- After success → S-15 (P2-T07: first sync; on a device with local data → S-03).
 
 **States:** offline → form disabled with "Connect to the internet to sign in"; errors mapped from codes
-(`invalid_credentials`, `invite_invalid`, `invite_expired`, `email_taken`, `rate_limited`).
+(`invalid_credentials`, `invite_invalid`, `invite_expired`, `email_taken`, `rate_limited`, `network`, …).
 
 ### S-03 First sync choice
 
@@ -352,7 +353,7 @@ FSRS Optimize (Phase 4, P4-T05), storage usage and "Clear cached audio" (Phase 3
 Wikimedia attributions (Phases 2–3). Numeric settings use native pickers (new words 1–200, max reviews 10–1000 in
 steps of 10, day start 00:00–23:00); retention is a slider 0.80–0.95.
 
-- **Account & sync** → S-15.
+- **Account & sync** → S-15 (a row with the account's name and email, or "Sign in to back up and sync").
 - **Study:** new words per day, max reviews per day, directions default, answer mode (Simple 2 buttons /
   Detailed 4 buttons), show IPA on front, day starts at (hour), desired retention (slider 0.80–0.95 with hint),
   FSRS weights (Phase 4: "Optimize" button, last optimized date).
@@ -360,7 +361,7 @@ steps of 10, day start 00:00–23:00); retention is a slider 0.80–0.95.
 - **Reminders:** enable, time; requires installed PWA (else explanation).
 - **Appearance:** theme (System / Light / Dark), UI language (Русский / English).
 - **Data:** Export (JSON full backup, CSV per deck), Import backup, storage usage, "Clear cached audio".
-- **About:** version, server version, "Install on iPhone" (opens the install hint; hidden in the installed app),
+- **About:** version, server version (`GET /api/meta` when online, else "—"), "Install on iPhone" (opens the install hint; hidden in the installed app),
   licenses (runtime dependencies with versions and licenses, collected at build time; Wikimedia attributions list
   in Phase 3).
 
@@ -370,9 +371,17 @@ signed in, with an "Export a backup" button.
 ### S-15 Account & sync
 
 Signed out: explanation "Sign in to back up and sync", buttons Sign in / Register. Signed in: display name,
-email, last sync time, pending changes count, **Sync now**, sync log (last 10 runs with status), Change password,
-"Sign out other devices", **Sign out** (warns about unsynced changes). Admin only: **Invites** (list with status,
-create invite with note and expiry, copy link, revoke).
+email, last sync time, pending changes count, **Sync now**, sync log (last 10 runs with status), Change password
+(sheet: current and new password; other devices are signed out), "Sign out other devices" (confirm sheet),
+**Sign out** (warns about unsynced changes). Admin only: **Invites** — list with code, note, status badge (Active /
+Used / Expired) and "Used by …" or the expiry; "Create invite" (sheet: note, expires in 1–90 days, default 7) then a
+sheet with the link `<origin>/register?invite=CODE`, Copy and Share (when the device can share); Revoke (confirm
+sheet) on active invites.
+
+**Session expired:** when the server answers 401 for the stored account (checked with `GET /api/auth/me` on app
+start when online), a banner "Your session has ended…" with **Sign in again** replaces the invites; local data stays.
+Server actions (change password, sign out other devices, create/revoke invite) are disabled offline with "Available
+online".
 
 ### S-16 Voices
 

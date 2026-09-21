@@ -1,6 +1,9 @@
+import { useQuery } from '@tanstack/react-query'
+import { Link } from '@tanstack/react-router'
 import { ChevronRight } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { meta } from '@/api/endpoints/system/system'
 import { InstallHint } from '@/components/InstallHint'
 import { StorageWarning } from '@/components/StorageWarning'
 import { useMeta } from '@/db/hooks'
@@ -8,10 +11,13 @@ import { setMeta } from '@/db/meta'
 import { updateSettings } from '@/db/settings'
 import { SETTINGS_LIMITS } from '@/domain/settings'
 import type { AnswerMode, Directions } from '@/domain/types'
+import { useAccount } from '@/features/auth/account'
 import { type UiLanguage, uiLanguages } from '@/i18n'
+import { callApi } from '@/lib/api'
 import { formatPercent } from '@/lib/intl'
 import { isStandalone } from '@/lib/platform'
 import type { Theme } from '@/lib/theme'
+import { useOnline } from '@/lib/useOnline'
 import { AudioSettingsSection } from './AudioSettingsSection'
 import { DataSection } from './DataSection'
 import { NumberSelect, Segmented, SettingsGroup, SettingsRow, useSettingsDraft } from './SettingsList'
@@ -23,7 +29,7 @@ const NEW_PER_DAY = range(SETTINGS_LIMITS.new_per_day.min, SETTINGS_LIMITS.new_p
 const MAX_REVIEWS = range(SETTINGS_LIMITS.max_reviews_per_day.min, SETTINGS_LIMITS.max_reviews_per_day.max, 10)
 const HOURS = range(SETTINGS_LIMITS.day_start_hour.min, SETTINGS_LIMITS.day_start_hour.max)
 
-/** S-14 Settings: study, audio, appearance, data and about (UC-21, UC-27). Account & sync arrives in Phase 2. */
+/** S-14 Settings: account & sync, study, audio, appearance, data and about (UC-21, UC-27). */
 export function SettingsPage() {
   const { t } = useTranslation()
   return (
@@ -32,12 +38,31 @@ export function SettingsPage() {
         <h1 className="text-2xl font-semibold">{t('screens.settings.title')}</h1>
       </header>
       <StorageWarning />
+      <AccountRow />
       <StudyGroup />
       <AudioSettingsSection />
       <AppearanceGroup />
       <DataSection />
       <AboutGroup />
     </div>
+  )
+}
+
+/** Link to S-15: the account's name when signed in, otherwise an invitation to sign in. */
+function AccountRow() {
+  const { t } = useTranslation()
+  const state = useAccount()
+  const account = state?.account
+  return (
+    <SettingsGroup title={t('screens.account.title')}>
+      <Link to="/settings/account" className="flex min-h-14 items-center justify-between gap-3 px-4 active:bg-muted">
+        <span className="flex min-w-0 flex-col">
+          <span className="truncate">{account ? account.display_name : t('account.signInToSync')}</span>
+          {account && <span className="truncate text-sm text-muted-foreground">{account.email}</span>}
+        </span>
+        <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+      </Link>
+    </SettingsGroup>
   )
 }
 
@@ -170,10 +195,16 @@ function AppearanceGroup() {
 function AboutGroup() {
   const { t } = useTranslation()
   const [installOpen, setInstallOpen] = useState(false)
+  const online = useOnline()
+  const serverMeta = useQuery({ queryKey: ['meta'], queryFn: () => callApi(() => meta()), enabled: online })
+  const serverVersion = online ? serverMeta.data?.version : undefined
   return (
     <SettingsGroup title={t('settings.sections.about')}>
       <SettingsRow label={t('settings.version')}>
         <span className="text-muted-foreground tabular-nums">{__APP_VERSION__}</span>
+      </SettingsRow>
+      <SettingsRow label={t('settings.serverVersion')}>
+        <span className="text-muted-foreground tabular-nums">{serverVersion ?? '—'}</span>
       </SettingsRow>
       {!isStandalone() && (
         <button
