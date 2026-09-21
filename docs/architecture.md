@@ -245,7 +245,14 @@ flowchart TD
   (`onSyncFinished` in the engine), clips of cards with `audio_id` in decks that are neither deleted nor archived and
   not yet cached are downloaded, two at a time; it stops when the connection is lost.
 - **Feature flags:** `useServerFeatures()` reads `GET /api/meta` (TanStack Query, when online) and keeps `features` in
-  `meta.server_features`, so buttons of disabled features stay hidden offline too.
+  `meta.server_features`, so buttons of disabled features stay hidden offline too (`undefined` while the stored value
+  is read, `null` before the server ever answered). Quick add renders once the account and the features are read,
+  so the first Enter already knows whether to ask for AI suggestions.
+- **Enrichment** (UC-09): `useEnrich()` wraps `POST /api/enrich` in a TanStack mutation (no retries; the request is
+  aborted on unmount or when a new one starts). Suggestions are only held in component state (ghosts in S-08, the
+  suggestion card in S-09); a card is written only by Save, through `createCard`/`updateCard` like any edit. The
+  pure comparison of suggestions with filled fields (`empty-fill` / `conflict` / `same`, "Accept all") lives in
+  `domain/enrich.ts`.
 
 ### 4.6 Internationalization
 
@@ -257,7 +264,8 @@ flowchart TD
 - Server errors are codes; the client maps them to translation keys (`errors.<code>`, `lib/apiErrors.ts`; an unknown
   code shows `errors.unknown`, an unreachable server `errors.network`). UI code calls the generated client through
   `callApi` (`lib/api.ts`), which returns the data of a 2xx response and throws `ApiError { status, code }`
-  otherwise. Only auth, admin invites, server metadata and (from P2-T06) the sync engine call the API.
+  otherwise. Only auth, admin invites, server metadata, the sync engine, audio (§4.5) and enrichment
+  (`features/enrich/useEnrich`, §8) call the API.
 - Dates and numbers via `Intl` with the UI locale.
 
 ### 4.7 PWA

@@ -159,7 +159,8 @@ This document describes how people use Annette Cards. Screen references (S-xx) p
 5. Snackbar "Added · Edit"; the field is cleared for the next word.
 
 **Alternatives:**
-- 3a. Online with AI enabled → UC-09 suggestions; Learner accepts with one tap.
+- 3a. Online with AI enabled → UC-09 suggestions; Learner saves them with one tap, or taps "Edit" to review them
+  in the card editor (S-08) as ghost values.
 - 4a. Duplicate in the deck → warning with "Add anyway" / "Open existing".
 
 ## UC-07 View, edit and delete a card
@@ -210,7 +211,8 @@ This document describes how people use Annette Cards. Screen references (S-xx) p
 
 **Alternatives:**
 - 3a. Quota exceeded → "Daily AI limit reached"; manual input continues.
-- 3b. Provider error or timeout (10 s) → inline error, manual input continues.
+- 3b. Provider error or timeout (10 s) → inline error, manual input continues (quick add shows the "Translation"
+  field).
 - 4a. Fields already filled → accepting shows a confirm before overwriting.
 
 ## UC-10 Import a dictionary from CSV/TSV

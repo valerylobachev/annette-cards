@@ -707,5 +707,17 @@
     "working": "Getting audio…",
     "removing": "Removing audio…",
     "noRecording": "No recording found for this word."
+  },
+  "enrich": {
+    "fill": "Fill with AI",
+    "working": "Getting suggestions…",
+    "failed": "Could not get suggestions, fill in manually.",
+    "suggestions": "AI suggestions",
+    "suggestionFor": "Suggestion for {{field}}:",
+    "acceptField": "Accept suggestion for {{field}}",
+    "acceptAll": "Accept all",
+    "replaceTitle_one": "Replace the filled field?",
+    "replaceTitle_other": "Replace {{count}} filled fields?",
+    "replace": "Replace"
   }
 }

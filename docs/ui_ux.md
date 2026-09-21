@@ -226,8 +226,14 @@ the last 10 answers (colored dots). Actions: Edit, Reset progress, Delete.
 **Fields:** Deck (picker), Front*, Back*, Example, Example translation, IPA (with helper keyboard row for common
 IPA symbols), Tags (chips with autocomplete from existing tags), Notes.
 
-- Button **"Fill with AI"** next to Front (enabled when Front is not empty and online): shows suggestions inline
-  as ghost values with "Accept all" / per-field accept; never overwrites filled fields without confirmation.
+- Button **"Fill with AI"** under Front (shown when signed in and the server offers enrichment; enabled when Front
+  is not empty and online, otherwise disabled with "Available online"; a spinner while waiting, the form stays
+  editable): each suggested field shows its suggestion under it as a ghost value (muted, dashed border) with a ✓
+  to accept it; **"Accept all"** next to the button fills the empty fields at once. Accepting into a filled field
+  (one or via Accept all) asks first ("Replace the filled field?" / "Replace N filled fields?"); Cancel keeps the
+  value and the ghost. Editing a field dismisses its ghost; a suggestion equal to the value is not shown. Errors
+  inline under Front: "Daily AI limit reached, try tomorrow." for the quota, otherwise "Could not get suggestions,
+  fill in manually." (timeout, provider error, network).
 - **Duplicate warning** under Front when the same normalized front exists in the deck: "Already in deck:
   *to take off — взлетать*" with link.
 - Speaker button next to Front to preview pronunciation with the deck's voice.
@@ -240,11 +246,15 @@ IPA symbols), Tags (chips with autocomplete from existing tags), Notes.
 **Purpose:** capture a word in seconds (UC-06).
 
 Bottom sheet over the current screen: deck selector (remembers last), single field "Word or phrase", Enter →
-if online and AI enabled, suggestions appear (translation + example) and one more tap saves; offline → second
-field "Translation" appears. After save: snackbar "Added · Edit", field cleared, keyboard stays open.
+if online, signed in and AI enabled, "Getting suggestions…", then a suggestion card (translation, IPA, example and
+its translation, notes) with **Edit**, and the main button becomes **Save**: one tap (or Enter) saves the word with
+all suggested fields. **Edit** opens the card editor (S-08) with the word filled in and the suggestions as ghosts.
+Changing the word drops the suggestions. Offline, AI disabled, signed out, or the request failed → second field
+"Translation" appears (a failed request adds a one-line hint above it: the quota text or "Could not get
+suggestions, fill in manually."). After save: snackbar "Added · Edit", field cleared, keyboard stays open.
 
 In Phase 1 the two-field flow (word → Enter → translation → Enter) is used online and offline; AI suggestions
-arrive in Phase 3. A duplicate (same normalized front in the deck) shows an inline warning with "Add anyway" and
+arrived in Phase 3. A duplicate (same normalized front in the deck) shows an inline warning with "Add anyway" and
 "Open existing"; the card is not saved until one is chosen.
 
 ### S-10 Import wizard

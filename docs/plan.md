@@ -267,8 +267,8 @@ Tasks: [P3-T04](../dev/impl/phase-03-audio-ai/task-04-enrich-server.md) · [P3-T
 
 - [x] `Enricher` trait and Anthropic implementation; strict JSON prompt; validation and one retry
 - [x] Daily quota (`enrich_usage`), error codes
-- [ ] "Fill with AI" in the card editor with ghost suggestions and per-field accept
-- [ ] Quick add with suggestions (one-tap save)
+- [x] "Fill with AI" in the card editor with ghost suggestions and per-field accept
+- [x] Quick add with suggestions (one-tap save)
 - [x] Prompt tuned for EN→RU and PL→RU (Polish: gender, aspect pairs in notes)
 
 Acceptance task: [P3-T06](../dev/impl/phase-03-audio-ai/task-06-phase-acceptance.md)

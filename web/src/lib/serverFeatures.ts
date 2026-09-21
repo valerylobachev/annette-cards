@@ -21,9 +21,10 @@ export function useServerMeta() {
 
 /**
  * The server's optional features (TTS, Commons, enrichment, push): fetched when online and remembered on this device,
- * so the UI knows them offline too. `null` until the server answered once.
+ * so the UI knows them offline too. `undefined` while the remembered value is read, `null` until the server answered
+ * once.
  */
-export function useServerFeatures(): ServerFeatures | null {
+export function useServerFeatures(): ServerFeatures | null | undefined {
   useServerMeta()
-  return useMeta('server_features') ?? null
+  return useMeta('server_features')
 }
