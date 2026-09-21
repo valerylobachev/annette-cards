@@ -1,0 +1,47 @@
+{
+  "common": {
+    "back": "Back",
+    "comingSoon": "This screen is coming soon."
+  },
+  "nav": {
+    "label": "Main navigation",
+    "today": "Today",
+    "decks": "Decks",
+    "stats": "Statistics",
+    "settings": "Settings"
+  },
+  "screens": {
+    "welcome": { "title": "Welcome" },
+    "signIn": { "title": "Sign in" },
+    "register": { "title": "Create account" },
+    "firstSync": { "title": "Sync your data" },
+    "today": { "title": "Today" },
+    "decks": { "title": "Decks" },
+    "deck": { "title": "Deck" },
+    "card": { "title": "Card" },
+    "cardNew": { "title": "New card" },
+    "cardEdit": { "title": "Edit card" },
+    "import": { "title": "Import" },
+    "study": { "title": "Study" },
+    "summary": { "title": "Session summary" },
+    "stats": { "title": "Statistics" },
+    "settings": { "title": "Settings" },
+    "account": { "title": "Account & sync" },
+    "voices": { "title": "Voices" }
+  },
+  "settings": {
+    "language": "Interface language"
+  },
+  "languages": {
+    "en": "English",
+    "ru": "Русский"
+  },
+  "cards": {
+    "count_one": "{{count}} card",
+    "count_other": "{{count}} cards"
+  },
+  "update": {
+    "available": "A new version is available",
+    "reload": "Reload"
+  }
+}

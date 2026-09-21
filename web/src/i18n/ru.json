@@ -1,0 +1,49 @@
+{
+  "common": {
+    "back": "Назад",
+    "comingSoon": "Этот экран скоро появится."
+  },
+  "nav": {
+    "label": "Основная навигация",
+    "today": "Сегодня",
+    "decks": "Колоды",
+    "stats": "Статистика",
+    "settings": "Настройки"
+  },
+  "screens": {
+    "welcome": { "title": "Добро пожаловать" },
+    "signIn": { "title": "Вход" },
+    "register": { "title": "Регистрация" },
+    "firstSync": { "title": "Синхронизация данных" },
+    "today": { "title": "Сегодня" },
+    "decks": { "title": "Колоды" },
+    "deck": { "title": "Колода" },
+    "card": { "title": "Карточка" },
+    "cardNew": { "title": "Новая карточка" },
+    "cardEdit": { "title": "Редактирование карточки" },
+    "import": { "title": "Импорт" },
+    "study": { "title": "Изучение" },
+    "summary": { "title": "Итоги сессии" },
+    "stats": { "title": "Статистика" },
+    "settings": { "title": "Настройки" },
+    "account": { "title": "Аккаунт и синхронизация" },
+    "voices": { "title": "Голоса" }
+  },
+  "settings": {
+    "language": "Язык интерфейса"
+  },
+  "languages": {
+    "en": "English",
+    "ru": "Русский"
+  },
+  "cards": {
+    "count_one": "{{count}} карточка",
+    "count_few": "{{count}} карточки",
+    "count_many": "{{count}} карточек",
+    "count_other": "{{count}} карточки"
+  },
+  "update": {
+    "available": "Доступна новая версия",
+    "reload": "Обновить"
+  }
+}

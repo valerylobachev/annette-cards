@@ -37,13 +37,13 @@ Task: [P0-T01](../dev/impl/phase-00-bootstrap/task-01-repo-tooling.md)
 ### Web skeleton
 Task: [P0-T02](../dev/impl/phase-00-bootstrap/task-02-web-skeleton.md)
 
-- [ ] Vite + React 19 + TypeScript (strict) with pnpm
-- [ ] Tailwind 4, shadcn/ui init, lucide-react, dark mode via system preference
-- [ ] TanStack Router with routes for all screens (placeholder pages) and bottom tab bar layout
-- [ ] i18next with `en.json`/`ru.json`, language detection, one translated string per screen
-- [ ] Biome config; Vitest + Testing Library; Playwright with WebKit and Chromium projects
-- [ ] `vite-plugin-pwa`: manifest, icons (incl. maskable, apple-touch-icon), iOS meta tags, update prompt banner
-- [ ] Vite proxy `/api` → `127.0.0.1:8080`
+- [x] Vite + React 19 + TypeScript (strict) with pnpm
+- [x] Tailwind 4, shadcn/ui init, lucide-react, dark mode via system preference
+- [x] TanStack Router with routes for all screens (placeholder pages) and bottom tab bar layout
+- [x] i18next with `en.json`/`ru.json`, language detection, one translated string per screen
+- [x] Biome config; Vitest + Testing Library; Playwright with WebKit and Chromium projects
+- [x] `vite-plugin-pwa`: manifest, icons (incl. maskable, apple-touch-icon), iOS meta tags, update prompt banner
+- [x] Vite proxy `/api` → `127.0.0.1:8080`
 
 ### Server skeleton (Rust learning start)
 Task: [P0-T03](../dev/impl/phase-00-bootstrap/task-03-server-skeleton.md)

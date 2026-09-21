@@ -22,9 +22,9 @@ rejected. Versions: use the latest stable release at bootstrap time and pin them
 | Framework | React 19 | Owner's primary UI stack |
 | Build tool | Vite | Fast dev server, first-class PWA plugin |
 | Package manager | pnpm | Fast, strict dependency resolution |
-| Routing | TanStack Router | Type-safe routes and search params |
+| Routing | TanStack Router (code-based routes in `src/app/router.tsx`) | Type-safe routes and search params; code-based avoids a generator plugin and a generated route tree for ~17 flat routes |
 | Styling | Tailwind CSS 4 | Utility-first, mobile-first, dark mode via `prefers-color-scheme` |
-| Components | shadcn/ui (Radix primitives) | Accessible, copy-in components that we own |
+| Components | shadcn/ui (Radix primitives, `radix-nova` style) | Accessible, copy-in components that we own; brings `radix-ui`, `class-variance-authority`, `cn`, `tw-animate-css` |
 | Gestures / animation | `motion` (formerly framer-motion) | Drag with velocity/threshold for swipe cards, spring animations |
 | Local database | Dexie (IndexedDB) | Versioned schema, transactions, reactive `useLiveQuery` |
 | Spaced repetition | `ts-fsrs` | Reference FSRS implementation, runs offline on the client |
@@ -33,7 +33,7 @@ rejected. Versions: use the latest stable release at bootstrap time and pin them
 | PWA | `vite-plugin-pwa` (Workbox) | Manifest, precache, runtime caching, update prompt |
 | Text-to-speech | Web Speech API (`speechSynthesis`) | Built into Safari, uses iOS system voices, offline |
 | CSV/TSV parsing | PapaParse | Delimiter auto-detection, streaming, robust quoting |
-| i18n | i18next + react-i18next | RU/EN UI, pluralization rules for Russian |
+| i18n | i18next + react-i18next + `i18next-browser-languagedetector` | RU/EN UI, pluralization rules for Russian; the detector picks the stored choice, then `navigator.language` |
 | Charts | Recharts | Simple React charts for statistics |
 | Dates | date-fns | Tree-shakable, handles day boundaries and locales |
 | IDs | `uuid` (v7) | Time-ordered IDs generated offline |
@@ -41,6 +41,7 @@ rejected. Versions: use the latest stable release at bootstrap time and pin them
 | Lint / format | Biome | One fast tool for lint + format |
 | Unit tests | Vitest + Testing Library + `fake-indexeddb` | Vite-native, fast |
 | E2E tests | Playwright (WebKit, Chromium) | WebKit approximates iOS Safari |
+| Dev HTTPS | `@vitejs/plugin-basic-ssl` | Self-signed HTTPS for `just dev-https` (service workers on a real iPhone need HTTPS) |
 
 ## Server (`server/`)
 

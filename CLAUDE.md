@@ -42,8 +42,10 @@ annette-cards/
 │   │   ├── db/           # Dexie schema, repositories, outbox
 │   │   ├── api/          # orval-generated client (do not edit by hand)
 │   │   ├── i18n/         # en.json, ru.json
-│   │   ├── components/   # shared + shadcn/ui
-│   │   └── lib/
+│   │   ├── components/   # shared + shadcn/ui (components/ui/)
+│   │   ├── lib/
+│   │   └── test/         # Vitest setup
+│   ├── public/           # icons, favicon
 │   └── tests/e2e/        # Playwright
 ├── server/               # Rust (axum + sqlx + SQLite)
 │   ├── migrations/

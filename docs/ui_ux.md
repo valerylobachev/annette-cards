@@ -51,6 +51,25 @@ flowchart TD
 - Back navigation: top-left chevron; iOS edge-swipe back works because routes are real history entries.
 - Deep links: `/study?deck=<id>&mode=swipe`, `/decks/<id>`, `/cards/<id>`.
 
+Routes (`web/src/app/router.tsx`; "full screen" = no tab bar):
+
+| Path | Screen | Full screen |
+| --- | --- | --- |
+| `/` | S-04 Today | |
+| `/decks`, `/decks/$deckId` | S-05 Decks list, S-06 Deck detail | |
+| `/cards/$cardId` | S-07 Card view | |
+| `/cards/new`, `/cards/$cardId/edit` | S-08 Card editor | yes |
+| `/import` | S-10 Import wizard | yes |
+| `/study?deck=&mode=` | S-11 Study session (`mode`: `swipe`, `choice`, `listening`, `typing`) | yes |
+| `/study/summary` | S-12 Session summary | yes |
+| `/stats` | S-13 Statistics | |
+| `/settings`, `/settings/account`, `/settings/voices` | S-14 Settings, S-15 Account & sync, S-16 Voices | |
+| `/welcome` | S-01 Onboarding | yes |
+| `/signin?invite=`, `/register?invite=` | S-02 Sign in / Register | yes |
+| `/first-sync` | S-03 First sync choice | yes |
+
+Quick add (S-09) is a sheet over the current screen, not a route.
+
 ## 4. Global components
 
 | Component | Behavior |
