@@ -7,6 +7,17 @@ import { card, deck, log, review, settings, state } from './fixtures'
 const NOW = new Date(2026, 8, 21, 12, 0).getTime()
 
 describe('buildPracticeQueue', () => {
+  it('practices only the failed cards for "Repeat these now"', () => {
+    const queue = buildPracticeQueue({
+      decks: [deck('d')],
+      cards: [card('failed', 'd'), card('lapsed', 'd')],
+      states: [review('failed', NOW, { stability: 30 }), review('lapsed', NOW, { lapses: 5 })],
+      failedIds: ['failed'],
+      onlyFailed: true,
+    })
+    expect(queue.map((item) => item.card_id)).toEqual(['failed'])
+  })
+
   it('takes lapsed and unstable studied directions, most lapses first, never New ones', () => {
     const queue = buildPracticeQueue({
       decks: [deck('d', { directions: 'both' })],

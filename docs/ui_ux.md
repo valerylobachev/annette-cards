@@ -60,8 +60,8 @@ Routes (`web/src/app/router.tsx`; "full screen" = no tab bar):
 | `/cards/$cardId` | S-07 Card view | |
 | `/cards/new`, `/cards/$cardId/edit` | S-08 Card editor | yes |
 | `/import` | S-10 Import wizard | yes |
-| `/study?deck=&mode=` | S-11 Study session (`mode`: `swipe`, `choice`, `listening`, `typing`) | yes |
-| `/study/summary` | S-12 Session summary | yes |
+| `/study?deck=&mode=&practice=1&repeat=` | S-11 Study session (`mode`: `swipe`, `choice`, `listening`, `typing`; `repeat` = session id for "Repeat these now") | yes |
+| `/study/summary?session=` | S-12 Session summary | yes |
 | `/stats` | S-13 Statistics | |
 | `/settings`, `/settings/account`, `/settings/voices` | S-14 Settings, S-15 Account & sync, S-16 Voices | |
 | `/welcome` | S-01 Onboarding | yes |
@@ -133,17 +133,20 @@ be removed — confirm sheet), **Cancel**. Progress view with determinate bar du
 
 **Layout (top → bottom):**
 
-- Top bar: greeting with display name, sync indicator.
+- Top bar: greeting with display name ("Hi there!" until accounts exist, Phase 2), sync indicator (Phase 2).
 - **Hero card:** "To review: 42 · New: 15", estimated time ("≈ 9 min"), primary button **Start** (full width,
-  thumb zone). If nothing is due: text "Nothing due. Next reviews in 3 h" and secondary actions "Learn extra new words", "Practice difficult words".
-- Mode selector under Start (chips): Swipe (default), Choice, Listening, Typing.
+  thumb zone). If nothing is due: text "Nothing due. Next reviews in 3 h" and secondary actions "Learn extra new
+  words" (shown when new cards are waiting beyond today's limit; +10 for today, then the session starts) and
+  "Practice difficult words" (shown when the practice queue has cards).
+- Mode selector under Start (chips): Swipe (default), Choice, Listening, Typing. **Phase 4** (decision D4): Phase 1
+  has only Swipe and no chips.
 - **Streak** row: flame icon, "12 days", 7-day dots.
 - **Decks due** list (compact): deck name, language flag code (EN/PL), due count; tap → start session for that
   deck only.
 - Floating "+" (Quick add).
 
-**States:** first day (no reviews yet) shows only new-card count; loading skeleton for < 200 ms is avoided
-(Dexie is fast) — render directly.
+**States:** first day (no reviews yet) shows only new-card count; no cards at all → "Add words to start studying"
+with a link to Decks; loading skeleton for < 200 ms is avoided (Dexie is fast) — render directly.
 
 ### S-05 Decks list
 
@@ -318,6 +321,11 @@ Closing the session with × ends it (the snapshot is removed); a finished sessio
 Cards reviewed, accuracy %, time spent, new words learned, streak update, list of "Difficult in this session"
 (Again at least once) with button **Repeat these now** (extra practice, does not affect FSRS for cards already
 answered today — practice mode) and **Done**.
+
+The route is `/study/summary?session=<id>`; the numbers come from the finished session kept in
+`meta.study_session` (its answer log ids). **Repeat these now** opens `/study?practice=1&repeat=<session id>`,
+which reads the cards answered Again from that session and practices only them. Once another session replaces the
+snapshot, the summary shows "This session summary is no longer available".
 
 ### S-13 Statistics
 

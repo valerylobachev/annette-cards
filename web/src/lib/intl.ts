@@ -36,3 +36,14 @@ export function formatNumber(value: number, uiLocale: string): string {
 export function languageTag(code: string): string {
   return code.toUpperCase()
 }
+
+/** A duration as "4 min" / "4 мин", or seconds below one minute ("45 sec" / "45 с"). */
+export function formatDuration(ms: number, uiLocale: string): string {
+  const seconds = Math.round(ms / 1000)
+  const [value, unit] = seconds < 60 ? [seconds, 'second'] : [Math.round(seconds / 60), 'minute']
+  return new Intl.NumberFormat(uiLocale, { style: 'unit', unit, unitDisplay: 'short' }).format(value)
+}
+
+export function formatPercent(share: number, uiLocale: string): string {
+  return new Intl.NumberFormat(uiLocale, { style: 'percent', maximumFractionDigits: 0 }).format(share)
+}

@@ -401,12 +401,45 @@
     },
     "know": "Know",
     "dontKnow": "Don't know",
-    "tapToFlip": "Tap to show the answer",
     "tapToFlipBack": "Tap to show the question",
     "empty": "Nothing to study right now.",
     "practiceEmpty": "No difficult words to practice.",
     "missingDeck": "This deck does not exist.",
     "backToToday": "Back to Today",
     "goToDecks": "Go to decks"
+  },
+  "today": {
+    "greeting": "Hi there!",
+    "toReview": "To review: {{count}}",
+    "newCount": "New: {{count}}",
+    "estimate": "≈ {{count}} min",
+    "start": "Start",
+    "nothingDue": "Nothing due.",
+    "nextReviews": "Next reviews {{when}}.",
+    "learnExtra": "Learn extra new words",
+    "practice": "Practice difficult words",
+    "streak_one": "{{count}} day",
+    "streak_other": "{{count}} days",
+    "streakLabel": "Study streak",
+    "last7": "Studied on {{count}} of the last 7 days",
+    "decksDue": "Decks due",
+    "empty": "Add words to start studying.",
+    "goToDecks": "Go to decks"
+  },
+  "summary": {
+    "cardsReviewed": "Cards reviewed",
+    "accuracy": "Accuracy",
+    "time": "Time",
+    "newLearned": "New words",
+    "streak": "Streak",
+    "difficult": "Difficult in this session",
+    "repeat": "Repeat these now",
+    "done": "Done",
+    "missing": "This session summary is no longer available."
+  },
+  "a11y": {
+    "frontForward": "Word: {{text}}. Double-tap to reveal the translation.",
+    "frontReverse": "Translation: {{text}}. Double-tap to reveal the word.",
+    "undone": "Answer undone. {{text}} is back."
   }
 }

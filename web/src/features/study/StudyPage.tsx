@@ -14,8 +14,8 @@ import type { QueueItem } from '@/domain/session'
 import type { SessionProgress } from '@/domain/studySession'
 import type { AnswerMode, Rating } from '@/domain/types'
 import { cn } from '@/lib/utils'
-import { FrontFace, SwipeCard, type SwipeCardHandle } from './SwipeCard'
-import { stackLayer, stackTransition } from './studyAnimations'
+import { FrontFace, promptOf, SwipeCard, type SwipeCardHandle } from './SwipeCard'
+import { stackLayer, useStudyMotion } from './studyAnimations'
 import { useStudySession } from './useStudySession'
 
 /** S-11 Study session, Mode A (swipe cards): start gate, top bar, card stack and answer buttons. */
@@ -27,11 +27,13 @@ export function StudyPage() {
   const snackbar = useSnackbar()
   const settings = useSettings()
   const [confirmLeave, setConfirmLeave] = useState(false)
+  const [announcement, setAnnouncement] = useState('')
   const card = useRef<SwipeCardHandle>(null)
+  const { enter } = useStudyMotion()
 
   const params = useMemo(
-    () => ({ deck: search.deck ?? null, practice: search.practice === 1 }),
-    [search.deck, search.practice],
+    () => ({ deck: search.deck ?? null, practice: search.practice === 1, repeat: search.repeat ?? null }),
+    [search.deck, search.practice, search.repeat],
   )
   const onFinish = useCallback(
     (session: string) => navigate({ to: '/study/summary', search: { session }, replace: true }),
@@ -39,6 +41,12 @@ export function StudyPage() {
   )
   const onUndoFailed = useCallback(() => snackbar.show({ message: t('study.undoFailed') }), [snackbar, t])
   const session = useStudySession(params, { onFinish, onUndoFailed })
+
+  async function undo() {
+    const restored = await session.undo()
+    const study = restored && session.cards?.get(restored.card_id)
+    if (restored && study) setAnnouncement(t('a11y.undone', { text: promptOf(study, restored.direction) }))
+  }
 
   async function leave() {
     await session.leave()
@@ -96,12 +104,7 @@ export function StudyPage() {
       )}
       {session.phase === 'studying' && session.progress && (
         <>
-          <TopBar
-            closeButton={closeButton}
-            progress={session.progress}
-            canUndo={session.canUndo}
-            onUndo={session.undo}
-          />
+          <TopBar closeButton={closeButton} progress={session.progress} canUndo={session.canUndo} onUndo={undo} />
           <div className="relative flex-1 px-4 py-4">
             <div className="relative size-full">
               {behind
@@ -113,9 +116,9 @@ export function StudyPage() {
               {current && currentCard && (
                 <motion.div
                   key={`${current.card_id}:${current.direction}:${session.progress.done}`}
-                  initial={stackLayer(1)}
-                  animate={stackLayer(0)}
-                  transition={stackTransition}
+                  initial={enter.initial}
+                  animate={enter.animate}
+                  transition={enter.transition}
                   className="absolute inset-0 origin-bottom"
                 >
                   <SwipeCard
@@ -137,6 +140,9 @@ export function StudyPage() {
           />
         </>
       )}
+      <p aria-live="polite" className="sr-only">
+        {announcement}
+      </p>
       <ConfirmSheet
         open={confirmLeave}
         onOpenChange={setConfirmLeave}

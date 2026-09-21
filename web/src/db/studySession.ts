@@ -1,3 +1,4 @@
+import { type SessionSummary, summarizeSession } from '@/domain/sessionSummary'
 import { canResume, newSnapshot, type StudySessionParams, type StudySessionSnapshot } from '@/domain/studySession'
 import type { Card, Deck } from '@/domain/types'
 import { newId } from '@/lib/ids'
@@ -16,8 +17,25 @@ export async function openStudySession(
   const saved = await getMeta('study_session')
   if (canResume(saved, params, now)) return { snapshot: saved, resumed: true }
   const deck = params.deck ?? undefined
-  const queue = params.practice ? await loadPracticeQueue(deck) : await loadSession(now, deck)
+  const failed =
+    params.repeat === null ? undefined : ((await loadFinishedSession(params.repeat))?.difficultCardIds ?? [])
+  const queue = params.practice ? await loadPracticeQueue(deck, failed) : await loadSession(now, deck)
   return { snapshot: newSnapshot(newId(), params, queue, now), resumed: false }
+}
+
+export type FinishedSession = SessionSummary & {
+  snapshot: StudySessionSnapshot
+  /** The difficult cards with their decks. */
+  cards: Map<string, StudyCard>
+}
+
+/** The summary of a finished session still kept in `meta.study_session`; `null` when it was replaced. */
+export async function loadFinishedSession(id: string): Promise<FinishedSession | null> {
+  const snapshot = await getMeta('study_session')
+  if (!snapshot || snapshot.id !== id || snapshot.finished_at === null) return null
+  const logs = (await db.review_log.bulkGet(snapshot.log_ids)).filter((log) => log !== undefined)
+  const summary = summarizeSession(logs)
+  return { ...summary, snapshot, cards: await loadStudyCards(summary.difficultCardIds) }
 }
 
 /** Device-local, never outboxed: answers themselves are saved by `answer()`. */

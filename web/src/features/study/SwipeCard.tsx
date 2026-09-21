@@ -6,7 +6,7 @@ import type { StudyCard } from '@/db/studySession'
 import { type SwipeDirection, swipeOutcome, swipeRating } from '@/domain/rating'
 import type { AnswerMode, Direction, Rating } from '@/domain/types'
 import { cn } from '@/lib/utils'
-import { FLY_DISTANCE, flipTransition, flyOut, MAX_TILT_DEG, springBack } from './studyAnimations'
+import { FLY_DISTANCE, springBack, useStudyMotion } from './studyAnimations'
 
 export type SwipeCardHandle = {
   /** Flies the card out as if swiped, then answers (the buttons under the card use this). */
@@ -27,22 +27,29 @@ const clamp = (value: number, min: number, max: number) => Math.min(max, Math.ma
 
 /**
  * Mode A swipe card (ui_ux.md S-11): tap flips, drag right = Good, left = Again, up = Easy (detailed mode). The
- * card tilts and shows a labelled overlay while dragged; a drag below the threshold springs back.
+ * card tilts and shows a labelled overlay while dragged; a drag below the threshold springs back. With reduced
+ * motion the sides cross-fade instead of turning, the card does not tilt and fades out instead of flying.
  */
 export function SwipeCard({ study, direction, mode, showIpa, onAnswer, ref }: Props) {
+  const { t } = useTranslation()
+  const motionStyle = useStudyMotion()
+  const { reduced } = motionStyle
   const area = useRef<HTMLDivElement>(null)
   const dragged = useRef(false)
   const committed = useRef(false)
   const [flipped, setFlipped] = useState(false)
   const turn = useMotionValue(0)
-  // The face turned away is hidden by the angle, not by `backface-visibility`, which WebKit does not honour here.
-  const frontOpacity = useTransform(turn, (deg): number => (deg < 90 ? 1 : 0))
-  const backOpacity = useTransform(turn, (deg): number => (deg < 90 ? 0 : 1))
+  // The side turned away is hidden by the angle, not by `backface-visibility`, which WebKit does not honour here.
+  // With reduced motion `turn` only drives a cross-fade.
+  const frontOpacity = useTransform(turn, (deg): number => (reduced ? 1 - deg / 180 : deg < 90 ? 1 : 0))
+  const backOpacity = useTransform(turn, (deg): number => (reduced ? deg / 180 : deg < 90 ? 0 : 1))
+  const opacity = useMotionValue(1)
   const x = useMotionValue(0)
   const y = useMotionValue(0)
   const width = () => area.current?.offsetWidth || 1
   const height = () => area.current?.offsetHeight || 1
-  const rotate = useTransform(x, (v) => clamp((v / width()) * MAX_TILT_DEG, -MAX_TILT_DEG, MAX_TILT_DEG))
+  const { maxTilt } = motionStyle
+  const rotate = useTransform(x, (v) => clamp((v / width()) * maxTilt, -maxTilt, maxTilt))
   const knowOpacity = useTransform(x, (v) => clamp(v / (width() * 0.35), 0, 1))
   const againOpacity = useTransform(x, (v) => clamp(-v / (width() * 0.35), 0, 1))
   const easyOpacity = useTransform(y, (v) => (mode === 'detailed' ? clamp(-v / (height() * 0.3), 0, 1) : 0))
@@ -50,11 +57,9 @@ export function SwipeCard({ study, direction, mode, showIpa, onAnswer, ref }: Pr
   async function commit(towards: SwipeDirection, rating: Rating) {
     if (committed.current) return
     committed.current = true
-    const flight =
-      towards === 'up'
-        ? [animate(y, -height() * FLY_DISTANCE, flyOut)]
-        : [animate(x, (towards === 'right' ? 1 : -1) * width() * FLY_DISTANCE, flyOut)]
-    await Promise.all(flight)
+    if (reduced) await animate(opacity, 0, motionStyle.leave)
+    else if (towards === 'up') await animate(y, -height() * FLY_DISTANCE, motionStyle.leave)
+    else await animate(x, (towards === 'right' ? 1 : -1) * width() * FLY_DISTANCE, motionStyle.leave)
     onAnswer(rating)
   }
 
@@ -63,7 +68,7 @@ export function SwipeCard({ study, direction, mode, showIpa, onAnswer, ref }: Pr
   function flip(toBack: boolean) {
     if (dragged.current) return
     setFlipped(toBack)
-    animate(turn, toBack ? 180 : 0, flipTransition)
+    animate(turn, toBack ? 180 : 0, motionStyle.flip)
   }
 
   function onDragEnd(_event: unknown, info: PanInfo) {
@@ -83,7 +88,7 @@ export function SwipeCard({ study, direction, mode, showIpa, onAnswer, ref }: Pr
         data-testid="swipe-card"
         drag={mode === 'detailed' ? true : 'x'}
         dragMomentum={false}
-        style={{ x, y, rotate }}
+        style={{ x, y, rotate, opacity }}
         onPointerDown={() => {
           dragged.current = false
         }}
@@ -94,11 +99,22 @@ export function SwipeCard({ study, direction, mode, showIpa, onAnswer, ref }: Pr
         className="absolute inset-0 cursor-grab active:cursor-grabbing"
       >
         <div className="absolute inset-0 perspective-[1000px]">
-          <motion.div style={{ rotateY: turn }} className="relative size-full transform-3d">
-            <CardSide hint="study.tapToFlip" hidden={flipped} opacity={frontOpacity} onTap={() => flip(true)}>
+          <motion.div
+            data-testid="card-sides"
+            style={{ rotateY: reduced ? 0 : turn }}
+            className="relative size-full transform-3d"
+          >
+            <CardSide
+              label={t(direction === 'forward' ? 'a11y.frontForward' : 'a11y.frontReverse', {
+                text: promptOf(study, direction),
+              })}
+              hidden={flipped}
+              opacity={frontOpacity}
+              onTap={() => flip(true)}
+            >
               <FrontFace study={study} direction={direction} showIpa={showIpa} />
             </CardSide>
-            <CardSide back hint="study.tapToFlipBack" hidden={!flipped} opacity={backOpacity} onTap={() => flip(false)}>
+            <CardSide back hidden={!flipped} opacity={backOpacity} onTap={() => flip(false)}>
               <BackFace study={study} direction={direction} />
             </CardSide>
           </motion.div>
@@ -113,19 +129,21 @@ export function SwipeCard({ study, direction, mode, showIpa, onAnswer, ref }: Pr
 
 type CardSideProps = {
   back?: boolean
+  /** VoiceOver label of the front ("Word: … Double-tap to reveal the translation."); the back reads its content. */
+  label?: string
   hidden: boolean
-  hint: 'study.tapToFlip' | 'study.tapToFlipBack'
   opacity: MotionValue<number>
   onTap: () => void
   children: ReactNode
 }
 
-function CardSide({ back = false, hidden, hint, opacity, onTap, children }: CardSideProps) {
+function CardSide({ back = false, label, hidden, opacity, onTap, children }: CardSideProps) {
   const { t } = useTranslation()
   return (
     <motion.button
       type="button"
       style={{ opacity }}
+      aria-label={label}
       aria-hidden={hidden}
       tabIndex={hidden ? -1 : 0}
       onClick={onTap}
@@ -136,10 +154,14 @@ function CardSide({ back = false, hidden, hint, opacity, onTap, children }: Card
       )}
     >
       {children}
-      <span className="sr-only">{t(hint)}</span>
+      {back && <span className="sr-only">{t('study.tapToFlipBack')}</span>}
     </motion.button>
   )
 }
+
+/** The text a side asks about: the studied word for forward, the translation for reverse. */
+export const promptOf = ({ card }: StudyCard, direction: Direction) =>
+  direction === 'forward' ? card.front : card.back
 
 /** The prompt: the studied word (+ IPA) for forward, the translation for reverse. */
 export function FrontFace({ study, direction, showIpa }: { study: StudyCard; direction: Direction; showIpa: boolean }) {

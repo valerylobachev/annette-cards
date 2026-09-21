@@ -9,6 +9,7 @@ describe('route search params', () => {
   it('parses the practice flag', () => {
     expect(parseStudySearch({ deck: 'd1', practice: 1 })).toEqual({ deck: 'd1', practice: 1 })
     expect(parseStudySearch({ deck: 'd1', practice: 'yes' }).practice).toBeUndefined()
+    expect(parseStudySearch({ repeat: 's1' })).toMatchObject({ practice: 1, repeat: 's1' })
   })
 
   it('drops unknown study modes and empty values', () => {

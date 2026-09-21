@@ -1,6 +1,8 @@
 import { buildPracticeQueue } from '@/domain/practice'
 import { buildSession, type QueueItem, type SessionInput } from '@/domain/session'
+import { currentStreak, last7Days } from '@/domain/streak'
 import { type StudyDay, studyDayBounds, studyDayOf } from '@/domain/studyDay'
+import { type TodaySummary, todaySummary } from '@/domain/today'
 import { getMeta, setMeta } from './meta'
 import { db } from './schema'
 import { getSettings } from './settings'
@@ -42,8 +44,36 @@ export async function loadSession(now: number, deckFilter?: string): Promise<Que
   return buildSession(await loadSessionInput(now, deckFilter), now)
 }
 
-/** Practice queue (UC-16) for all decks or one deck; `failedIds` = cards failed in the last session. */
+/**
+ * Practice queue (UC-16) for all decks or one deck. With `failedIds` ("Repeat these now") only those cards are
+ * practiced.
+ */
 export async function loadPracticeQueue(deckFilter?: string, failedIds?: string[]): Promise<QueueItem[]> {
   const [decks, cards, states] = await Promise.all([db.decks.toArray(), db.cards.toArray(), db.card_states.toArray()])
-  return buildPracticeQueue({ decks, cards, states, deckFilter, failedIds })
+  return buildPracticeQueue({ decks, cards, states, deckFilter, failedIds, onlyFailed: failedIds !== undefined })
+}
+
+export type TodayData = TodaySummary & {
+  streak: number
+  /** Studied or not on each of the last 7 study days, today last. */
+  last7: boolean[]
+  /** Any answer was ever given (otherwise Today shows only the new-card count). */
+  hasHistory: boolean
+}
+
+/** Everything Today (S-04) shows, at `now`. The streak counts every non-undone answer, practice included. */
+export async function loadToday(now: number): Promise<TodayData> {
+  const input = await loadSessionInput(now)
+  const { day_start_hour } = await getSettings()
+  const logs = await db.review_log.toArray()
+  const studyDays = new Set(
+    logs.filter((log) => log.deleted_at === null).map((log) => studyDayOf(log.reviewed_at, day_start_hour)),
+  )
+  const today = studyDayOf(now, day_start_hour)
+  return {
+    ...todaySummary(input, now),
+    streak: currentStreak(studyDays, today),
+    last7: last7Days(studyDays, today),
+    hasHistory: studyDays.size > 0,
+  }
 }

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { getDeck } from '@/db/decks'
 import { answer as answerCard, StudyError, undoAnswer } from '@/db/study'
 import { clearStudySession, loadStudyCards, openStudySession, saveStudySession } from '@/db/studySession'
+import type { QueueItem } from '@/domain/session'
 import {
   applyAnswer,
   applyUndo,
@@ -29,7 +30,7 @@ type Options = {
  * `undoAnswer()` and saves the snapshot to `meta` after every change so a reload resumes at the same card.
  */
 export function useStudySession(params: StudySessionParams, { onFinish, onUndoFailed }: Options) {
-  const { deck, practice } = params
+  const { deck, practice, repeat } = params
   const [phase, setPhase] = useState<StudyPhase>('loading')
   const [snapshot, setSnapshot] = useState<StudySessionSnapshot | null>(null)
   const [resumed, setResumed] = useState(false)
@@ -46,7 +47,7 @@ export function useStudySession(params: StudySessionParams, { onFinish, onUndoFa
         if (!cancelled) setPhase('missing_deck')
         return
       }
-      const opened = await openStudySession({ deck, practice }, now())
+      const opened = await openStudySession({ deck, practice, repeat }, now())
       if (cancelled) return
       const { queue, undo } = opened.snapshot
       setCardIds([...new Set([...queue, ...(undo?.queue ?? [])].map((item) => item.card_id))])
@@ -57,7 +58,7 @@ export function useStudySession(params: StudySessionParams, { onFinish, onUndoFa
     return () => {
       cancelled = true
     }
-  }, [deck, practice])
+  }, [deck, practice, repeat])
 
   // A result counts only for the ids it was loaded for: a stale one would make every card look deleted.
   const loaded = useLiveQuery(async () => ({ ids: cardIds, cards: await loadStudyCards(cardIds) }), [cardIds])
@@ -115,16 +116,20 @@ export function useStudySession(params: StudySessionParams, { onFinish, onUndoFa
     [snapshot, current, practice, update],
   )
 
-  const undo = useCallback(async () => {
-    if (!snapshot?.undo || busy.current) return
+  /** Returns the card put back on top, or `null` when nothing was undone. */
+  const undo = useCallback(async (): Promise<QueueItem | null> => {
+    if (!snapshot?.undo || busy.current) return null
     busy.current = true
     try {
       await undoAnswer(snapshot.undo.log_id)
-      await update(applyUndo(snapshot, now()))
+      const restored = applyUndo(snapshot, now())
+      await update(restored)
+      return restored.queue[0] ?? null
     } catch (error) {
       if (!(error instanceof StudyError)) throw error
       await update({ ...snapshot, undo: null })
       onUndoFailed()
+      return null
     } finally {
       busy.current = false
     }

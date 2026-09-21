@@ -9,7 +9,8 @@ import { getMeta, type MetaKey } from './meta'
 import { recentReviews } from './reviewLog'
 import { db } from './schema'
 import { toSettings } from './settings'
-import { loadSession } from './studyQueries'
+import { loadToday } from './studyQueries'
+import { loadFinishedSession } from './studySession'
 
 // Reactive reads for components: they re-render when a transaction commits changes to the queried tables.
 // `undefined` means "still loading" (the first render before IndexedDB answers); `null` means "not found".
@@ -62,9 +63,14 @@ export function useRecentReviews(card_id: string, direction: Direction) {
 }
 
 /**
- * The study queue as of the last database change (Today counts). `now` is read when the query runs, so a queue
- * that became due while nothing changed is picked up on the next change or remount.
+ * Today (S-04) counts, streak and decks due. `now` is read when the query runs (on mount and on every database
+ * change), so cards that became due while nothing changed appear on the next change or remount.
  */
-export function useSessionPreview(deckFilter?: string) {
-  return useLiveQuery(() => loadSession(now(), deckFilter), [deckFilter])
+export function useToday() {
+  return useLiveQuery(() => loadToday(now()))
+}
+
+/** The summary of a finished session; `null` when it is no longer stored. */
+export function useFinishedSession(id: string) {
+  return useLiveQuery(() => loadFinishedSession(id), [id])
 }

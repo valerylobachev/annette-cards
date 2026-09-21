@@ -14,6 +14,8 @@ export type PracticeInput = {
   deckFilter?: string
   /** Cards answered Again in the last session ("Repeat these now", S-12). */
   failedIds?: string[]
+  /** Practice only `failedIds` ("Repeat these now"), without the other difficult cards. */
+  onlyFailed?: boolean
 }
 
 /**
@@ -21,7 +23,14 @@ export type PracticeInput = {
  * the cards failed in the last session; most lapses first, then lowest stability; at most 50. Same eligibility as
  * the study queue (live card, live non-archived deck, active direction). New directions are never practiced.
  */
-export function buildPracticeQueue({ decks, cards, states, deckFilter, failedIds = [] }: PracticeInput): QueueItem[] {
+export function buildPracticeQueue({
+  decks,
+  cards,
+  states,
+  deckFilter,
+  failedIds = [],
+  onlyFailed = false,
+}: PracticeInput): QueueItem[] {
   const liveDecks = new Map(
     decks
       .filter((deck) => deck.deleted_at === null && deck.archived_at === null)
@@ -37,7 +46,8 @@ export function buildPracticeQueue({ decks, cards, states, deckFilter, failedIds
       const deck = deckOfCard.get(state.card_id)
       if (!deck || state.deleted_at !== null || state.state === 0) return false
       if (!activeDirections(deck.directions).includes(state.direction)) return false
-      return failed.has(state.card_id) || state.lapses >= DIFFICULT_LAPSES || state.stability < LOW_STABILITY_DAYS
+      if (failed.has(state.card_id)) return true
+      return !onlyFailed && (state.lapses >= DIFFICULT_LAPSES || state.stability < LOW_STABILITY_DAYS)
     })
     .sort((a, b) => b.lapses - a.lapses || a.stability - b.stability)
     .slice(0, PRACTICE_LIMIT)

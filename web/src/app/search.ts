@@ -1,8 +1,11 @@
 export const studyModes = ['swipe', 'choice', 'listening', 'typing'] as const
 export type StudyMode = (typeof studyModes)[number]
 
-/** `/study?deck=<id>&mode=swipe&practice=1` (ui_ux.md §3 deep links; `practice` = UC-16 practice mode). */
-export type StudySearch = { deck?: string; mode?: StudyMode; practice?: 1 }
+/**
+ * `/study?deck=<id>&mode=swipe&practice=1` (ui_ux.md §3 deep links; `practice` = UC-16 practice mode).
+ * `repeat=<session id>` ("Repeat these now", S-12) practices the cards failed in that session; it implies practice.
+ */
+export type StudySearch = { deck?: string; mode?: StudyMode; practice?: 1; repeat?: string }
 
 /** `/study/summary?session=<id>` (S-12): the finished session (`meta.study_session`). */
 export type SummarySearch = { session?: string }
@@ -22,8 +25,9 @@ function optionalString(value: unknown): string | undefined {
 
 export function parseStudySearch(search: Record<string, unknown>): StudySearch {
   const mode = studyModes.find((m) => m === search.mode)
-  const practice = search.practice === 1 || search.practice === '1' ? 1 : undefined
-  return { deck: optionalString(search.deck), mode, practice }
+  const repeat = optionalString(search.repeat)
+  const practice = search.practice === 1 || search.practice === '1' || repeat ? 1 : undefined
+  return { deck: optionalString(search.deck), mode, practice, repeat }
 }
 
 export function parseAuthSearch(search: Record<string, unknown>): AuthSearch {

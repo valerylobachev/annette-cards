@@ -55,7 +55,7 @@ const item = (card_id: string, kind: QueueItem['kind'] = 'new'): QueueItem => ({
   direction: 'forward',
   kind,
 })
-const params = { deck: 'd', practice: false }
+const params = { deck: 'd', practice: false, repeat: null }
 
 describe('study session snapshot', () => {
   const fresh = newSnapshot('s', params, [item('a'), item('b', 'review'), item('c')], NOW)
@@ -68,8 +68,9 @@ describe('study session snapshot', () => {
   })
 
   it('does not resume another deck, another mode or a finished session', () => {
-    expect(canResume(fresh, { deck: null, practice: false }, NOW)).toBe(false)
-    expect(canResume(fresh, { deck: 'd', practice: true }, NOW)).toBe(false)
+    expect(canResume(fresh, { ...params, deck: null }, NOW)).toBe(false)
+    expect(canResume(fresh, { ...params, practice: true }, NOW)).toBe(false)
+    expect(canResume(fresh, { ...params, repeat: 'other' }, NOW)).toBe(false)
     expect(canResume({ ...fresh, finished_at: NOW }, params, NOW)).toBe(false)
     expect(canResume(null, params, NOW)).toBe(false)
   })

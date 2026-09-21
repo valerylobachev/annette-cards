@@ -143,6 +143,10 @@ whose `state_before.state` is New counts as a new card introduced, every other a
 5. Learning steps: a card answered with a short next interval (< 20 min) is re-inserted into the current queue at
    its due time (about 10 s per card); if the session ends earlier, it remains due.
 
+**Streak** (`domain/streak.ts`, decision D5; Phase 4 adds the longest streak and the heatmap). The current streak
+is the number of consecutive study days with at least one non-undone answer (practice answers count), ending
+today, or yesterday when nothing was answered yet today.
+
 **Answer → rating mapping.**
 
 | Mode | Input | FSRS rating |
@@ -172,8 +176,9 @@ latest non-deleted log is refused with `undo_not_last`.
 
 **Practice mode** (UC-16, `domain/practice.ts`). The queue holds studied directions with lapses ≥ 3 or stability
 < 2 days, plus the cards failed in the last session; most lapses first, at most 50. Every practice answer is
-logged with `practice = true`. A card that is not due yet keeps its FSRS state (only the log is written); a due
-card is scheduled normally. Practice logs, like undone (soft-deleted) logs, are excluded from the daily counters.
+logged with `practice = true`. "Repeat these now" (S-12) practices only the cards failed in that session. A card
+that is not due yet keeps its FSRS state (only the log is written); a due card is scheduled normally. Practice
+logs, like undone (soft-deleted) logs, are excluded from the daily counters.
 
 ### 4.5 Speech and audio
 

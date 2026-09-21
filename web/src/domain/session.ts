@@ -35,23 +35,8 @@ const kindOf = (state: CardState): QueueItemKind =>
  *    queued. Learning/Relearning states are never buried, so learning steps continue.
  */
 export function buildSession(input: SessionInput, now: number): QueueItem[] {
-  const { decks, cards, states, settings, extraNew, deckFilter } = input
-  const liveDecks = new Map(
-    decks
-      .filter((deck) => deck.deleted_at === null && deck.archived_at === null)
-      .filter((deck) => deckFilter === undefined || deck.id === deckFilter)
-      .map((deck) => [deck.id, deck]),
-  )
-  const cardById = new Map(
-    cards.filter((card) => card.deleted_at === null && liveDecks.has(card.deck_id)).map((card) => [card.id, card]),
-  )
-  const eligible = states.filter((state) => {
-    const card = cardById.get(state.card_id)
-    const deck = card && liveDecks.get(card.deck_id)
-    return (
-      state.deleted_at === null && deck !== undefined && activeDirections(deck.directions).includes(state.direction)
-    )
-  })
+  const { cards, settings, extraNew } = input
+  const { liveDecks, cardById, eligible } = eligibleStates(input)
 
   // Counters over all decks: the daily limits are global, the deck filter only narrows the queue.
   const logs = countedLogs(input.logsToday)
@@ -113,6 +98,30 @@ export function buildSession(input: SessionInput, now: number): QueueItem[] {
   }
 
   return interleave(due, fresh)
+}
+
+/**
+ * Step 0 of the queue: states of live cards in live, non-archived decks (optionally one deck) whose direction is
+ * active for the deck.
+ */
+export function eligibleStates({ decks, cards, states, deckFilter }: SessionInput) {
+  const liveDecks = new Map(
+    decks
+      .filter((deck) => deck.deleted_at === null && deck.archived_at === null)
+      .filter((deck) => deckFilter === undefined || deck.id === deckFilter)
+      .map((deck) => [deck.id, deck]),
+  )
+  const cardById = new Map(
+    cards.filter((card) => card.deleted_at === null && liveDecks.has(card.deck_id)).map((card) => [card.id, card]),
+  )
+  const eligible = states.filter((state) => {
+    const card = cardById.get(state.card_id)
+    const deck = card && liveDecks.get(card.deck_id)
+    return (
+      state.deleted_at === null && deck !== undefined && activeDirections(deck.directions).includes(state.direction)
+    )
+  })
+  return { liveDecks, cardById, eligible }
 }
 
 /** Card creation order; the UUIDv7 id breaks ties (cards imported in one batch share `created_at`). */

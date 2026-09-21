@@ -5,7 +5,12 @@ export const RESUME_WITHIN_MS = 30 * 60_000
 /** Longer thinking (the phone put down) counts as this much time spent on one card. */
 export const MAX_ANSWER_DURATION_MS = 60_000
 
-export type StudySessionParams = { deck: string | null; practice: boolean }
+export type StudySessionParams = {
+  deck: string | null
+  practice: boolean
+  /** "Repeat these now" (S-12): practice the cards failed in this finished session. */
+  repeat: string | null
+}
 
 /** A study session saved to `meta.study_session` after every answer, so it survives a reload. */
 export type StudySessionSnapshot = StudySessionParams & {
@@ -51,6 +56,7 @@ export function canResume(
     saved.queue.length > 0 &&
     saved.deck === params.deck &&
     saved.practice === params.practice &&
+    saved.repeat === params.repeat &&
     now - saved.last_active_at < RESUME_WITHIN_MS
   )
 }

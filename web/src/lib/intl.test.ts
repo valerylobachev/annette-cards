@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatNumber, languageName, relativeTime } from './intl'
+import { formatDuration, formatNumber, formatPercent, languageName, relativeTime } from './intl'
 
 const day = 24 * 3600 * 1000
 
@@ -27,5 +27,18 @@ describe('formatNumber', () => {
   it('uses locale grouping', () => {
     expect(formatNumber(1210, 'en')).toBe('1,210')
     expect(formatNumber(1210, 'ru')).toBe('1 210')
+  })
+})
+
+describe('formatDuration and formatPercent', () => {
+  it('shows minutes, or seconds below a minute', () => {
+    expect(formatDuration(45_000, 'en')).toBe('45 sec')
+    expect(formatDuration(260_000, 'en')).toBe('4 min')
+    expect(formatDuration(260_000, 'ru')).toBe('4 мин')
+  })
+
+  it('shows a whole percentage', () => {
+    expect(formatPercent(0.75, 'en')).toBe('75%')
+    expect(formatPercent(0.75, 'ru')).toBe('75\u00a0%')
   })
 })

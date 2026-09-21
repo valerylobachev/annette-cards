@@ -117,14 +117,14 @@ Tasks: [P1-T07](../dev/impl/phase-01-local-mvp/task-07-scheduler-session-builder
 ### 1.5 Study UI
 Tasks: [P1-T09](../dev/impl/phase-01-local-mvp/task-09-study-session-swipe.md) · [P1-T10](../dev/impl/phase-01-local-mvp/task-10-today-summary.md)
 
-- [ ] Today (S-04): due/new counts, estimate, Start, deck-due list, streak
+- [x] Today (S-04): due/new counts, estimate, Start, deck-due list, streak
 - [x] Study session shell (S-11): start gate, progress, counters, close confirm, undo, resume within 30 min
 - [x] Swipe cards with `motion`: flip, drag with rotation and overlays, thresholds, buttons alternative,
       simple and detailed answer modes, stack preview
-- [ ] Session summary (S-12) with "Repeat these now"
-- [ ] Reduced-motion variants and VoiceOver labels
+- [x] Session summary (S-12) with "Repeat these now"
+- [x] Reduced-motion variants and VoiceOver labels
 - [x] (added) Deep link `/study?deck=&mode=&practice=1`; long-text auto-shrink on study cards
-- [ ] (added) Today: "Learn extra new words" (+10 today) and "Practice difficult words"; minimal current-streak function (full logic in 4.2); no mode selector until 4.1
+- [x] (added) Today: "Learn extra new words" (+10 today) and "Practice difficult words"; minimal current-streak function (full logic in 4.2); no mode selector until 4.1
 
 ### 1.6 Speech
 Task: [P1-T11](../dev/impl/phase-01-local-mvp/task-11-speech.md)

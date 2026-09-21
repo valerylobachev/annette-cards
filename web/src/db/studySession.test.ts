@@ -26,7 +26,7 @@ async function deckWithCards(fronts: string[]) {
 describe('study session store', () => {
   it('resumes the saved session within 30 minutes and builds a new one after', async () => {
     const { deck } = await deckWithCards(['a', 'b', 'c'])
-    const params = { deck: deck.id, practice: false }
+    const params = { deck: deck.id, practice: false, repeat: null }
     const start = Date.now()
     const { snapshot, resumed } = await openStudySession(params, start)
     expect(resumed).toBe(false)
@@ -48,7 +48,7 @@ describe('study session store', () => {
 
   it('never outboxes the session and forgets it when cleared', async () => {
     const { deck } = await deckWithCards(['a'])
-    const params = { deck: deck.id, practice: false }
+    const params = { deck: deck.id, practice: false, repeat: null }
     const outboxBefore = await db.outbox.count()
     const { snapshot } = await openStudySession(params, Date.now())
     await saveStudySession(snapshot)
