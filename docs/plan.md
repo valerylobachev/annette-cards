@@ -224,14 +224,17 @@ Tasks: [P2-T08](../dev/impl/phase-02-backend-sync/task-08-deploy-artifacts.md) Â
 
 - [x] `deploy/`: Caddyfile, systemd unit with hardening, env template, `litestream.yml`, `deploy/README.md`
 - [x] `just release` (cargo-zigbuild, musl) and `just deploy` (upload, symlink switch, restart)
-- [ ] Provision VPS: user, directories, Caddy, Litestream to S3-compatible bucket
-- [ ] Restore drill: restore the DB from the bucket into a temp file and verify
-- [ ] Uptime check on `/api/health`
+- [x] Provision VPS: user, directories, Caddy, Litestream to S3-compatible bucket
+- [x] Restore drill: restore the DB from the bucket into a temp file and verify
+- [x] Uptime check on `/api/health`
 
 Acceptance task: [P2-T10](../dev/impl/phase-02-backend-sync/task-10-phase-acceptance.md)
 
 **Acceptance:** owner and one invited user each use the app on two devices; offline edits on both converge after
 reconnect; a VPS restart and a restore drill lose no data.
+
+**Accepted:** 2026-09-21 (VPS provisioning, restore drill, uptime check and the manual acceptance verified by the
+owner).
 
 ---
 
