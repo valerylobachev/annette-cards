@@ -24,7 +24,7 @@ describe('app shell', () => {
 
   it('hides the tab bar on full-screen routes', async () => {
     renderAt('/study?deck=abc&mode=swipe')
-    await screen.findByRole('heading', { name: 'Study' })
+    await screen.findByText('This deck does not exist.')
     expect(screen.queryByRole('navigation')).not.toBeInTheDocument()
   })
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseAuthSearch, parseStudySearch } from './search'
+import { parseAuthSearch, parseStudySearch, parseSummarySearch } from './search'
 
 describe('route search params', () => {
   it('parses the study deep link', () => {
@@ -13,6 +13,11 @@ describe('route search params', () => {
 
   it('drops unknown study modes and empty values', () => {
     expect(parseStudySearch({ deck: '', mode: 'flip' })).toEqual({ deck: undefined, mode: undefined })
+  })
+
+  it('parses the finished session of the summary', () => {
+    expect(parseSummarySearch({ session: 's1' })).toEqual({ session: 's1' })
+    expect(parseSummarySearch({})).toEqual({ session: undefined })
   })
 
   it('parses an invite code', () => {

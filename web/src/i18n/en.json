@@ -373,5 +373,40 @@
   },
   "export": {
     "deckCsv": "Export CSV"
+  },
+  "study": {
+    "start": "Start",
+    "continue": "Continue",
+    "resumed": "Continuing where you left off",
+    "allDecks": "All decks",
+    "practice": "Practice difficult words",
+    "close": "Close session",
+    "leaveTitle": "Leave the session?",
+    "leaveHint": "Answers are saved.",
+    "leave": "Leave",
+    "undo": "Undo last answer",
+    "undoFailed": "This answer can no longer be undone.",
+    "progress": "{{done}} / {{total}}",
+    "progressLabel": "Session progress",
+    "counts": {
+      "new": "New {{count}}",
+      "learning": "Learning {{count}}",
+      "review": "Review {{count}}"
+    },
+    "ratings": {
+      "1": "Again",
+      "2": "Hard",
+      "3": "Good",
+      "4": "Easy"
+    },
+    "know": "Know",
+    "dontKnow": "Don't know",
+    "tapToFlip": "Tap to show the answer",
+    "tapToFlipBack": "Tap to show the question",
+    "empty": "Nothing to study right now.",
+    "practiceEmpty": "No difficult words to practice.",
+    "missingDeck": "This deck does not exist.",
+    "backToToday": "Back to Today",
+    "goToDecks": "Go to decks"
   }
 }

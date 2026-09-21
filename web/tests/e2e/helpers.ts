@@ -74,3 +74,23 @@ export function cardRow(id: string, deck_id: string, front: string, back: string
     ...extra,
   }
 }
+
+/** A New study state for one direction of a card (seeded rows skip the repository that creates them). */
+export function newStateRow(card_id: string, direction: 'forward' | 'reverse' = 'forward', extra: Row = {}): Row {
+  return {
+    card_id,
+    direction,
+    state: 0,
+    due: 1,
+    stability: 0,
+    difficulty: 0,
+    elapsed_days: 0,
+    scheduled_days: 0,
+    learning_steps: 0,
+    reps: 0,
+    lapses: 0,
+    last_review: null,
+    ...stamp,
+    ...extra,
+  }
+}

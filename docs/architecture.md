@@ -87,7 +87,8 @@ Device-local preferences (not synced): selected voice per language, speech rate,
 They are stored in `meta` because voices differ between devices. `meta` keys (typed in `web/src/db/meta.ts`):
 `device_id`, `sync_cursor`, `last_sync_at`, `account`, `voice_pref` (voice per language), `speech_rate`, `theme`,
 `audio_prefetch`, `last_quick_add_deck` (deck preselected in Quick add), `extra_new` (`{ study_day, count }`,
-extra new cards allowed today). Writes to `meta` never create outbox entries.
+extra new cards allowed today), `study_session` (snapshot of the current or last study session for resume within
+30 min and the summary; `domain/studySession.ts`). Writes to `meta` never create outbox entries.
 
 ### 4.3 Write path
 
@@ -161,7 +162,9 @@ Levenshtein distance ≤ 1 for answers up to 6 characters, ≤ 2 for longer; or 
 (important for Polish: `zolw` vs `żółw`). Differences are highlighted.
 
 **Answer transaction** (`db/study.ts`). Compute `fsrs.next(state, now, rating)`; in one Dexie transaction update
-`card_states`, append `review_log` (with previous state snapshot for undo), add outbox entries.
+`card_states`, append `review_log` (with previous state snapshot for undo), add outbox entries. `duration_ms` is the
+time from the card being shown to the answer, capped at 60 s (a phone put down mid-card does not inflate the time
+spent).
 
 **Undo.** Only the last answer in the current session: restore the previous state snapshot (stamped with a new
 `updated_at`, so it wins last-write-wins) and soft-delete the log entry (`deleted_at`). An answer that is not the

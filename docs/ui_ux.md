@@ -255,13 +255,16 @@ Large files (10 000 rows) are parsed in a Web Worker with a progress bar.
 
 **Common layout:**
 
-- Top: close (×) with confirm if answers were given; progress bar (done / total); counters "New 3 · Learning 2 ·
-  Review 17"; undo button (↶) enabled after the first answer.
+- Top: close (×) with confirm if answers were given ("Answers are saved. Leave the session?"); progress bar
+  (done / total: answers given out of answers given plus cards left, so a card that returns for a learning step
+  adds to the total); counters "New 3 · Learning 2 · Review 17" for the cards left; undo button (↶) enabled after
+  the first answer, putting the card back on top.
 - Center: the exercise.
 - Bottom: answer controls in the thumb zone.
 
-**Start gate:** the first screen shows the deck/mode and a large **Start** button; this tap unlocks speech
-synthesis on iOS.
+**Start gate:** the first screen shows the deck (or "All decks"), practice mode and the number of cards, and a
+large **Start** button (**Continue** when a session is resumed); this tap unlocks speech synthesis on iOS. An
+unknown deck id or an empty queue shows an empty state instead.
 
 #### Mode A — Swipe cards (default)
 
@@ -271,8 +274,11 @@ synthesis on iOS.
   plays on reveal.
 - **Swipe right** = Know (Good), **swipe left** = Don't know (Again). In detailed mode **swipe up** = Easy and a
   "Hard" button is shown.
-- Drag feedback: card follows the finger with rotation up to ±12°; a colored overlay and label ("Know" / "Again")
-  fade in proportionally; commit threshold = 35 % of screen width or velocity > 600 px/s; otherwise spring back.
+- Drag feedback: card follows the finger with rotation up to ±12°; a colored overlay and label ("Know" / "Again" /
+  "Easy") fade in proportionally; commit threshold = 35 % of the card area width or velocity > 600 px/s in the
+  drag direction; swipe up (detailed mode, mostly vertical drag) commits at 30 % of the card area height or an
+  upward velocity > 600 px/s; otherwise spring back. The buttons fly the card out the same way (Again left, Hard
+  and Good right, Easy up).
 - Buttons below the card (accessible alternative): ✗ Again · (Hard) · ✓ Good · (Easy); in simple mode only ✗ and ✓.
 - Swiping without flipping is allowed (fast "I know it" flow).
 - Next card slides in from the stack (the next two cards are visible as a stack behind).
@@ -302,7 +308,10 @@ Prompt (translation in forward-recall setup), input field with auto-focus, langu
 **Session end:** automatically when the queue is empty → S-12.
 
 **Interruptions:** leaving the app mid-session keeps all given answers (each is saved immediately); returning
-within 30 min resumes the same queue.
+within 30 min resumes the same queue. After every answer the session snapshot (remaining queue, answer log ids,
+last answer for undo, `started_at`, `last_active_at`) is saved to the device-local `meta.study_session`; opening
+`/study` with the same deck and practice flag within 30 min of `last_active_at` resumes it at the same card.
+Closing the session with × ends it (the snapshot is removed); a finished session stays in `meta` for the summary.
 
 ### S-12 Session summary
 

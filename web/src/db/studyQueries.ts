@@ -1,3 +1,4 @@
+import { buildPracticeQueue } from '@/domain/practice'
 import { buildSession, type QueueItem, type SessionInput } from '@/domain/session'
 import { type StudyDay, studyDayBounds, studyDayOf } from '@/domain/studyDay'
 import { getMeta, setMeta } from './meta'
@@ -39,4 +40,10 @@ export async function loadSessionInput(now: number, deckFilter?: string): Promis
 
 export async function loadSession(now: number, deckFilter?: string): Promise<QueueItem[]> {
   return buildSession(await loadSessionInput(now, deckFilter), now)
+}
+
+/** Practice queue (UC-16) for all decks or one deck; `failedIds` = cards failed in the last session. */
+export async function loadPracticeQueue(deckFilter?: string, failedIds?: string[]): Promise<QueueItem[]> {
+  const [decks, cards, states] = await Promise.all([db.decks.toArray(), db.cards.toArray(), db.card_states.toArray()])
+  return buildPracticeQueue({ decks, cards, states, deckFilter, failedIds })
 }

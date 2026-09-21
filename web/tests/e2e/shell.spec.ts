@@ -27,7 +27,7 @@ test('app loads and the four tabs navigate', async ({ page }) => {
 
 test('study route hides the tab bar', async ({ page }) => {
   await page.goto('/study?deck=d1&mode=swipe')
-  await expect(page.getByRole('heading', { name: 'Study' })).toBeVisible()
+  await expect(page.getByText('This deck does not exist.')).toBeVisible()
   await expect(page.getByRole('navigation')).toHaveCount(0)
 })
 

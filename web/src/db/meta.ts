@@ -1,3 +1,4 @@
+import type { StudySessionSnapshot } from '@/domain/studySession'
 import { db } from './schema'
 
 /** Signed-in account shown in Settings (Phase 2). */
@@ -21,6 +22,8 @@ export type MetaValues = {
   last_quick_add_deck: string
   /** "Learn extra new words": extra new cards allowed on one study day (`YYYY-MM-DD`). */
   extra_new: { study_day: string; count: number }
+  /** The current or last study session, resumed within 30 min (S-11). */
+  study_session: StudySessionSnapshot
 }
 
 export type MetaKey = keyof MetaValues
@@ -32,4 +35,8 @@ export async function getMeta<K extends MetaKey>(key: K): Promise<MetaValues[K] 
 
 export async function setMeta<K extends MetaKey>(key: K, value: MetaValues[K]): Promise<void> {
   await db.meta.put({ key, value })
+}
+
+export async function deleteMeta(key: MetaKey): Promise<void> {
+  await db.meta.delete(key)
 }

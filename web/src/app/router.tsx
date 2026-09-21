@@ -9,7 +9,7 @@ import { StudyPage, SummaryPage } from '@/features/study/pages'
 import { FirstSyncPage } from '@/features/sync/pages'
 import { TodayPage } from '@/features/today/pages'
 import { RootLayout } from './RootLayout'
-import { parseAuthSearch, parseCardNewSearch, parseImportSearch, parseStudySearch } from './search'
+import { parseAuthSearch, parseCardNewSearch, parseImportSearch, parseStudySearch, parseSummarySearch } from './search'
 
 declare module '@tanstack/react-router' {
   interface Register {
@@ -62,6 +62,7 @@ const routes = [
     path: '/study/summary',
     component: SummaryPage,
     staticData: fullScreen,
+    validateSearch: parseSummarySearch,
   }), // S-12
   createRoute({ getParentRoute: () => rootRoute, path: '/stats', component: StatsPage }), // S-13
   createRoute({ getParentRoute: () => rootRoute, path: '/settings', component: SettingsPage }), // S-14
