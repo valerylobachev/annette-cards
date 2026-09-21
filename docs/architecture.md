@@ -160,11 +160,17 @@ surrounding punctuation, ignore leading articles/particles optionally (`to`, `th
 Levenshtein distance ≤ 1 for answers up to 6 characters, ≤ 2 for longer; or equal after stripping diacritics
 (important for Polish: `zolw` vs `żółw`). Differences are highlighted.
 
-**Answer transaction.** Compute `fsrs.next(state, now, rating)`; in one Dexie transaction update `card_states`,
-append `review_log` (with previous state snapshot for undo), add outbox entries.
+**Answer transaction** (`db/study.ts`). Compute `fsrs.next(state, now, rating)`; in one Dexie transaction update
+`card_states`, append `review_log` (with previous state snapshot for undo), add outbox entries.
 
-**Undo.** Only the last answer in the current session: restore the previous state snapshot and soft-delete the
-log entry (`deleted_at`).
+**Undo.** Only the last answer in the current session: restore the previous state snapshot (stamped with a new
+`updated_at`, so it wins last-write-wins) and soft-delete the log entry (`deleted_at`). An answer that is not the
+latest non-deleted log is refused with `undo_not_last`.
+
+**Practice mode** (UC-16, `domain/practice.ts`). The queue holds studied directions with lapses ≥ 3 or stability
+< 2 days, plus the cards failed in the last session; most lapses first, at most 50. Every practice answer is
+logged with `practice = true`. A card that is not due yet keeps its FSRS state (only the log is written); a due
+card is scheduled normally. Practice logs, like undone (soft-deleted) logs, are excluded from the daily counters.
 
 ### 4.5 Speech and audio
 
@@ -360,6 +366,7 @@ CREATE TABLE review_log (
   state_before TEXT NOT NULL,             -- JSON snapshot (for undo / rebuild)
   reviewed_at  INTEGER NOT NULL,
   duration_ms  INTEGER NOT NULL,
+  practice     INTEGER NOT NULL DEFAULT 0, -- 1 = answered in practice mode (UC-16); migration in P2-T03
   updated_at   INTEGER NOT NULL,
   updated_by   TEXT NOT NULL,
   deleted_at   INTEGER,
@@ -497,6 +504,8 @@ sequenceDiagram
   "has_more": false
 }
 ```
+
+`review_log` rows carry `practice` (boolean in JSON, `0/1` in SQLite; decision D2).
 
 Push is processed in one SQLite transaction per request; the client sends batches of at most 500 rows. Entities
 are applied in dependency order: decks → cards → card_states → review_log → settings.

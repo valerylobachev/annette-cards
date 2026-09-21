@@ -324,7 +324,7 @@ the mode is unavailable with a hint.
 2. System builds a practice queue: cards with lapses ≥ 3 or low stability, or those failed in the last session.
 3. Learner studies in any mode.
 
-**Postconditions:** Practice answers are logged with `mode` + practice flag but **do not change FSRS states** for
+**Postconditions:** Practice answers are logged with `mode` and `practice = true` (`review_log.practice`) but **do not change FSRS states** for
 cards not yet due (avoids distorting intervals); cards that are due are scheduled normally.
 
 ## UC-17 Undo the last answer

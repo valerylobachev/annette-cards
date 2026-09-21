@@ -78,6 +78,11 @@ export type ReviewLog = SyncStamp & {
   state_before: CardStateSnapshot
   reviewed_at: number
   duration_ms: number
+  /**
+   * Answered in practice mode (UC-16, decision D2). Practice answers do not count towards daily limits and do not
+   * change the FSRS state of cards that are not due yet.
+   */
+  practice: boolean
   deleted_at: number | null
 }
 

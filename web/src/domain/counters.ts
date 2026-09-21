@@ -7,9 +7,9 @@ export type DailyCounters = {
   reviewsDone: number
 }
 
-/** Logs that count towards daily limits: not undone. */
+/** Logs that count towards daily limits: not undone and not practice (architecture.md §4.4). */
 export function countedLogs(logs: ReviewLog[]): ReviewLog[] {
-  return logs.filter((log) => log.deleted_at === null)
+  return logs.filter((log) => log.deleted_at === null && !log.practice)
 }
 
 /** Daily counters from the logs of one study day (the caller selects the day's logs). */

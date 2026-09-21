@@ -68,6 +68,7 @@ export function log(card_id: string, reviewed_at: number, extra: Partial<ReviewL
     state_before: before,
     reviewed_at,
     duration_ms: 1000,
+    practice: false,
     ...stamp,
     ...extra,
   }

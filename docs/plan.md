@@ -108,11 +108,11 @@ Tasks: [P1-T07](../dev/impl/phase-01-local-mvp/task-07-scheduler-session-builder
 - [x] Session builder: due first, new interleaved 1:4, limits, sibling burying, learning re-insertion
 - [x] (added) Extra-new allowance: "Learn extra new words" raises today's new limit by 10 (device-local
       `meta.extra_new`)
-- [ ] Answer transaction: next state + review log (with `state_before`) + outbox, atomically
-- [ ] Undo last answer
-- [ ] Practice mode for difficult words (no FSRS change for non-due cards)
-- [ ] Unit tests covering queue order, limits, day boundary, burying, undo
-- [ ] (added) `practice` flag on `review_log` for practice answers (UC-16)
+- [x] Answer transaction: next state + review log (with `state_before`) + outbox, atomically
+- [x] Undo last answer
+- [x] Practice mode for difficult words (no FSRS change for non-due cards)
+- [x] Unit tests covering queue order, limits, day boundary, burying, undo
+- [x] (added) `practice` flag on `review_log` for practice answers (UC-16)
 
 ### 1.5 Study UI
 Tasks: [P1-T09](../dev/impl/phase-01-local-mvp/task-09-study-session-swipe.md) · [P1-T10](../dev/impl/phase-01-local-mvp/task-10-today-summary.md)

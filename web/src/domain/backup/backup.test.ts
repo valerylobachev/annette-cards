@@ -51,6 +51,7 @@ function sampleBackup(): BackupV1 {
     state_before: { ...snapshot },
     reviewed_at: 5,
     duration_ms: 1000,
+    practice: false,
     ...stamp,
   }))
   return {

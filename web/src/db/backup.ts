@@ -109,7 +109,8 @@ async function writeRows(ctx: WriteContext, decks: Deck[], cards: Card[], states
   for (const card of cards) await writeCard(ctx, { ...card, deleted_at: null })
   for (const state of states) await writeCardState(ctx, { ...state, deleted_at: null })
   for (const log of logs) {
-    await ctx.db.review_log.put(stamp(ctx, { ...log, deleted_at: null }))
+    // `practice` arrived after the first backups were written (decision D2).
+    await ctx.db.review_log.put(stamp(ctx, { ...log, practice: log.practice ?? false, deleted_at: null }))
     await addToOutbox(ctx, 'review_log', log.id)
   }
   for (const [deck_id, deckCards] of groupBy(cards, (card) => card.deck_id)) {

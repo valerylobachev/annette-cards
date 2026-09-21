@@ -4,14 +4,17 @@ import { addToOutbox } from './outbox'
 import { db } from './schema'
 import { mutate, stamp, type WriteContext } from './write'
 
-export type ReviewInput = Omit<ReviewLog, 'id' | 'updated_at' | 'updated_by' | 'deleted_at'>
+/** A new log entry; `practice` defaults to `false`. */
+export type ReviewInput = Omit<ReviewLog, 'id' | 'updated_at' | 'updated_by' | 'deleted_at' | 'practice'> & {
+  practice?: boolean
+}
 
 // review_log is append-only: this module deliberately has no update function. The only allowed change is a soft
 // delete for "undo last answer" (CLAUDE.md invariants).
 
 /** Appends a log entry and records it in the outbox, inside the caller's transaction. */
 export async function appendReviewInTx(ctx: WriteContext, input: ReviewInput): Promise<ReviewLog> {
-  const entry = stamp(ctx, { id: newId(), ...input, deleted_at: null })
+  const entry: ReviewLog = stamp(ctx, { id: newId(), ...input, practice: input.practice ?? false, deleted_at: null })
   await ctx.db.review_log.add(entry)
   await addToOutbox(ctx, 'review_log', entry.id)
   return entry
