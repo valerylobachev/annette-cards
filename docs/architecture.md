@@ -85,7 +85,9 @@ db.version(1).stores({
 
 Device-local preferences (not synced): selected voice per language, speech rate, theme, audio prefetch flag.
 They are stored in `meta` because voices differ between devices. `meta` keys (typed in `web/src/db/meta.ts`):
-`device_id`, `sync_cursor`, `last_sync_at`, `account`, `voice_pref` (voice per language), `speech_rate`, `theme`,
+`device_id`, `sync_cursor` (`server_seq` of the last pulled row), `last_sync_at` (end of the last successful sync),
+`sync_log` (the last 10 sync runs: start, end, status, pushed, pulled, rejected rows, error code), `clock_skew_ms`
+(device minus server clock, stored while it exceeds 5 min), `account`, `voice_pref` (voice per language), `speech_rate`, `theme`,
 `audio_prefetch`, `last_quick_add_deck` (deck preselected in Quick add), `extra_new` (`{ study_day, count }`,
 extra new cards allowed today), `study_session` (snapshot of the current or last study session for resume within
 30 min and the summary; `domain/studySession.ts`), `install_hint_shown` (the one-time iOS install hint was closed),
@@ -104,12 +106,18 @@ runs before the first paint (a file, not an inline script, because of the CSP `d
 Every mutation runs in a single Dexie `rw` transaction:
 
 1. Validate input (domain).
-2. Write the entity with `updated_at = now`, `updated_by = device_id`.
+2. Write the entity with `updated_at = now`, `updated_by = device_id`. The stamp is strictly later than this
+   device's previous one (`now`, or previous + 1 ms), so two edits in the same millisecond never share a stamp;
+   times inside the row (`reviewed_at`, `deleted_at`, due dates) use the real `now`.
 3. Upsert an outbox entry `{entity, entity_id}` (deduplicated by compound index; `card_states` use
    `"<card_id>:<direction>"` as `entity_id`). An existing entry is replaced with a new `seq`, so a push already in
    flight cannot clear a later change.
 4. Commit. `useLiveQuery` re-renders subscribed components.
-5. Sync engine is notified (debounced 2 s) if the user is signed in and online.
+5. Sync engine is notified (`db/changes.ts`, called by `mutate` after the commit; debounced 2 s) and syncs if the
+   user is signed in and online.
+
+Rows pulled from the server take another path (`db/remote.ts`): they are written with their own stamps, in one
+transaction per page together with `sync_cursor`, never outboxed and never announced as local changes.
 
 ### 4.4 Study engine
 
@@ -618,6 +626,26 @@ is named `"{card_id}:{direction}"` in `applied`, `skipped` and `rejected`; setti
 all entities in `server_seq` order, soft-deleted rows included; `settings` is the settings row if it changed
 after the cursor. `cursor` in the response is the largest `server_seq` returned (the request's cursor when the page
 is empty); `has_more` means another page follows. An updated row comes again with its new `server_seq`, once.
+
+**Client engine** (`features/sync/`): `syncNow(reason)` runs one sync at a time (a call during a run schedules one
+more run). A run needs an account, a valid session and a connection, then:
+
+1. **Push** the whole outbox, sorted by entity (decks → cards → card states → review log → settings) and cut into
+   requests of at most 500 rows, so a card whose deck was edited later (and sits later in the outbox) is never sent
+   before its deck. After each answer the sent outbox entries are removed if they still have the `seq` that was
+   sent: applied and skipped rows are on the server (skipped ones come back on pull), rejected rows would be refused
+   again and go to the sync log instead. A row edited during the request has a new entry and is sent in the next
+   round (up to 5 rounds). The first request is made even with an empty outbox: its `server_time` is compared with
+   the device clock (warning in S-15 when they differ by more than 5 min).
+2. **Pull** pages of 500 from `sync_cursor` until `has_more` is false; each page is merged by LWW and the cursor
+   saved in one transaction.
+3. Cards still alive in a deck that arrived deleted (added here or on a third device before the deletion arrived)
+   are deleted like a local deck deletion would, as local writes that the next push sends.
+4. `last_sync_at` and a sync log entry are written. HTTP 401 marks the session expired and stops syncing until the
+   user signs in again; other errors are logged and retried after 5 s, 10 s, 20 s … up to 5 min.
+
+Triggers: app start, `visibilitychange` to visible, `online`, 2 s after the last local change, "Sync now" in S-15,
+pull-down on Today, and sign-in.
 
 Push is processed in one SQLite transaction (`BEGIN IMMEDIATE`) per request. Entities are applied in dependency
 order: decks → cards → card_states → review_log → settings, so a card may reference a deck from the same batch.

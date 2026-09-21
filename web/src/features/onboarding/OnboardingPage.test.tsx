@@ -51,7 +51,13 @@ describe('onboarding', () => {
 
   it('creates the first deck and the goal, requests persistence, then opens Today', async () => {
     const persist = vi.fn(async () => true)
-    vi.stubGlobal('navigator', Object.assign(Object.create(navigator), { storage: { persist } }))
+    // jsdom's getters reject a derived object, so values the app reads are defined on it.
+    const stub = Object.create(navigator, {
+      storage: { value: { persist } },
+      onLine: { value: true },
+      userAgent: { value: navigator.userAgent },
+    })
+    vi.stubGlobal('navigator', stub)
     await goToGoalStep()
     await userEvent.click(screen.getByRole('button', { name: '10' }))
     await userEvent.click(screen.getByRole('button', { name: 'Next' }))

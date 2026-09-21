@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router'
 import { TriangleAlert } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
@@ -6,7 +7,7 @@ import { shareBackup } from '@/features/export/exportFiles'
 
 /**
  * Shown when the browser refused persistent storage and there is no account to sync to (ui_ux.md §7): Safari
- * may delete the data, so offer a backup. A sign-in link joins it in Phase 2.
+ * may delete the data, so offer a backup or signing in.
  */
 export function StorageWarning() {
   const { t } = useTranslation()
@@ -19,9 +20,14 @@ export function StorageWarning() {
         <TriangleAlert className="mt-0.5 size-5 shrink-0 text-hard" aria-hidden />
         {t('storage.warning')}
       </p>
-      <Button variant="outline" size="lg" className="self-start" onClick={() => void shareBackup()}>
-        {t('storage.export')}
-      </Button>
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" size="lg" onClick={() => void shareBackup()}>
+          {t('storage.export')}
+        </Button>
+        <Button variant="outline" size="lg" asChild>
+          <Link to="/signin">{t('auth.signIn')}</Link>
+        </Button>
+      </div>
     </div>
   )
 }

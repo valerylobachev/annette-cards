@@ -7,7 +7,10 @@ import { Button } from '@/components/ui/button'
 import { useToday } from '@/db/hooks'
 import type { TodayData } from '@/db/studyQueries'
 import { addExtraNew } from '@/db/studyQueries'
+import { useAccount } from '@/features/auth/account'
 import { QuickAddButton } from '@/features/cards/QuickAddSheet'
+import { PullToSync } from '@/features/sync/PullToSync'
+import { SyncIndicator } from '@/features/sync/SyncIndicator'
 import { now } from '@/lib/clock'
 import { relativeTime } from '@/lib/intl'
 import { cn } from '@/lib/utils'
@@ -17,6 +20,7 @@ export function TodayPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const today = useToday()
+  const name = useAccount()?.account?.display_name
 
   // Dexie answers within a few ms: render nothing instead of a skeleton (ui_ux.md S-04).
   if (!today) return null
@@ -28,26 +32,31 @@ export function TodayPage() {
     today.nextDueAt === null
 
   return (
-    <div className="mx-auto flex w-full max-w-[720px] flex-col gap-6 px-4 pt-4 pb-24">
-      <header className="flex min-h-11 items-center">
-        <h1 className="text-2xl font-semibold">{t('today.greeting')}</h1>
-      </header>
-      <StorageWarning />
-      {empty ? (
-        <EmptyState
-          message={t('today.empty')}
-          actionLabel={t('today.goToDecks')}
-          onAction={() => navigate({ to: '/decks' })}
-        />
-      ) : (
-        <>
-          <Hero today={today} />
-          <StreakRow streak={today.streak} last7={today.last7} />
-          {today.decksDue.length > 0 && <DecksDue decksDue={today.decksDue} />}
-        </>
-      )}
-      <QuickAddButton />
-    </div>
+    <PullToSync>
+      <div className="mx-auto flex w-full max-w-[720px] flex-col gap-6 px-4 pt-4 pb-24">
+        <header className="flex min-h-11 items-center justify-between gap-2">
+          <h1 className="truncate text-2xl font-semibold">
+            {name ? t('today.greetingName', { name }) : t('today.greeting')}
+          </h1>
+          <SyncIndicator />
+        </header>
+        <StorageWarning />
+        {empty ? (
+          <EmptyState
+            message={t('today.empty')}
+            actionLabel={t('today.goToDecks')}
+            onAction={() => navigate({ to: '/decks' })}
+          />
+        ) : (
+          <>
+            <Hero today={today} />
+            <StreakRow streak={today.streak} last7={today.last7} />
+            {today.decksDue.length > 0 && <DecksDue decksDue={today.decksDue} />}
+          </>
+        )}
+        <QuickAddButton />
+      </div>
+    </PullToSync>
   )
 }
 

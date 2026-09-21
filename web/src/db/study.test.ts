@@ -16,7 +16,9 @@ beforeEach(async () => {
   setClock(() => T0)
 })
 
+/** A card created a second before T0, so that the answer at T0 is stamped T0. */
 async function newCard() {
+  setClock(() => T0 - 1000)
   const deck = await createDeck({
     name: 'English',
     target_lang: 'en-GB',
@@ -26,6 +28,7 @@ async function newCard() {
   })
   const card = await createCard({ deck_id: deck.id, front: 'cat', back: 'кошка' })
   await db.outbox.clear()
+  setClock(() => T0)
   return card
 }
 

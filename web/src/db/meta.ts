@@ -1,6 +1,19 @@
 import type { StudySessionSnapshot } from '@/domain/studySession'
 import { db } from './schema'
 
+/** One sync run (S-15 sync log). */
+export type SyncLogEntry = {
+  started_at: number
+  finished_at: number
+  status: 'ok' | 'error'
+  pushed: number
+  pulled: number
+  /** Rows the server refused; they are not retried. */
+  rejected: { entity: string; id: string; code: string }[]
+  /** Error code of a failed run (`network`, `unauthorized`, …). */
+  error_code?: string
+}
+
 /** The signed-in account (S-15), stored on this device only. */
 export type AccountInfo = { user_id: string; email: string; display_name: string; is_admin: boolean }
 
@@ -10,8 +23,14 @@ export type AccountInfo = { user_id: string; email: string; display_name: string
  */
 export type MetaValues = {
   device_id: string
+  /** `server_seq` of the last pulled row. */
   sync_cursor: number
+  /** End of the last successful sync. */
   last_sync_at: number
+  /** The last 10 sync runs, newest first (S-15). */
+  sync_log: SyncLogEntry[]
+  /** Device clock minus server clock, stored while it exceeds 5 minutes (S-15 warning). */
+  clock_skew_ms: number
   account: AccountInfo | null
   /** The server answered 401 for the stored account: "Sign in again" is shown; local data is kept. */
   session_expired: boolean

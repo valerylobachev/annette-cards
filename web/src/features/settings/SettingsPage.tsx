@@ -12,6 +12,7 @@ import { updateSettings } from '@/db/settings'
 import { SETTINGS_LIMITS } from '@/domain/settings'
 import type { AnswerMode, Directions } from '@/domain/types'
 import { useAccount } from '@/features/auth/account'
+import { SyncIndicator } from '@/features/sync/SyncIndicator'
 import { type UiLanguage, uiLanguages } from '@/i18n'
 import { callApi } from '@/lib/api'
 import { formatPercent } from '@/lib/intl'
@@ -34,8 +35,9 @@ export function SettingsPage() {
   const { t } = useTranslation()
   return (
     <div className="mx-auto flex w-full max-w-[720px] flex-col gap-6 px-4 pt-4 pb-8">
-      <header className="flex min-h-11 items-center">
+      <header className="flex min-h-11 items-center justify-between gap-2">
         <h1 className="text-2xl font-semibold">{t('screens.settings.title')}</h1>
+        <SyncIndicator />
       </header>
       <StorageWarning />
       <AccountRow />

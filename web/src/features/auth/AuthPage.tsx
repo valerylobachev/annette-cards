@@ -11,6 +11,7 @@ import { apiErrorCode, callApi } from '@/lib/api'
 import { errorMessage } from '@/lib/apiErrors'
 import { useOnline } from '@/lib/useOnline'
 import { Segmented } from '../settings/SettingsList'
+import { syncNow } from '../sync/engine'
 import { setAccount } from './account'
 
 export type AuthMode = 'signin' | 'register'
@@ -39,7 +40,10 @@ export function AuthPage({ mode, invite, onSignedIn }: Props) {
   async function done(me: MeResponse) {
     await setAccount(me)
     if (onSignedIn) await onSignedIn(me)
-    else await navigate({ to: '/settings/account', replace: true })
+    else {
+      void syncNow('signin')
+      await navigate({ to: '/settings/account', replace: true })
+    }
   }
 
   return (

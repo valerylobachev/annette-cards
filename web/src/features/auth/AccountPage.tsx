@@ -1,6 +1,6 @@
 import { Link, useRouter } from '@tanstack/react-router'
 import { ChevronLeft } from 'lucide-react'
-import { type FormEvent, type ReactNode, useId, useState } from 'react'
+import { type FormEvent, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { changePassword, logoutOthers } from '@/api/endpoints/auth/auth'
 import { ConfirmSheet } from '@/components/ConfirmSheet'
@@ -13,16 +13,12 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '
 import { apiErrorCode, callApi, isUnauthorized } from '@/lib/api'
 import { errorMessage } from '@/lib/apiErrors'
 import { SettingsGroup } from '../settings/SettingsList'
+import { SyncSection } from '../sync/SyncSection'
 import { type AccountInfo, markSessionExpired, useAccount } from './account'
 import { InvitesSection } from './InvitesSection'
 
-type Props = {
-  /** The sync block (P2-T06) and sign-out (P2-T07) render here. */
-  children?: ReactNode
-}
-
-/** S-15 Account & sync: sign-in prompt, or the account with password change, other devices and admin invites. */
-export function AccountPage({ children }: Props) {
+/** S-15 Account & sync: sign-in prompt, or the account, the sync block, password change and admin invites. */
+export function AccountPage() {
   const { t } = useTranslation()
   const router = useRouter()
   const state = useAccount()
@@ -40,7 +36,7 @@ export function AccountPage({ children }: Props) {
         <>
           {state.sessionExpired && <SessionExpiredBanner />}
           <AccountGroup account={state.account} />
-          {children}
+          {!state.sessionExpired && <SyncSection />}
           {state.account.is_admin && !state.sessionExpired && <InvitesSection />}
         </>
       )}

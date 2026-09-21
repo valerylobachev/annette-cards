@@ -45,6 +45,7 @@ describe('decks repository', () => {
   })
 
   it('soft delete keeps the row but hides it from get and list', async () => {
+    setClock(() => 1_000)
     const deck = await createDeck(deckInput)
     setClock(() => 5_000)
     await deleteDeck(deck.id)
@@ -63,6 +64,7 @@ describe('decks repository', () => {
 
 describe('cards repository', () => {
   it('updating a card three times leaves one outbox entry and the latest updated_at', async () => {
+    setClock(() => 1_000)
     const deck = await createDeck(deckInput)
     const card = await createCard({
       deck_id: deck.id,
@@ -84,6 +86,16 @@ describe('cards repository', () => {
     expect(cardEntries.map((entry) => entry.entity_id)).toEqual([card.id])
     // The last change moved the entry to the end of the outbox.
     expect((await db.outbox.orderBy('seq').last())?.entity_id).toBe(card.id)
+  })
+})
+
+describe('last-write-wins stamps', () => {
+  it('stamps two writes in the same millisecond with increasing times', async () => {
+    setClock(() => 2_000)
+    const deck = await createDeck(deckInput)
+    await deleteDeck(deck.id)
+    const stored = await db.decks.get(deck.id)
+    expect(stored).toMatchObject({ created_at: 2_000, deleted_at: 2_000, updated_at: 2_001 })
   })
 })
 

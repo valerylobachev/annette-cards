@@ -74,7 +74,7 @@ Quick add (S-09) is a sheet over the current screen, not a route.
 
 | Component | Behavior |
 | --- | --- |
-| Sync indicator | Small icon in the top bar of Today and Settings: synced ✓, syncing (spinner), pending changes (dot with count), offline (cloud-off), error (red dot → details) |
+| Sync indicator | Small icon in the top bar of Today and Settings, hidden when signed out; tap opens S-15: synced (cloud with ✓), syncing (spinner), pending changes (cloud with a count badge), offline (cloud-off), error (cloud with a red dot: the last run failed or the session expired). VoiceOver reads the state, e.g. "3 changes waiting to sync" |
 | Snackbar | Bottom, above tab bar; used for undo ("Card deleted · Undo"), success and non-blocking errors; 4 s |
 | Update banner | "A new version is available · Reload" when the service worker has an update |
 | Install hint | One-time sheet on iOS Safari when not installed: 3 illustrated steps "Share → Add to Home Screen" |
@@ -142,7 +142,8 @@ be removed — confirm sheet), **Cancel**. Progress view with determinate bar du
 
 **Layout (top → bottom):**
 
-- Top bar: greeting with display name ("Hi there!" until accounts exist, Phase 2), sync indicator (Phase 2).
+- Top bar: greeting with the display name when signed in ("Hi, Anna!", else "Hi there!"), sync indicator.
+  Pulling the page down while signed in syncs now ("Pull to sync" → "Release to sync" → "Syncing…").
 - **Hero card:** "To review: 42 · New: 15", estimated time ("≈ 9 min"), primary button **Start** (full width,
   thumb zone). If nothing is due: text "Nothing due. Next reviews in 3 h" and secondary actions "Learn extra new
   words" (shown when new cards are waiting beyond today's limit; +10 for today, then the session starts) and
@@ -378,6 +379,11 @@ Used / Expired) and "Used by …" or the expiry; "Create invite" (sheet: note, e
 sheet with the link `<origin>/register?invite=CODE`, Copy and Share (when the device can share); Revoke (confirm
 sheet) on active invites.
 
+**Sync block** (signed in): last sync (relative time, "Never"), changes waiting to sync, **Sync now** (disabled
+offline with "Available online", and while syncing), a clock warning when the device clock is more than 5 min off
+the server's, and a collapsible sync log of the last 10 runs ("5 min ago: sent 3, received 12" or "…: failed —
+<error>"); a run with refused rows shows their count and "Details" (entity · id · code).
+
 **Session expired:** when the server answers 401 for the stored account (checked with `GET /api/auth/me` on app
 start when online), a banner "Your session has ended…" with **Sign in again** replaces the invites; local data stays.
 Server actions (change password, sign out other devices, create/revoke invite) are disabled offline with "Available
@@ -411,7 +417,7 @@ this device only".
 | Speech blocked (no gesture yet) | Start gate prevents it; fallback: speaker icon pulses, tap to play |
 | Sync conflict lost (server newer) | Silent (LWW); no dialog |
 | Sync rejected rows | Settings → Sync shows an error entry with the count and "Details" |
-| Storage persistence denied | Settings banner: "Your data may be removed by Safari. Sign in or export a backup." |
+| Storage persistence denied | Settings banner: "Your data may be removed by Safari. Sign in or export a backup." with "Export a backup" and "Sign in" |
 | Server feature offline | Button disabled with "Available online" caption |
 | AI quota exceeded | Inline: "Daily AI limit reached, try tomorrow" |
 | Very long text on card | Auto-shrink font down to 20 px, then scroll inside the card |

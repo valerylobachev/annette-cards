@@ -449,7 +449,8 @@
     "last7": "Studied on {{count}} of the last 7 days",
     "decksDue": "Decks due",
     "empty": "Add words to start studying.",
-    "goToDecks": "Go to decks"
+    "goToDecks": "Go to decks",
+    "greetingName": "Hi, {{name}}!"
   },
   "summary": {
     "cardsReviewed": "Cards reviewed",
@@ -627,5 +628,30 @@
     "service_unavailable": "The server is unavailable. Try again later.",
     "network": "Cannot reach the server. Check your connection.",
     "unknown": "Something went wrong. Try again."
+  },
+  "sync": {
+    "section": "Sync",
+    "lastSync": "Last sync",
+    "never": "Never",
+    "pending": "Changes waiting to sync",
+    "syncNow": "Sync now",
+    "syncing": "Syncing…",
+    "clockSkew": "This device's clock is {{minutes}} min off the server's. Set the time automatically, or newer edits may lose to older ones.",
+    "log": "Sync log",
+    "logOk": "{{when}}: sent {{pushed}}, received {{pulled}}",
+    "logError": "{{when}}: failed — {{error}}",
+    "rejected_one": "{{count}} change was refused by the server",
+    "rejected_other": "{{count}} changes were refused by the server",
+    "details": "Details",
+    "pullToSync": "Pull to sync",
+    "releaseToSync": "Release to sync",
+    "status": {
+      "synced": "Synced",
+      "syncing": "Syncing",
+      "pending_one": "{{count}} change waiting to sync",
+      "pending_other": "{{count}} changes waiting to sync",
+      "offline": "Offline: changes are kept and synced later",
+      "error": "Sync failed"
+    }
   }
 }

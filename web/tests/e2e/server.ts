@@ -1,4 +1,4 @@
-import type { BrowserContext, Page } from '@playwright/test'
+import type { APIResponse, BrowserContext, Page, request } from '@playwright/test'
 
 /** The admin created by the API web server in playwright.config.ts. */
 export const ADMIN = { email: 'admin@e2e.test', password: 'admin password 1' }
@@ -27,4 +27,56 @@ export async function signIn(page: Page, email: string, password: string) {
   await form.getByLabel('Email').fill(email)
   await form.getByLabel('Password', { exact: true }).fill(password)
   await form.getByRole('button', { name: 'Sign in' }).click()
+}
+
+/** A fresh account (invited by the admin through the API), so tests running in parallel never share data. */
+export async function createAccount(
+  playwright: { request: typeof request },
+  name = 'user',
+): Promise<{ email: string; password: string; name: string }> {
+  const baseURL = SYNC_SERVER.baseURL
+  const headers = () => ({ origin: baseURL, 'x-forwarded-for': `10.9.${randomPart()}.${randomPart()}` })
+  const admin = await playwright.request.newContext({ baseURL, ignoreHTTPSErrors: true, extraHTTPHeaders: headers() })
+  await expectOk(admin.post('/api/auth/login', { data: ADMIN }))
+  const invite = await (await expectOk(admin.post('/api/admin/invites', { data: {} }))).json()
+  await admin.dispose()
+
+  const account = { email: uniqueEmail(name), password: `${name} password 1`, name }
+  const user = await playwright.request.newContext({ baseURL, ignoreHTTPSErrors: true, extraHTTPHeaders: headers() })
+  await expectOk(
+    user.post('/api/auth/register', {
+      data: { invite_code: invite.code, display_name: name, email: account.email, password: account.password },
+    }),
+  )
+  await user.dispose()
+  return account
+}
+
+function randomPart() {
+  return Math.floor(Math.random() * 250) + 1
+}
+
+async function expectOk(response: Promise<APIResponse>): Promise<APIResponse> {
+  const answer = await response
+  if (!answer.ok()) throw new Error(`${answer.url()} → ${answer.status()} ${await answer.text()}`)
+  return answer
+}
+
+/** Rows waiting in the outbox of the page's app. */
+export async function outboxCount(page: Page): Promise<number> {
+  return page.evaluate(
+    () =>
+      new Promise<number>((resolve, reject) => {
+        const request = indexedDB.open('annette')
+        request.onerror = () => reject(request.error)
+        request.onsuccess = () => {
+          const count = request.result.transaction('outbox').objectStore('outbox').count()
+          count.onsuccess = () => {
+            request.result.close()
+            resolve(count.result)
+          }
+          count.onerror = () => reject(count.error)
+        }
+      }),
+  )
 }

@@ -92,6 +92,26 @@ export function undeleteDeck(id: string): Promise<void> {
   })
 }
 
+/**
+ * After a pull: a deck deleted on another device may still have live cards here (added on this device, or on a
+ * third one, before the deletion arrived). They are deleted like `deleteDeck` would, with the deck's `deleted_at`,
+ * as local writes, so the server gets them too (architecture.md §6.1). Returns how many decks needed it.
+ */
+export async function deleteCardsOfDeletedDecks(): Promise<number> {
+  const deletedDecks = await db.decks.filter((deck) => deck.deleted_at !== null).toArray()
+  const deckIds = new Set(deletedDecks.map((deck) => deck.id))
+  const orphans = await db.cards.filter((card) => card.deleted_at === null && deckIds.has(card.deck_id)).toArray()
+  // No write (and no local-change notification, which would trigger another sync) when nothing is left over.
+  if (orphans.length === 0) return 0
+  const affected = new Set(orphans.map((card) => card.deck_id))
+  await mutate(['decks', 'cards', 'card_states'], async (ctx) => {
+    for (const deck of deletedDecks) {
+      if (affected.has(deck.id)) await setDeletedAt(ctx, deck.id, null, deck.deleted_at)
+    }
+  })
+  return affected.size
+}
+
 /** Moves the deck's cards and their states whose `deleted_at` equals `from` to `to`. */
 async function setDeletedAt(ctx: WriteContext, deck_id: string, from: number | null, to: number | null) {
   const cards = await ctx.db.cards
