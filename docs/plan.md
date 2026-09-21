@@ -276,6 +276,9 @@ Acceptance task: [P3-T06](../dev/impl/phase-03-audio-ai/task-06-phase-acceptance
 **Acceptance:** a homograph and a Polish word with diacritics get correct audio on the iPhone, offline after the
 first play; adding a word with AI takes two taps.
 
+**Accepted:** 2026-09-21 (deployment with the audio and AI keys, homograph and Polish audio on the iPhone, offline
+playback, cross-device audio, two-tap AI add and the quota message verified by the owner).
+
 ---
 
 ## Phase 4 — Polish

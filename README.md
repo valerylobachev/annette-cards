@@ -8,7 +8,8 @@ algorithm decide when you should see each word again.
 
 > **Status:** Phase 1 (local MVP) implemented and verified by automated tests: the app works fully offline;
 > the real-iPhone acceptance check is pending. Phase 2 (invite-only accounts, sync between devices, deployment to the
-> VPS with backups) is complete. Phase 3 (audio and AI) is in progress (see [`docs/plan.md`](docs/plan.md)).
+> VPS with backups) is complete. Phase 3 (server audio: generated
+> pronunciation and Wikimedia recordings; AI enrichment) is complete (see [`docs/plan.md`](docs/plan.md)).
 
 ## Features
 
