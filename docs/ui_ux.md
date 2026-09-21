@@ -153,9 +153,13 @@ be removed — confirm sheet), **Cancel**. Progress view with determinate bar du
 
 - Name, language pair ("EN-GB → RU"), card count, progress bar (new / learning / mature), due badge.
 - Swipe row left → Archive / Delete; long-press → context menu (Rename, Settings, Export, Delete).
+- Every swipe/long-press action is also in the row's "⋯" menu. Archive shows a 4 s "Deck archived · Undo"
+  snackbar; Export is enabled in P1-T06.
 - Section "Archived" collapsed at the bottom.
-- "+" → create deck sheet: name, target language (+ variant), native language, directions (Forward / Reverse /
-  Both), optional new-per-day override.
+- "New deck" button in the header → create deck sheet: name (required, ≤ 100 chars), target language (EN-GB, EN-US,
+  PL pinned as chips, others in a picker), native language (default Russian), directions (Forward / Reverse / Both,
+  default from settings), optional new-per-day override. The same sheet edits deck settings. The floating "+" on
+  this screen opens Quick add (§3), not the create deck sheet.
 
 **Empty state:** "No decks yet" + buttons "Create deck", "Import file".
 

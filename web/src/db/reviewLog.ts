@@ -9,11 +9,11 @@ export type ReviewInput = Omit<ReviewLog, 'id' | 'updated_at' | 'updated_by' | '
 // review_log is append-only: this module deliberately has no update function. The only allowed change is a soft
 // delete for "undo last answer" (CLAUDE.md invariants).
 
-/** Appends a log entry and records it in the outbox. Must run inside `mutate`. */
+/** Appends a log entry and records it in the outbox, inside the caller's transaction. */
 export async function appendReviewInTx(ctx: WriteContext, input: ReviewInput): Promise<ReviewLog> {
   const entry = stamp(ctx, { id: newId(), ...input, deleted_at: null })
-  await db.review_log.add(entry)
-  await addToOutbox('review_log', entry.id)
+  await ctx.db.review_log.add(entry)
+  await addToOutbox(ctx, 'review_log', entry.id)
   return entry
 }
 
@@ -24,11 +24,11 @@ export function appendReview(input: ReviewInput): Promise<ReviewLog> {
 /** Undo of an answer: sets `deleted_at`, nothing else. */
 export function softDeleteReview(id: string): Promise<void> {
   return mutate(['review_log'], async (ctx) => {
-    const entry = await db.review_log.get(id)
+    const entry = await ctx.db.review_log.get(id)
     if (!entry) throw new Error(`Review ${id} not found`)
     const deleted = stamp(ctx, { ...entry, deleted_at: ctx.now })
-    await db.review_log.put(deleted)
-    await addToOutbox('review_log', id)
+    await ctx.db.review_log.put(deleted)
+    await addToOutbox(ctx, 'review_log', id)
   })
 }
 

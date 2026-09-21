@@ -1,4 +1,4 @@
-export type FieldErrorCode = 'required' | 'too_long'
+export type FieldErrorCode = 'required' | 'too_long' | 'invalid'
 
 /** A validation problem of one input field; the UI maps `code` to a localized `validation.*` message. */
 export type FieldError = { field: string; code: FieldErrorCode; max?: number }

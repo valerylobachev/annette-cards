@@ -21,10 +21,10 @@ export async function getSettings(): Promise<Settings> {
 /** Merges `patch` into the stored document, stamps it and records it in the outbox. */
 export function updateSettings(patch: Partial<Settings>): Promise<Settings> {
   return mutate(['settings'], async (ctx) => {
-    const current = await getSettings()
+    const current = toSettings(await ctx.db.settings.get(SETTINGS_ID))
     const row: SettingsRow = stamp(ctx, { ...current, ...patch, id: SETTINGS_ID })
-    await db.settings.put(row)
-    await addToOutbox('settings', SETTINGS_ID)
+    await ctx.db.settings.put(row)
+    await addToOutbox(ctx, 'settings', SETTINGS_ID)
     return toSettings(row)
   })
 }

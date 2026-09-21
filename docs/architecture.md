@@ -107,7 +107,10 @@ Every mutation runs in a single Dexie `rw` transaction:
 replaced by optimized weights (Phase 4).
 
 **Directions.** Each card has up to two states: `forward` (see studied word → recall translation) and `reverse`
-(see translation → recall studied word). The deck setting decides which directions are active.
+(see translation → recall studied word). The deck setting decides which directions are active. Every card write
+creates a New state for each active direction that has none (`ensureStatesForCards` in `web/src/db/cardStates.ts`);
+existing states are never reset. When a direction is switched off, its states are **kept** (hidden from study
+queues, not deleted), so switching it back on restores the progress.
 
 **Day boundary.** A "study day" starts at `day_start_hour` (default 04:00 local time). Daily limits and statistics
 use study days.
@@ -424,7 +427,8 @@ CREATE INDEX idx_log_user_reviewed     ON review_log(user_id, reviewed_at);
   `updated_at` wins; ties broken by lexicographically larger `updated_by`.
 - `review_log` is append-only and idempotent by `id`; only `deleted_at` may change (undo).
 - Soft deletes propagate like any other change. A deleted deck implies its cards are hidden on both sides; the
-  client also marks the cards deleted to keep data consistent.
+  client also marks the cards and their states deleted, in the same transaction and with the same `deleted_at`
+  (which lets "Undo" restore exactly those rows).
 - Clock skew risk is accepted for a personal app; the client warns if `|server_time − device_time| > 5 min`.
 
 ### 6.2 Sequence

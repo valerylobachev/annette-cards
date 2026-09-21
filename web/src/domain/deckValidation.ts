@@ -25,7 +25,7 @@ export function validateDeckInput(input: DeckInput): { value: DeckInput; errors:
     ...checkText('native_lang', value.native_lang, { required: true, max: 35 }),
   ]
   if (value.new_per_day !== null && !(Number.isInteger(value.new_per_day) && value.new_per_day >= 0)) {
-    errors.push({ field: 'new_per_day', code: 'required' })
+    errors.push({ field: 'new_per_day', code: 'invalid' })
   }
   return { value, errors }
 }

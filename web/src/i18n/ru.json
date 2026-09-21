@@ -1,7 +1,20 @@
 {
   "common": {
     "back": "Назад",
-    "comingSoon": "Этот экран скоро появится."
+    "comingSoon": "Этот экран скоро появится.",
+    "close": "Закрыть",
+    "cancel": "Отмена",
+    "save": "Сохранить",
+    "create": "Создать",
+    "delete": "Удалить",
+    "undo": "Отменить",
+    "rename": "Переименовать",
+    "archive": "В архив",
+    "unarchive": "Из архива",
+    "settings": "Настройки",
+    "export": "Экспорт",
+    "search": "Поиск",
+    "more": "Действия"
   },
   "nav": {
     "label": "Основная навигация",
@@ -11,23 +24,57 @@
     "settings": "Настройки"
   },
   "screens": {
-    "welcome": { "title": "Добро пожаловать" },
-    "signIn": { "title": "Вход" },
-    "register": { "title": "Регистрация" },
-    "firstSync": { "title": "Синхронизация данных" },
-    "today": { "title": "Сегодня" },
-    "decks": { "title": "Колоды" },
-    "deck": { "title": "Колода" },
-    "card": { "title": "Карточка" },
-    "cardNew": { "title": "Новая карточка" },
-    "cardEdit": { "title": "Редактирование карточки" },
-    "import": { "title": "Импорт" },
-    "study": { "title": "Изучение" },
-    "summary": { "title": "Итоги сессии" },
-    "stats": { "title": "Статистика" },
-    "settings": { "title": "Настройки" },
-    "account": { "title": "Аккаунт и синхронизация" },
-    "voices": { "title": "Голоса" }
+    "welcome": {
+      "title": "Добро пожаловать"
+    },
+    "signIn": {
+      "title": "Вход"
+    },
+    "register": {
+      "title": "Регистрация"
+    },
+    "firstSync": {
+      "title": "Синхронизация данных"
+    },
+    "today": {
+      "title": "Сегодня"
+    },
+    "decks": {
+      "title": "Колоды"
+    },
+    "deck": {
+      "title": "Колода"
+    },
+    "card": {
+      "title": "Карточка"
+    },
+    "cardNew": {
+      "title": "Новая карточка"
+    },
+    "cardEdit": {
+      "title": "Редактирование карточки"
+    },
+    "import": {
+      "title": "Импорт"
+    },
+    "study": {
+      "title": "Изучение"
+    },
+    "summary": {
+      "title": "Итоги сессии"
+    },
+    "stats": {
+      "title": "Статистика"
+    },
+    "settings": {
+      "title": "Настройки"
+    },
+    "account": {
+      "title": "Аккаунт и синхронизация"
+    },
+    "voices": {
+      "title": "Голоса"
+    }
   },
   "settings": {
     "language": "Язык интерфейса"
@@ -45,5 +92,55 @@
   "update": {
     "available": "Доступна новая версия",
     "reload": "Обновить"
+  },
+  "validation": {
+    "required": "Обязательное поле",
+    "tooLong": "Не более {{max}} символов",
+    "invalidNumber": "Введите целое число"
+  },
+  "decks": {
+    "new": "Новая колода",
+    "create": "Создать колоду",
+    "importFile": "Импорт из файла",
+    "empty": "Колод пока нет",
+    "searchPlaceholder": "Поиск колод",
+    "noMatches": "Ничего не найдено",
+    "archived": "Архив ({{count}})",
+    "languagePair": "{{target}} → {{native}}",
+    "due_one": "{{count}} к повторению",
+    "due_few": "{{count}} к повторению",
+    "due_many": "{{count}} к повторению",
+    "due_other": "{{count}} к повторению",
+    "progress": "Новые {{new}}, изучаются {{learning}}, выучены {{mature}}",
+    "actionsFor": "Действия с колодой «{{name}}»",
+    "deleteConfirm_one": "Удалить колоду и {{count}} карточку?",
+    "deleteConfirm_few": "Удалить колоду и {{count}} карточки?",
+    "deleteConfirm_many": "Удалить колоду и {{count}} карточек?",
+    "deleteConfirm_other": "Удалить колоду и {{count}} карточки?",
+    "deleteHint": "В течение 10 секунд это можно отменить.",
+    "form": {
+      "createTitle": "Новая колода",
+      "settingsTitle": "Настройки колоды",
+      "renameTitle": "Переименовать колоду",
+      "name": "Название",
+      "namePlaceholder": "например, English B2",
+      "targetLang": "Изучаю",
+      "otherLanguage": "Другой язык",
+      "nativeLang": "Перевод на",
+      "directions": "Направления",
+      "forward": "Прямое",
+      "reverse": "Обратное",
+      "both": "Оба",
+      "forwardHint": "Видите слово — вспоминаете перевод",
+      "reverseHint": "Видите перевод — вспоминаете слово",
+      "bothHint": "В обе стороны, у каждой свой прогресс",
+      "newPerDay": "Новых слов в день",
+      "newPerDayHint": "Оставьте пустым, чтобы использовать общую настройку ({{count}})"
+    }
+  },
+  "snackbar": {
+    "deckDeleted": "Колода удалена",
+    "deckArchived": "Колода в архиве",
+    "deckRestored": "Колода восстановлена"
   }
 }

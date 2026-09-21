@@ -1,7 +1,20 @@
 {
   "common": {
     "back": "Back",
-    "comingSoon": "This screen is coming soon."
+    "comingSoon": "This screen is coming soon.",
+    "close": "Close",
+    "cancel": "Cancel",
+    "save": "Save",
+    "create": "Create",
+    "delete": "Delete",
+    "undo": "Undo",
+    "rename": "Rename",
+    "archive": "Archive",
+    "unarchive": "Unarchive",
+    "settings": "Settings",
+    "export": "Export",
+    "search": "Search",
+    "more": "More actions"
   },
   "nav": {
     "label": "Main navigation",
@@ -11,23 +24,57 @@
     "settings": "Settings"
   },
   "screens": {
-    "welcome": { "title": "Welcome" },
-    "signIn": { "title": "Sign in" },
-    "register": { "title": "Create account" },
-    "firstSync": { "title": "Sync your data" },
-    "today": { "title": "Today" },
-    "decks": { "title": "Decks" },
-    "deck": { "title": "Deck" },
-    "card": { "title": "Card" },
-    "cardNew": { "title": "New card" },
-    "cardEdit": { "title": "Edit card" },
-    "import": { "title": "Import" },
-    "study": { "title": "Study" },
-    "summary": { "title": "Session summary" },
-    "stats": { "title": "Statistics" },
-    "settings": { "title": "Settings" },
-    "account": { "title": "Account & sync" },
-    "voices": { "title": "Voices" }
+    "welcome": {
+      "title": "Welcome"
+    },
+    "signIn": {
+      "title": "Sign in"
+    },
+    "register": {
+      "title": "Create account"
+    },
+    "firstSync": {
+      "title": "Sync your data"
+    },
+    "today": {
+      "title": "Today"
+    },
+    "decks": {
+      "title": "Decks"
+    },
+    "deck": {
+      "title": "Deck"
+    },
+    "card": {
+      "title": "Card"
+    },
+    "cardNew": {
+      "title": "New card"
+    },
+    "cardEdit": {
+      "title": "Edit card"
+    },
+    "import": {
+      "title": "Import"
+    },
+    "study": {
+      "title": "Study"
+    },
+    "summary": {
+      "title": "Session summary"
+    },
+    "stats": {
+      "title": "Statistics"
+    },
+    "settings": {
+      "title": "Settings"
+    },
+    "account": {
+      "title": "Account & sync"
+    },
+    "voices": {
+      "title": "Voices"
+    }
   },
   "settings": {
     "language": "Interface language"
@@ -43,5 +90,51 @@
   "update": {
     "available": "A new version is available",
     "reload": "Reload"
+  },
+  "validation": {
+    "required": "Required",
+    "tooLong": "At most {{max}} characters",
+    "invalidNumber": "Enter a whole number"
+  },
+  "decks": {
+    "new": "New deck",
+    "create": "Create deck",
+    "importFile": "Import file",
+    "empty": "No decks yet",
+    "searchPlaceholder": "Search decks",
+    "noMatches": "No decks match your search",
+    "archived": "Archived ({{count}})",
+    "languagePair": "{{target}} → {{native}}",
+    "due_one": "{{count}} due",
+    "due_other": "{{count}} due",
+    "progress": "New {{new}}, learning {{learning}}, mature {{mature}}",
+    "actionsFor": "Actions for {{name}}",
+    "deleteConfirm_one": "Delete deck and {{count}} card?",
+    "deleteConfirm_other": "Delete deck and {{count}} cards?",
+    "deleteHint": "You can undo this for 10 seconds.",
+    "form": {
+      "createTitle": "New deck",
+      "settingsTitle": "Deck settings",
+      "renameTitle": "Rename deck",
+      "name": "Name",
+      "namePlaceholder": "e.g. English B2",
+      "targetLang": "I'm learning",
+      "otherLanguage": "Other language",
+      "nativeLang": "Translate into",
+      "directions": "Directions",
+      "forward": "Forward",
+      "reverse": "Reverse",
+      "both": "Both",
+      "forwardHint": "See the word, recall the translation",
+      "reverseHint": "See the translation, recall the word",
+      "bothHint": "Both ways, each with its own progress",
+      "newPerDay": "New words per day",
+      "newPerDayHint": "Leave empty to use the global setting ({{count}})"
+    }
+  },
+  "snackbar": {
+    "deckDeleted": "Deck deleted",
+    "deckArchived": "Deck archived",
+    "deckRestored": "Deck restored"
   }
 }

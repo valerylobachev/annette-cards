@@ -1,10 +1,8 @@
 import { expect, test } from '@playwright/test'
+import { useUiLanguage } from './helpers'
 
 test.beforeEach(async ({ page }) => {
-  // Start every test in English regardless of the browser locale.
-  await page.addInitScript(() => {
-    if (!localStorage.getItem('annette.uiLanguage')) localStorage.setItem('annette.uiLanguage', 'en')
-  })
+  await useUiLanguage(page)
 })
 
 test('app loads and the four tabs navigate', async ({ page }) => {

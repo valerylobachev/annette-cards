@@ -1,5 +1,7 @@
 import type { Card } from '@/domain/types'
 import { newId } from '@/lib/ids'
+import { ensureStatesForCard } from './cardStates'
+import { requireDeckInTx } from './decks'
 import { addToOutbox } from './outbox'
 import { db } from './schema'
 import { mutate, stamp, type WriteContext } from './write'
@@ -12,17 +14,19 @@ export type CardInput = Pick<
 
 type ReadOptions = { includeDeleted?: boolean }
 
-/** Stamps and stores a card and records it in the outbox. Must run inside `mutate`. */
+/** Stamps and stores a card and records it in the outbox, inside the caller's transaction. */
 export async function writeCard(ctx: WriteContext, card: Card): Promise<Card> {
   const stamped = stamp(ctx, card)
-  await db.cards.put(stamped)
-  await addToOutbox('cards', stamped.id)
+  await ctx.db.cards.put(stamped)
+  await addToOutbox(ctx, 'cards', stamped.id)
   return stamped
 }
 
+/** Creates a card and a New state for each active direction of its deck. */
 export function createCard(input: CardInput): Promise<Card> {
-  return mutate(['cards'], (ctx) =>
-    writeCard(ctx, {
+  return mutate(['decks', 'cards', 'card_states'], async (ctx) => {
+    const deck = await requireDeckInTx(ctx, input.deck_id)
+    const card = await writeCard(ctx, {
       id: newId(),
       ...input,
       audio_id: null,
@@ -30,13 +34,15 @@ export function createCard(input: CardInput): Promise<Card> {
       deleted_at: null,
       updated_at: ctx.now,
       updated_by: ctx.deviceId,
-    }),
-  )
+    })
+    await ensureStatesForCard(ctx, card, deck)
+    return card
+  })
 }
 
 export function updateCard(id: string, patch: Partial<CardInput>): Promise<Card> {
   return mutate(['cards'], async (ctx) => {
-    const card = await requireCard(id)
+    const card = await requireCardInTx(ctx, id)
     return writeCard(ctx, { ...card, ...patch })
   })
 }
@@ -44,7 +50,7 @@ export function updateCard(id: string, patch: Partial<CardInput>): Promise<Card>
 /** Soft delete: sets `deleted_at`; the row stays for sync. */
 export function deleteCard(id: string): Promise<void> {
   return mutate(['cards'], async (ctx) => {
-    const card = await requireCard(id)
+    const card = await requireCardInTx(ctx, id)
     await writeCard(ctx, { ...card, deleted_at: ctx.now })
   })
 }
@@ -63,8 +69,8 @@ export function listCards(deck_id: string, { includeDeleted = false }: ReadOptio
     .sortBy('created_at')
 }
 
-export async function requireCard(id: string): Promise<Card> {
-  const card = await db.cards.get(id)
+export async function requireCardInTx(ctx: WriteContext, id: string): Promise<Card> {
+  const card = await ctx.db.cards.get(id)
   if (!card) throw new Error(`Card ${id} not found`)
   return card
 }

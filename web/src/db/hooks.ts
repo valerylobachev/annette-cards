@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { DEFAULT_SETTINGS } from '@/domain/settings'
 import { getCardStates } from './cardStates'
 import { getCard, listCards } from './cards'
-import { getDeck, listDecks } from './decks'
+import { getDeck, listDeckSummaries, listDecks } from './decks'
 import { db } from './schema'
 import { toSettings } from './settings'
 
@@ -32,4 +32,8 @@ export function useCardStates(card_id: string) {
 /** Settings are never "loading": defaults are used until the stored row is read. */
 export function useSettings() {
   return useLiveQuery(async () => toSettings(await db.settings.get('user')), [], DEFAULT_SETTINGS)
+}
+
+export function useDeckSummaries() {
+  return useLiveQuery(() => listDeckSummaries())
 }

@@ -1,0 +1,31 @@
+import { describe, expect, it } from 'vitest'
+import { formatNumber, languageName, relativeTime } from './intl'
+
+const day = 24 * 3600 * 1000
+
+describe('languageName', () => {
+  it('names a language in the UI language', () => {
+    expect(languageName('pl', 'ru')).toBe('польский')
+    expect(languageName('pl', 'en')).toBe('Polish')
+  })
+
+  it('falls back to the code for an invalid tag', () => {
+    expect(languageName('!!', 'en')).toBe('!!')
+  })
+})
+
+describe('relativeTime', () => {
+  it('formats future and past times', () => {
+    expect(relativeTime(3 * day, 'en', 0)).toBe('in 3 days')
+    expect(relativeTime(3 * day, 'ru', 0)).toBe('через 3 дня')
+    expect(relativeTime(-2 * 3600 * 1000, 'en', 0)).toBe('2 hours ago')
+    expect(relativeTime(10_000, 'en', 0)).toBe('this minute')
+  })
+})
+
+describe('formatNumber', () => {
+  it('uses locale grouping', () => {
+    expect(formatNumber(1210, 'en')).toBe('1,210')
+    expect(formatNumber(1210, 'ru')).toBe('1 210')
+  })
+})
