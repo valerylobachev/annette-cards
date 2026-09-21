@@ -449,7 +449,7 @@ function CardRow({ item, lang, selected, onToggle, onLongPress, onDelete }: Card
       >
         {content}
       </Link>
-      <SpeakButton text={card.front} lang={lang} className="mr-1" />
+      <SpeakButton text={card.front} lang={lang} audioId={card.audio_id} className="mr-1" />
     </SwipeRow>
   )
 }

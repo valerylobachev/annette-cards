@@ -8,13 +8,15 @@ type Props = {
   text: string
   /** BCP-47 language of `text` (the deck's `target_lang`). */
   lang: string
+  /** The card's server clip (`card.audio_id`), played instead of the system voice. */
+  audioId?: string | null
   className?: string
 }
 
-/** Speaker button that pronounces `text` (UC-12); it does not trigger the row or card it sits in. */
-export function SpeakButton({ text, lang, className }: Props) {
+/** Speaker button that pronounces `text` (UC-12), with the card's server audio when it has one; it does not trigger the row or card it sits in. */
+export function SpeakButton({ text, lang, audioId = null, className }: Props) {
   const { t } = useTranslation()
-  const { speak } = useSpeech()
+  const { pronounce } = useSpeech()
   return (
     <Button
       type="button"
@@ -26,7 +28,7 @@ export function SpeakButton({ text, lang, className }: Props) {
       onClick={(event) => {
         event.preventDefault()
         event.stopPropagation()
-        void speak(text, lang)
+        void pronounce(text, lang, audioId)
       }}
     >
       <Volume2 className="size-5" />

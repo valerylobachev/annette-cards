@@ -13,6 +13,7 @@ import type { Card, CardState, Deck, Direction, Rating } from '@/domain/types'
 import { formatNumber, relativeTime } from '@/lib/intl'
 import { useSpeech } from '@/lib/speech/useSpeech'
 import { cn } from '@/lib/utils'
+import { PronunciationSection } from './PronunciationSection'
 
 const ratingDotClass: Record<Rating, string> = {
   1: 'bg-red-500',
@@ -45,7 +46,7 @@ export function CardView({ card, deck }: { card: Card; deck: Deck }) {
   const navigate = useNavigate()
   const snackbar = useSnackbar()
   const states = useCardStates(card.id)
-  const { speak } = useSpeech()
+  const { speak, pronounce } = useSpeech()
   const [confirm, setConfirm] = useState<'reset' | 'delete' | null>(null)
 
   function goBack() {
@@ -84,7 +85,7 @@ export function CardView({ card, deck }: { card: Card; deck: Deck }) {
             type="button"
             lang={deck.target_lang}
             className="inline-flex items-start gap-2 text-left"
-            onClick={() => void speak(card.front, deck.target_lang)}
+            onClick={() => void pronounce(card.front, deck.target_lang, card.audio_id)}
           >
             {card.front}
             <Volume2 className="mt-2 size-6 shrink-0 text-muted-foreground" aria-hidden />
@@ -135,6 +136,8 @@ export function CardView({ card, deck }: { card: Card; deck: Deck }) {
           <p className="whitespace-pre-wrap">{card.notes}</p>
         </section>
       )}
+
+      <PronunciationSection card={card} deck={deck} />
 
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold">{t('card.progress')}</h2>

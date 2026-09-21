@@ -40,6 +40,8 @@ export default defineConfig({
         ANNETTE_DATABASE_URL: 'sqlite://data/e2e.db',
         ANNETTE_BIND: `127.0.0.1:${apiPort}`,
         ANNETTE_PUBLIC_URL: syncURL,
+        // No test may call an external service (Wikimedia is on by default; TTS needs a key).
+        ANNETTE_COMMONS_ENABLED: 'false',
         RUST_LOG: 'warn',
       },
       url: `http://127.0.0.1:${apiPort}/api/health`,

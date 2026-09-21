@@ -256,11 +256,11 @@ Tasks: [P3-T01](../dev/impl/phase-03-audio-ai/task-01-tts-audio-server.md) · [P
 ### 3.2 Client audio
 Task: [P3-T03](../dev/impl/phase-03-audio-ai/task-03-client-audio.md)
 
-- [ ] Card view pronunciation section: generate, find recording, remove, attribution display
-- [ ] Playback chain: cached MP3 → download+cache → system voice fallback
-- [ ] Workbox runtime cache for `/api/audio/*`; optional prefetch for active decks after sync
-- [ ] "Clear cached audio" and storage usage in Settings
-- [ ] (added) Wikimedia attributions list in Settings → About
+- [x] Card view pronunciation section: generate, find recording, remove, attribution display
+- [x] Playback chain: cached MP3 → download+cache → system voice fallback
+- [x] Workbox runtime cache for `/api/audio/*`; optional prefetch for active decks after sync
+- [x] "Clear cached audio" and storage usage in Settings
+- [x] (added) Wikimedia attributions list in Settings → About
 
 ### 3.3 AI enrichment
 Tasks: [P3-T04](../dev/impl/phase-03-audio-ai/task-04-enrich-server.md) · [P3-T05](../dev/impl/phase-03-audio-ai/task-05-enrich-client.md)

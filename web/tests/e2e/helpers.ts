@@ -127,3 +127,62 @@ export async function readRow(page: Page, store: string, key: string): Promise<R
   )
   return row as Row | undefined
 }
+
+export type Spoken = { text: string; lang: string; voice: string | null; rate: number }
+
+/** Replaces the Web Speech API with a recorder: three English voices, every `speak` call kept in `__spoken`. */
+export async function stubSpeech(page: Page) {
+  await page.addInitScript(() => {
+    const voices = [
+      {
+        name: 'Daniel',
+        lang: 'en-GB',
+        voiceURI: 'com.apple.voice.compact.en-GB.Daniel',
+        default: true,
+        localService: true,
+      },
+      {
+        name: 'Malcolm (Premium)',
+        lang: 'en-GB',
+        voiceURI: 'com.apple.voice.premium.en-GB.Malcolm',
+        default: false,
+        localService: true,
+      },
+      {
+        name: 'Samantha',
+        lang: 'en-US',
+        voiceURI: 'com.apple.voice.enhanced.en-US.Samantha',
+        default: false,
+        localService: true,
+      },
+    ]
+    const spoken: unknown[] = []
+    Object.assign(window, { __spoken: spoken })
+    class FakeUtterance extends EventTarget {
+      text: string
+      lang = ''
+      rate = 1
+      volume = 1
+      voice: { voiceURI: string } | null = null
+      onend: (() => void) | null = null
+      onerror: (() => void) | null = null
+      constructor(text: string) {
+        super()
+        this.text = text
+      }
+    }
+    const synth = Object.assign(new EventTarget(), {
+      getVoices: () => voices,
+      cancel: () => {},
+      speak: (u: FakeUtterance) => {
+        spoken.push({ text: u.text, lang: u.lang, voice: u.voice?.voiceURI ?? null, rate: u.rate })
+        setTimeout(() => u.onend?.(), 10)
+      },
+    })
+    Object.defineProperty(window, 'speechSynthesis', { value: synth, configurable: true })
+    Object.defineProperty(window, 'SpeechSynthesisUtterance', { value: FakeUtterance, configurable: true })
+  })
+}
+
+export const spoken = (page: Page) =>
+  page.evaluate(() => (window as unknown as { __spoken: Spoken[] }).__spoken.filter((s) => s.text !== ''))

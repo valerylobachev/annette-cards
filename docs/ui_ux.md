@@ -212,7 +212,10 @@ history.
 
 **Layout:** large front word + speaker button; IPA under it; translation; example (tap → speak) and its
 translation; tags; notes. Section **Pronunciation**: current source (System voice / Generated / Recording with
-attribution), buttons "Generate audio", "Find recording", "Remove audio" (server-only, offline hint).
+attribution; "Server audio" while a clip that is not cached yet cannot be downloaded), buttons "Generate audio",
+"Find recording", "Remove audio" (signed in only; each shown only when the server offers the feature — `/api/meta`,
+remembered offline; disabled offline with the "Available online" hint). A new clip plays once; errors are shown
+under the buttons ("No recording found for this word.", quota, service errors).
 Section **Progress** per direction: state, next due, stability, difficulty, reps, lapses, and a mini history of
 the last 10 answers (colored dots). Actions: Edit, Reset progress, Delete.
 
@@ -362,13 +365,15 @@ steps of 10, day start 00:00–23:00); retention is a slider 0.80–0.95.
 - **Study:** new words per day, max reviews per day, directions default, answer mode (Simple 2 buttons /
   Detailed 4 buttons), show IPA on front, day starts at (hour), desired retention (slider 0.80–0.95 with hint),
   FSRS weights (Phase 4: "Optimize" button, last optimized date).
-- **Audio:** autoplay (Off / Front / Front and answer), speech rate, **Voices** → S-16.
+- **Audio:** autoplay (Off / Front / Front and answer), speech rate, "Download audio for offline" (this device:
+  after each sync, clips of active decks are saved), **Voices** → S-16.
 - **Reminders:** enable, time; requires installed PWA (else explanation).
 - **Appearance:** theme (System / Light / Dark), UI language (Русский / English).
-- **Data:** Export (JSON full backup, CSV per deck), Import backup, storage usage, "Clear cached audio".
+- **Data:** Export (JSON full backup, CSV per deck), Import backup, storage usage (`navigator.storage.estimate()`,
+  "12.5 MB of 2 GB"), number of saved audio clips, "Clear cached audio" (confirm sheet).
 - **About:** version, server version (`GET /api/meta` when online, else "—"), "Install on iPhone" (opens the install hint; hidden in the installed app),
-  licenses (runtime dependencies with versions and licenses, collected at build time; Wikimedia attributions list
-  in Phase 3).
+  licenses (runtime dependencies with versions and licenses, collected at build time), "Recordings (Wikimedia
+  Commons)": author · license · file page of every recording saved on this device.
 
 The storage warning (§7) sits at the top of Settings and Today while persistence is denied and no account is
 signed in, with an "Export a backup" button.

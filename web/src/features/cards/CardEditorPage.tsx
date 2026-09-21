@@ -184,7 +184,14 @@ function CardEditor({ decks, card, initialDeckId }: EditorProps) {
                 onChange={set('front')}
                 {...errorProps('front')}
               />
-              {deck && <SpeakButton text={fields.front} lang={deck.target_lang} />}
+              {deck && (
+                <SpeakButton
+                  text={fields.front}
+                  lang={deck.target_lang}
+                  // The clip says the saved word: an edited front is spoken by the system voice.
+                  audioId={card && fields.front.trim() === card.front ? card.audio_id : null}
+                />
+              )}
             </div>
           </FormField>
           {duplicate && <DuplicateWarning card={duplicate} />}

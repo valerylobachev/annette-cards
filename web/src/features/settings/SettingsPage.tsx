@@ -1,9 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { ChevronRight } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { meta } from '@/api/endpoints/system/system'
 import { InstallHint } from '@/components/InstallHint'
 import { StorageWarning } from '@/components/StorageWarning'
 import { useMeta } from '@/db/hooks'
@@ -14,12 +12,13 @@ import type { AnswerMode, Directions } from '@/domain/types'
 import { useAccount } from '@/features/auth/account'
 import { SyncIndicator } from '@/features/sync/SyncIndicator'
 import { type UiLanguage, uiLanguages } from '@/i18n'
-import { callApi } from '@/lib/api'
 import { formatPercent } from '@/lib/intl'
 import { isStandalone } from '@/lib/platform'
+import { useServerMeta } from '@/lib/serverFeatures'
 import type { Theme } from '@/lib/theme'
 import { useOnline } from '@/lib/useOnline'
 import { AudioSettingsSection } from './AudioSettingsSection'
+import { RecordingAttributions } from './AudioStorage'
 import { DataSection } from './DataSection'
 import { NumberSelect, Segmented, SettingsGroup, SettingsRow, useSettingsDraft } from './SettingsList'
 
@@ -198,7 +197,7 @@ function AboutGroup() {
   const { t } = useTranslation()
   const [installOpen, setInstallOpen] = useState(false)
   const online = useOnline()
-  const serverMeta = useQuery({ queryKey: ['meta'], queryFn: () => callApi(() => meta()), enabled: online })
+  const serverMeta = useServerMeta()
   const serverVersion = online ? serverMeta.data?.version : undefined
   return (
     <SettingsGroup title={t('settings.sections.about')}>
@@ -231,6 +230,7 @@ function AboutGroup() {
           ))}
         </ul>
       </details>
+      <RecordingAttributions />
       <InstallHint open={installOpen} onOpenChange={setInstallOpen} />
     </SettingsGroup>
   )

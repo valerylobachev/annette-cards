@@ -101,7 +101,9 @@
     "installApp": "Установить на iPhone",
     "licenses": "Лицензии открытого ПО",
     "changesNextSession": "Изменения применятся со следующей сессии.",
-    "serverVersion": "Версия сервера"
+    "serverVersion": "Версия сервера",
+    "attributions": "Записи (Wikimedia Commons)",
+    "noAttributions": "На этом устройстве нет сохранённых записей."
   },
   "languages": {
     "en": "English",
@@ -516,7 +518,9 @@
     },
     "rate": "Скорость речи",
     "rateValue": "{{rate}}×",
-    "voices": "Голоса"
+    "voices": "Голоса",
+    "prefetch": "Скачивать аудио для офлайна",
+    "prefetchHint": "После каждой синхронизации аудио карточек активных колод сохраняется на этом устройстве."
   },
   "voices": {
     "auto": "Автоматически (лучший доступный)",
@@ -544,7 +548,18 @@
   },
   "storage": {
     "warning": "Safari может удалить ваши данные. Войдите в аккаунт или сохраните резервную копию.",
-    "export": "Сохранить резервную копию"
+    "export": "Сохранить резервную копию",
+    "usage": "Занято места",
+    "usageValue": "{{used}} из {{quota}}",
+    "unknown": "Неизвестно",
+    "cachedAudio_one": "Сохранён {{formatted}} аудиофайл",
+    "cachedAudio_few": "Сохранено {{formatted}} аудиофайла",
+    "cachedAudio_many": "Сохранено {{formatted}} аудиофайлов",
+    "cachedAudio_other": "Сохранено {{formatted}} аудиофайла",
+    "clearAudio": "Очистить сохранённое аудио",
+    "clearAudioConfirm": "Удалить сохранённое аудио с этого устройства?",
+    "clearAudioHint": "При воспроизведении онлайн файлы скачаются снова.",
+    "audioCleared": "Сохранённое аудио удалено"
   },
   "onboarding": {
     "appName": "Annette Cards",
@@ -721,5 +736,19 @@
     "syncing": "Синхронизируем данные…",
     "continuesLater": "Аккаунт подключён, синхронизация продолжится в фоне.",
     "retry": "Повторить"
+  },
+  "pronunciation": {
+    "title": "Произношение",
+    "systemVoice": "Системный голос",
+    "generated": "Сгенерировано",
+    "recording": "Запись",
+    "serverAudio": "Аудио с сервера",
+    "attribution": "{{attribution}}",
+    "generate": "Сгенерировать аудио",
+    "findRecording": "Найти запись",
+    "remove": "Удалить аудио",
+    "working": "Получаем аудио…",
+    "removing": "Удаляем аудио…",
+    "noRecording": "Для этого слова запись не найдена."
   }
 }

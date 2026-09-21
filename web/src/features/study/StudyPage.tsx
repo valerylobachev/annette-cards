@@ -13,6 +13,7 @@ import { answerRatings } from '@/domain/rating'
 import type { QueueItem } from '@/domain/session'
 import type { SessionProgress } from '@/domain/studySession'
 import type { AnswerMode, Rating } from '@/domain/types'
+import { unlockAudio } from '@/lib/audio/playCard'
 import { languageName } from '@/lib/intl'
 import { unlock } from '@/lib/speech/speech'
 import { useSpeech } from '@/lib/speech/useSpeech'
@@ -105,6 +106,7 @@ export function StudyPage() {
             onStart={() => {
               // Synchronously inside the tap: iOS allows speech only after a gesture-started utterance.
               unlock()
+              unlockAudio()
               void session.start()
             }}
           />

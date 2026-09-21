@@ -88,7 +88,8 @@ They are stored in `meta` because voices differ between devices. `meta` keys (ty
 `device_id`, `sync_cursor` (`server_seq` of the last pulled row), `last_sync_at` (end of the last successful sync),
 `sync_log` (the last 10 sync runs: start, end, status, pushed, pulled, rejected rows, error code), `clock_skew_ms`
 (device minus server clock, stored while it exceeds 5 min), `account`, `voice_pref` (voice per language), `speech_rate`, `theme`,
-`audio_prefetch`, `last_quick_add_deck` (deck preselected in Quick add), `extra_new` (`{ study_day, count }`,
+`audio_prefetch` (download clips of active decks after each sync), `server_features` (`features` of the last
+`GET /api/meta`, kept for offline use), `last_quick_add_deck` (deck preselected in Quick add), `extra_new` (`{ study_day, count }`,
 extra new cards allowed today), `study_session` (snapshot of the current or last study session for resume within
 30 min and the summary; `domain/studySession.ts`), `install_hint_shown` (the one-time iOS install hint was closed),
 `storage_persisted` (answer of `navigator.storage.persist()`), `onboarding_done` (first-run onboarding finished on
@@ -225,7 +226,26 @@ flowchart TD
 - The first utterance must follow a user gesture; the study screen starts with a "Start" tap for this reason.
 - `utterance.lang` is always set explicitly (`en-GB`, `en-US`, `pl-PL`).
 - Example sentences can be spoken too (tap on the example).
-- Optional prefetch after sync: download MP3s for cards of active decks into Cache Storage (`audio-v1`).
+- **Server audio** (P3-T03, `lib/audio/`): `useSpeech().speaker` is `audioSpeaker(systemSpeaker)`. For a card with
+  `audio_id`, `playCardAudio` takes the clip from Cache Storage (`audio-v1`, key `/api/audio/{id}`), else downloads
+  it while online (`fetch` with `credentials: 'same-origin'`; a 200 answer is put into the cache) and plays it through
+  one reused `<audio>` element from a blob URL (hence `media-src 'self' blob:` in the CSP, §9). No clip (offline and
+  not cached, 404, network error) or a refused `play()` → the system voice. Examples always use the system voice.
+  iOS: the study Start tap and every speaker tap call `unlockAudio()` synchronously (the element plays a 50 ms silent
+  WAV inside the gesture), so autoplayed clips may play later without a gesture.
+- **Source and attribution** come from the clip's response headers (`X-Audio-Source`, percent-encoded
+  `X-Audio-Attribution`, §5.3), so a cached clip carries them offline. Settings → About lists the attributions of the
+  cached recordings (`cachedAudioInfo()`).
+- **Attach / remove** (S-07): the device first pushes unsynced edits of the card (so the server's edit does not
+  overwrite them), calls `POST`/`DELETE /api/cards/{id}/audio`, then writes the new `audio_id` with
+  `applyServerAudio(cardId, audioId)` — no stamp and no outbox entry, because the server already stamped and versioned
+  the edit (§7) and a push of it would only race that version; the next pull (started right away) brings the server's
+  row. A new clip is cached and played once.
+- **Prefetch** (device-local `meta.audio_prefetch`, Settings → Audio, default off): after each successful sync
+  (`onSyncFinished` in the engine), clips of cards with `audio_id` in decks that are neither deleted nor archived and
+  not yet cached are downloaded, two at a time; it stops when the connection is lost.
+- **Feature flags:** `useServerFeatures()` reads `GET /api/meta` (TanStack Query, when online) and keeps `features` in
+  `meta.server_features`, so buttons of disabled features stay hidden offline too.
 
 ### 4.6 Internationalization
 
@@ -247,7 +267,7 @@ flowchart TD
 | Manifest | `display: standalone`, theme colors for light/dark, maskable icons |
 | iOS meta | `apple-touch-icon`, `apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style` |
 | Precache | App shell via Workbox: `index.html`, JS (incl. the CSV import worker; routes are not lazy-loaded), CSS, `theme.js`, icons, manifest; `navigateFallback: /index.html` so every route opens offline. Verified by `web/tests/e2e/offline.spec.ts` against the production build |
-| Runtime caching | `/api/audio/*` CacheFirst (`audio-v1`, max 5000 entries); other `/api/*` NetworkOnly |
+| Runtime caching | `/api/audio/*` CacheFirst (`audio-v1`, max 5000 entries, only 200 answers; matched by path, since Workbox tests a RegExp against the whole URL); other `/api/*` NetworkOnly. The app writes the same cache when it downloads a clip; "Clear cached audio" (Settings → Data) deletes it, sign-out too |
 | Updates | `registerType: 'prompt'` → in-app banner "New version available — Reload" |
 | Storage | `navigator.storage.persist()` on first run; show a warning if denied and the user is not signed in |
 | Install hint | If not `standalone` on iOS, show a one-time "Add to Home Screen" guide |

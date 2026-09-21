@@ -46,7 +46,20 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],
-        runtimeCaching: [{ urlPattern: ({ url }) => url.pathname.startsWith('/api/'), handler: 'NetworkOnly' }],
+        runtimeCaching: [
+          // Clips never change (a new clip gets a new id); the app also writes this cache (src/lib/audio/audioCache.ts).
+          // A path check, not a RegExp: Workbox tests a RegExp against the whole URL, origin included.
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith('/api/audio/'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'audio-v1',
+              expiration: { maxEntries: 5000 },
+              cacheableResponse: { statuses: [200] },
+            },
+          },
+          { urlPattern: ({ url }) => url.pathname.startsWith('/api/'), handler: 'NetworkOnly' },
+        ],
       },
     }),
   ],

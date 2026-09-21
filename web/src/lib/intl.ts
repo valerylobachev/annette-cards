@@ -47,3 +47,15 @@ export function formatDuration(ms: number, uiLocale: string): string {
 export function formatPercent(share: number, uiLocale: string): string {
   return new Intl.NumberFormat(uiLocale, { style: 'percent', maximumFractionDigits: 0 }).format(share)
 }
+
+/** A storage size as "1.2 MB" / "1,2 МБ" (KB below one megabyte, GB from one gigabyte). */
+export function formatBytes(bytes: number, uiLocale: string): string {
+  const [value, unit] =
+    bytes >= 1e9 ? [bytes / 1e9, 'gigabyte'] : bytes >= 1e6 ? [bytes / 1e6, 'megabyte'] : [bytes / 1e3, 'kilobyte']
+  return new Intl.NumberFormat(uiLocale, {
+    style: 'unit',
+    unit,
+    unitDisplay: 'short',
+    maximumFractionDigits: 1,
+  }).format(value)
+}

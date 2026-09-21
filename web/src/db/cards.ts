@@ -15,6 +15,25 @@ export type { CardDraft }
 
 type ReadOptions = { includeDeleted?: boolean }
 
+/**
+ * Writes the `audio_id` the server set when it attached or removed audio (architecture.md §4.5). The server already
+ * stamped and versioned that edit, so this is not a local mutation: no stamp, no outbox entry (a push of it would
+ * only race the server's version); the next pull brings the server's row with its stamp.
+ */
+export async function applyServerAudio(cardId: string, audioId: string | null): Promise<void> {
+  await db.cards.update(cardId, { audio_id: audioId })
+}
+
+/** Ids of cards with server audio in decks that are neither deleted nor archived (the audio prefetch). */
+export async function audioIdsOfActiveDecks(): Promise<string[]> {
+  const decks = await db.decks.filter((deck) => deck.deleted_at === null && deck.archived_at === null).toArray()
+  const active = new Set(decks.map((deck) => deck.id))
+  const cards = await db.cards
+    .filter((card) => card.deleted_at === null && card.audio_id !== null && active.has(card.deck_id))
+    .toArray()
+  return [...new Set(cards.map((card) => card.audio_id as string))]
+}
+
 /** Stamps and stores a card and records it in the outbox, inside the caller's transaction. */
 export async function writeCard(ctx: WriteContext, card: Card): Promise<Card> {
   const stamped = stamp(ctx, card)

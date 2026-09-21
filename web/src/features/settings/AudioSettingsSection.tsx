@@ -4,16 +4,23 @@ import { useTranslation } from 'react-i18next'
 import { useMeta } from '@/db/hooks'
 import { setMeta } from '@/db/meta'
 import type { Autoplay } from '@/domain/types'
+import { prefetchAudio } from '@/lib/audio/prefetch'
 import { DEFAULT_SPEECH_RATE, SPEECH_RATE_RANGE } from '@/lib/speech/speech'
 import { Segmented, SettingsGroup, SettingsRow, useSettingsDraft } from './SettingsList'
 
 const AUTOPLAY: Autoplay[] = ['off', 'front', 'front_and_back']
 
-/** S-14 Audio: autoplay (synced setting), speech rate (this device) and the Voices screen. */
+/** S-14 Audio: autoplay (synced setting), speech rate and audio prefetch (this device) and the Voices screen. */
 export function AudioSettingsSection() {
   const { t, i18n } = useTranslation()
   const { settings, save } = useSettingsDraft()
   const rate = useMeta('speech_rate') ?? DEFAULT_SPEECH_RATE
+  const prefetch = useMeta('audio_prefetch') === true
+
+  async function togglePrefetch(on: boolean) {
+    await setMeta('audio_prefetch', on)
+    if (on) void prefetchAudio()
+  }
 
   return (
     <SettingsGroup title={t('speech.audio')}>
@@ -46,6 +53,17 @@ export function AudioSettingsSection() {
           value={rate}
           onChange={(event) => void setMeta('speech_rate', Number(event.target.value))}
           className="h-11 accent-primary"
+        />
+      </SettingsRow>
+      <SettingsRow label={t('speech.prefetch')} htmlFor="audio-prefetch" hint={t('speech.prefetchHint')}>
+        <input
+          id="audio-prefetch"
+          type="checkbox"
+          role="switch"
+          aria-checked={prefetch}
+          checked={prefetch}
+          onChange={(event) => void togglePrefetch(event.target.checked)}
+          className="size-6 shrink-0 accent-primary"
         />
       </SettingsRow>
       <Link to="/settings/voices" className="flex min-h-14 items-center justify-between gap-3 px-4 active:bg-muted">

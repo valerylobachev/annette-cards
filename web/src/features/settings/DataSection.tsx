@@ -10,9 +10,13 @@ import { restoreAsNew, restoreReplace } from '@/db/backup'
 import { type BackupV1, backupCounts, parseBackup } from '@/domain/backup/format'
 import { shareBackup } from '@/features/export/exportFiles'
 import { formatNumber } from '@/lib/intl'
+import { AudioStorageRows } from './AudioStorage'
 import { SettingsGroup } from './SettingsList'
 
-/** S-14 Data: export a full backup and restore one (UC-24, UC-25); CSV per deck is in the deck menus. */
+/**
+ * S-14 Data: export a full backup and restore one (UC-24, UC-25; CSV per deck is in the deck menus), storage usage
+ * and cached audio.
+ */
 export function DataSection() {
   const { t } = useTranslation()
   const fileInput = useRef<HTMLInputElement>(null)
@@ -64,6 +68,7 @@ export function DataSection() {
           </p>
         )}
       </div>
+      <AudioStorageRows />
       <RestoreSheet backup={backup} onClose={() => setBackup(null)} />
     </SettingsGroup>
   )

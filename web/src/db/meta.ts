@@ -14,6 +14,9 @@ export type SyncLogEntry = {
   error_code?: string
 }
 
+/** Optional server features (`GET /api/meta`); the UI of a disabled one is hidden. */
+export type ServerFeatures = { tts: boolean; commons: boolean; enrich: boolean; push: boolean }
+
 /** The signed-in account (S-15), stored on this device only. */
 export type AccountInfo = { user_id: string; email: string; display_name: string; is_admin: boolean }
 
@@ -40,7 +43,10 @@ export type MetaValues = {
   voice_pref: Record<string, string>
   speech_rate: number
   theme: 'system' | 'light' | 'dark'
+  /** Download the clips of active decks after each sync (Settings → Audio; default off). */
   audio_prefetch: boolean
+  /** The server's optional features from the last `GET /api/meta`, so they are known offline. */
+  server_features: ServerFeatures
   /** Deck preselected in Quick add. */
   last_quick_add_deck: string
   /** "Learn extra new words": extra new cards allowed on one study day (`YYYY-MM-DD`). */

@@ -101,7 +101,9 @@
     "installApp": "Install on iPhone",
     "licenses": "Open-source licenses",
     "changesNextSession": "Changes apply to the next session.",
-    "serverVersion": "Server version"
+    "serverVersion": "Server version",
+    "attributions": "Recordings (Wikimedia Commons)",
+    "noAttributions": "No recordings saved on this device."
   },
   "languages": {
     "en": "English",
@@ -480,7 +482,9 @@
     },
     "rate": "Speech rate",
     "rateValue": "{{rate}}×",
-    "voices": "Voices"
+    "voices": "Voices",
+    "prefetch": "Download audio for offline",
+    "prefetchHint": "After each sync, the audio of cards in active decks is saved on this device."
   },
   "voices": {
     "auto": "Automatic (best available)",
@@ -508,7 +512,16 @@
   },
   "storage": {
     "warning": "Your data may be removed by Safari. Sign in or export a backup.",
-    "export": "Export a backup"
+    "export": "Export a backup",
+    "usage": "Storage used",
+    "usageValue": "{{used}} of {{quota}}",
+    "unknown": "Unknown",
+    "cachedAudio_one": "{{formatted}} audio clip saved",
+    "cachedAudio_other": "{{formatted}} audio clips saved",
+    "clearAudio": "Clear cached audio",
+    "clearAudioConfirm": "Delete saved audio from this device?",
+    "clearAudioHint": "Clips download again when they are played online.",
+    "audioCleared": "Cached audio cleared"
   },
   "onboarding": {
     "appName": "Annette Cards",
@@ -677,5 +690,19 @@
     "syncing": "Syncing your data…",
     "continuesLater": "Your account is connected; syncing continues in the background.",
     "retry": "Try again"
+  },
+  "pronunciation": {
+    "title": "Pronunciation",
+    "systemVoice": "System voice",
+    "generated": "Generated",
+    "recording": "Recording",
+    "serverAudio": "Server audio",
+    "attribution": "{{attribution}}",
+    "generate": "Generate audio",
+    "findRecording": "Find recording",
+    "remove": "Remove audio",
+    "working": "Getting audio…",
+    "removing": "Removing audio…",
+    "noRecording": "No recording found for this word."
   }
 }

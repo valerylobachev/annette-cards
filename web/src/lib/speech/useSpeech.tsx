@@ -1,5 +1,6 @@
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react'
 import { useMeta } from '@/db/hooks'
+import { audioSpeaker, stopAudio } from '@/lib/audio/playCard'
 import { DEFAULT_SPEECH_RATE, type SpeechPrefs, speak, speechSupported, systemSpeaker } from './speech'
 import { bestVoice, loadVoices, type Voice, voicesFor } from './voices'
 
@@ -49,17 +50,24 @@ export function SpeechProvider({ children }: { children: ReactNode }) {
 
 export function useSpeech() {
   const { voices, prefs } = useContext(SpeechContext)
-  return useMemo(
-    () => ({
+  return useMemo(() => {
+    // Server audio of a card first, the system voice as the fallback (architecture.md §4.5).
+    const speaker = audioSpeaker(systemSpeaker(prefs))
+    return {
       voices,
       prefs,
-      speaker: systemSpeaker(prefs),
+      speaker,
       /** Speaks text in a studied language; call it straight from a tap handler. */
-      speak: (text: string, lang: string) => speak(text, { lang, rate: prefs.rate, voiceURI: prefs.voicePref[lang] }),
+      speak: (text: string, lang: string) => {
+        stopAudio()
+        return speak(text, { lang, rate: prefs.rate, voiceURI: prefs.voicePref[lang] })
+      },
+      /** Plays a word: the card's server clip (`audioId`) when there is one, else the system voice. */
+      pronounce: (front: string, lang: string, audioId: string | null = null) =>
+        speaker.play({ front, example: null, audio_id: audioId }, lang, 'front'),
       voicesFor: (lang: string) => voicesFor(voices ?? [], lang),
       /** `null` while the voice list is still loading. */
       hasVoice: (lang: string) => (voices === null ? null : bestVoice(voices, lang) !== null),
-    }),
-    [voices, prefs],
-  )
+    }
+  }, [voices, prefs])
 }

@@ -5,7 +5,9 @@ import { AutoInstallHint } from '@/components/InstallHint'
 import { SnackbarProvider } from '@/components/Snackbar'
 import { UpdateBanner } from '@/components/UpdateBanner'
 import { useSessionCheck } from '@/features/auth/useSessionCheck'
+import { onSyncFinished } from '@/features/sync/engine'
 import { startSyncTriggers } from '@/features/sync/triggers'
+import { prefetchAudio } from '@/lib/audio/prefetch'
 import { SpeechProvider } from '@/lib/speech/useSpeech'
 import { TabBar } from './TabBar'
 import { useAppPreferences } from './useAppPreferences'
@@ -16,6 +18,7 @@ export function RootLayout() {
   useAppPreferences()
   useSessionCheck()
   useEffect(() => startSyncTriggers(), [])
+  useEffect(() => onSyncFinished(() => void prefetchAudio()), [])
   // Server calls outside sync (invites, server version) go through TanStack Query; nothing is retried offline.
   const [queryClient] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: false } } }))
 

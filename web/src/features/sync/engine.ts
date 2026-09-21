@@ -25,6 +25,7 @@ type EngineState = { running: boolean; progress: SyncProgress | null }
 
 let state: EngineState = { running: false, progress: null }
 const listeners = new Set<() => void>()
+const finishedListeners = new Set<() => void>()
 let current: Promise<void> | null = null
 let runAgain = false
 let failures = 0
@@ -43,6 +44,12 @@ export function subscribeEngine(listener: () => void): () => void {
 
 export function engineState(): EngineState {
   return state
+}
+
+/** Called after every successful sync (the audio prefetch). Returns the unsubscribe function. */
+export function onSyncFinished(listener: () => void): () => void {
+  finishedListeners.add(listener)
+  return () => finishedListeners.delete(listener)
 }
 
 /** Whether this device may sync now: signed in, session valid, online. */
@@ -106,6 +113,7 @@ async function runOnce(reason: SyncReason): Promise<void> {
     await setMeta('last_sync_at', finished_at)
     await appendLog({ started_at, finished_at, status: 'ok', pushed, pulled, rejected })
     failures = 0
+    for (const listener of finishedListeners) listener()
   } catch (error) {
     const error_code = apiErrorCode(error)
     await appendLog({ started_at, finished_at: now(), status: 'error', pushed, pulled, rejected, error_code })
