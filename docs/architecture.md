@@ -84,7 +84,9 @@ db.version(1).stores({
 ```
 
 Device-local preferences (not synced): selected voice per language, speech rate, theme, audio prefetch flag.
-They are stored in `meta` because voices differ between devices.
+They are stored in `meta` because voices differ between devices. `meta` keys (typed in `web/src/db/meta.ts`):
+`device_id`, `sync_cursor`, `last_sync_at`, `account`, `voice_pref` (voice per language), `speech_rate`, `theme`,
+`audio_prefetch`. Writes to `meta` never create outbox entries.
 
 ### 4.3 Write path
 
@@ -92,7 +94,9 @@ Every mutation runs in a single Dexie `rw` transaction:
 
 1. Validate input (domain).
 2. Write the entity with `updated_at = now`, `updated_by = device_id`.
-3. Upsert an outbox entry `{entity, entity_id}` (deduplicated by compound index).
+3. Upsert an outbox entry `{entity, entity_id}` (deduplicated by compound index; `card_states` use
+   `"<card_id>:<direction>"` as `entity_id`). An existing entry is replaced with a new `seq`, so a push already in
+   flight cannot clear a later change.
 4. Commit. `useLiveQuery` re-renders subscribed components.
 5. Sync engine is notified (debounced 2 s) if the user is signed in and online.
 
@@ -399,9 +403,16 @@ CREATE INDEX idx_log_user_reviewed     ON review_log(user_id, reviewed_at);
   "desired_retention": 0.9,
   "fsrs_weights": null,
   "autoplay": "front",
-  "reminder": { "enabled": false, "time": "20:00", "tz": "Europe/Riga" }
+  "reminder": { "enabled": false, "time": "20:00", "tz": "Europe/Riga" },
+  "default_directions": "both",
+  "show_ipa_on_front": true
 }
 ```
+
+- `answer_mode`: `simple` | `detailed`; `autoplay`: `off` | `front` | `front_and_back`.
+- `default_directions` (`forward` | `reverse` | `both`): directions preselected for a new deck.
+- `show_ipa_on_front`: show the IPA with the studied word on the front of a study card.
+- Missing fields fall back to these defaults (`web/src/domain/settings.ts`), so older documents stay valid.
 
 ## 6. Synchronization protocol
 

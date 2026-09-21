@@ -71,12 +71,12 @@ Acceptance task: [P0-T04](../dev/impl/phase-00-bootstrap/task-04-phase-acceptanc
 ### 1.1 Data layer
 Task: [P1-T01](../dev/impl/phase-01-local-mvp/task-01-data-layer.md)
 
-- [ ] Domain types (`Deck`, `Card`, `CardState`, `ReviewLog`, `Settings`) matching `architecture.md` §5.4
-- [ ] Dexie schema v1 (§4.2), device id generation, UUIDv7 helper
-- [ ] Repositories with transactional writes (`updated_at`, `updated_by`, outbox entry) — tests with
+- [x] Domain types (`Deck`, `Card`, `CardState`, `ReviewLog`, `Settings`) matching `architecture.md` §5.4
+- [x] Dexie schema v1 (§4.2), device id generation, UUIDv7 helper
+- [x] Repositories with transactional writes (`updated_at`, `updated_by`, outbox entry) — tests with
       `fake-indexeddb`
-- [ ] Settings repository with defaults (§5.5) and device-local preferences in `meta`
-- [ ] (added) Settings fields `default_directions` and `show_ipa_on_front` (documented in §5.5)
+- [x] Settings repository with defaults (§5.5) and device-local preferences in `meta`
+- [x] (added) Settings fields `default_directions` and `show_ipa_on_front` (documented in §5.5)
 
 ### 1.2 Decks and cards
 Tasks: [P1-T02](../dev/impl/phase-01-local-mvp/task-02-decks-list.md) · [P1-T03](../dev/impl/phase-01-local-mvp/task-03-card-editor-quick-add.md) · [P1-T04](../dev/impl/phase-01-local-mvp/task-04-deck-detail-card-view.md)

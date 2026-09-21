@@ -1,3 +1,5 @@
+// IndexedDB for Dexie in jsdom; must load before any module opens the database.
+import 'fake-indexeddb/auto'
 import '@testing-library/jest-dom/vitest'
 import { cleanup } from '@testing-library/react'
 import { afterEach } from 'vitest'

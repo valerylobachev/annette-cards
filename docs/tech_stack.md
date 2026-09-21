@@ -26,7 +26,7 @@ rejected. Versions: use the latest stable release at bootstrap time and pin them
 | Styling | Tailwind CSS 4 | Utility-first, mobile-first, dark mode via `prefers-color-scheme` |
 | Components | shadcn/ui (Radix primitives, `radix-nova` style) | Accessible, copy-in components that we own; brings `radix-ui`, `class-variance-authority`, `cn`, `tw-animate-css` |
 | Gestures / animation | `motion` (formerly framer-motion) | Drag with velocity/threshold for swipe cards, spring animations |
-| Local database | Dexie (IndexedDB) | Versioned schema, transactions, reactive `useLiveQuery` |
+| Local database | Dexie (IndexedDB) + `dexie-react-hooks` | Versioned schema, transactions, reactive `useLiveQuery` |
 | Spaced repetition | `ts-fsrs` | Reference FSRS implementation, runs offline on the client |
 | Server state | TanStack Query | Caching and retries for auth, audio, enrich calls |
 | API client | orval | Generates typed client + TanStack Query hooks from OpenAPI |
