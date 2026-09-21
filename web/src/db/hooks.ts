@@ -1,9 +1,11 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { DEFAULT_SETTINGS } from '@/domain/settings'
+import type { Direction } from '@/domain/types'
 import { getCardStates } from './cardStates'
-import { getCard, listCards, listTags } from './cards'
+import { getCard, listCards, listDeckCardsWithStates, listTags } from './cards'
 import { getDeck, listDeckSummaries, listDecks } from './decks'
 import { getMeta, type MetaKey } from './meta'
+import { recentReviews } from './reviewLog'
 import { db } from './schema'
 import { toSettings } from './settings'
 
@@ -46,4 +48,13 @@ export function useSettings() {
 
 export function useDeckSummaries() {
   return useLiveQuery(() => listDeckSummaries())
+}
+
+/** `null` when the deck does not exist. */
+export function useDeckCards(deck_id: string) {
+  return useLiveQuery(() => listDeckCardsWithStates(deck_id), [deck_id])
+}
+
+export function useRecentReviews(card_id: string, direction: Direction) {
+  return useLiveQuery(() => recentReviews(card_id, direction), [card_id, direction], [])
 }

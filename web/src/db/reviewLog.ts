@@ -1,4 +1,4 @@
-import type { ReviewLog } from '@/domain/types'
+import type { Direction, ReviewLog } from '@/domain/types'
 import { newId } from '@/lib/ids'
 import { addToOutbox } from './outbox'
 import { db } from './schema'
@@ -36,4 +36,10 @@ export function softDeleteReview(id: string): Promise<void> {
 export async function listReviews(card_id: string): Promise<ReviewLog[]> {
   const entries = await db.review_log.where('card_id').equals(card_id).toArray()
   return entries.filter((entry) => entry.deleted_at === null).sort((a, b) => b.reviewed_at - a.reviewed_at)
+}
+
+/** The last `limit` non-deleted answers for one direction of a card, newest first (card view history). */
+export async function recentReviews(card_id: string, direction: Direction, limit = 10): Promise<ReviewLog[]> {
+  const entries = await listReviews(card_id)
+  return entries.filter((entry) => entry.direction === direction).slice(0, limit)
 }

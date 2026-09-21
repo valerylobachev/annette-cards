@@ -1,8 +1,11 @@
 export const studyModes = ['swipe', 'choice', 'listening', 'typing'] as const
 export type StudyMode = (typeof studyModes)[number]
 
-/** `/study?deck=<id>&mode=swipe` (ui_ux.md §3 deep links). */
-export type StudySearch = { deck?: string; mode?: StudyMode }
+/** `/study?deck=<id>&mode=swipe&practice=1` (ui_ux.md §3 deep links; `practice` = UC-16 practice mode). */
+export type StudySearch = { deck?: string; mode?: StudyMode; practice?: 1 }
+
+/** `/import?deck=<id>` (S-10): import into an existing deck. */
+export type ImportSearch = { deck?: string }
 
 /** `/cards/new?deck=<id>` (S-08): the deck to add the card to. */
 export type CardNewSearch = { deck?: string }
@@ -16,7 +19,8 @@ function optionalString(value: unknown): string | undefined {
 
 export function parseStudySearch(search: Record<string, unknown>): StudySearch {
   const mode = studyModes.find((m) => m === search.mode)
-  return { deck: optionalString(search.deck), mode }
+  const practice = search.practice === 1 || search.practice === '1' ? 1 : undefined
+  return { deck: optionalString(search.deck), mode, practice }
 }
 
 export function parseAuthSearch(search: Record<string, unknown>): AuthSearch {
@@ -24,5 +28,9 @@ export function parseAuthSearch(search: Record<string, unknown>): AuthSearch {
 }
 
 export function parseCardNewSearch(search: Record<string, unknown>): CardNewSearch {
+  return { deck: optionalString(search.deck) }
+}
+
+export function parseImportSearch(search: Record<string, unknown>): ImportSearch {
   return { deck: optionalString(search.deck) }
 }

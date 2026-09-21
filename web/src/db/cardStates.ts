@@ -49,3 +49,16 @@ export async function applyDeckDirections(ctx: WriteContext, deck: Deck): Promis
     .toArray()
   await ensureStatesForCards(ctx, cards, deck)
 }
+
+/**
+ * Puts every non-deleted state of the cards back to New (`newCardState`). The review log is kept: history is
+ * append-only, only the schedule starts over.
+ */
+export function resetProgress(card_ids: string[]): Promise<void> {
+  return mutate(['card_states'], async (ctx) => {
+    const states = await ctx.db.card_states.where('card_id').anyOf(card_ids).toArray()
+    for (const state of states) {
+      if (state.deleted_at === null) await writeCardState(ctx, newCardState(state.card_id, state.direction, ctx.now))
+    }
+  })
+}

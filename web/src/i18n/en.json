@@ -170,6 +170,102 @@
   "snackbar": {
     "deckDeleted": "Deck deleted",
     "deckArchived": "Deck archived",
-    "deckRestored": "Deck restored"
+    "deckRestored": "Deck restored",
+    "cardsDeleted_one": "{{count}} card deleted",
+    "cardsDeleted_other": "{{count}} cards deleted",
+    "cardDeleted": "Card deleted",
+    "progressReset": "Progress reset",
+    "cardsMoved": "Cards moved"
+  },
+  "deck": {
+    "notFound": "This deck does not exist.",
+    "menu": "Deck actions",
+    "settings": "Deck settings",
+    "import": "Import into deck",
+    "export": "Export deck",
+    "study": "Study deck",
+    "practice": "Practice difficult",
+    "filters": {
+      "label": "Filter by state",
+      "new": "New",
+      "learning": "Learning",
+      "review": "Review",
+      "difficult": "Difficult"
+    },
+    "searchPlaceholder": "Search words, examples, tags",
+    "sort": {
+      "label": "Sort",
+      "added_desc": "Recently added",
+      "due_asc": "Due soonest",
+      "alpha": "Alphabetical",
+      "difficulty_desc": "Most difficult"
+    },
+    "tags": "Tags",
+    "empty": "This deck is empty",
+    "addWord": "Add word",
+    "importCards": "Import",
+    "noMatches": "No cards match",
+    "cardList": "Cards",
+    "select": "Select",
+    "selectAll": "Select all",
+    "done": "Done",
+    "selected_one": "{{count}} selected",
+    "selected_other": "{{count}} selected",
+    "selectCard": "Select {{front}}",
+    "bulk": {
+      "label": "Actions for selected cards",
+      "move": "Move",
+      "addTag": "Add tag",
+      "removeTag": "Remove tag",
+      "reset": "Reset",
+      "delete": "Delete",
+      "moveTitle_one": "Move {{count}} card to",
+      "moveTitle_other": "Move {{count}} cards to",
+      "addTagTitle": "Add a tag",
+      "removeTagTitle": "Remove a tag",
+      "tagName": "Tag",
+      "resetConfirm_one": "Reset progress of {{count}} card?",
+      "resetConfirm_other": "Reset progress of {{count}} cards?",
+      "resetHint": "They start again as new cards. The answer history is kept.",
+      "deleteConfirm_one": "Delete {{count}} card?",
+      "deleteConfirm_other": "Delete {{count}} cards?"
+    },
+    "due": "due {{when}}"
+  },
+  "card": {
+    "notFound": "This card does not exist.",
+    "edit": "Edit",
+    "reset": "Reset progress",
+    "delete": "Delete",
+    "resetConfirm": "Reset progress of this card?",
+    "deleteConfirm": "Delete this card?",
+    "example": "Example",
+    "notes": "Notes",
+    "tags": "Tags",
+    "progress": "Progress",
+    "forward": "Word → translation",
+    "reverse": "Translation → word",
+    "nextDue": "Next review",
+    "notStudied": "Not studied yet",
+    "stability": "Stability",
+    "difficulty": "Difficulty",
+    "reps": "Reviews",
+    "lapses": "Lapses",
+    "history": "Last answers",
+    "noHistory": "No answers yet",
+    "days_one": "{{count}} day",
+    "days_other": "{{count}} days",
+    "states": {
+      "0": "New",
+      "1": "Learning",
+      "2": "Review",
+      "3": "Relearning"
+    },
+    "ratings": {
+      "1": "Again",
+      "2": "Hard",
+      "3": "Good",
+      "4": "Easy"
+    }
   }
 }

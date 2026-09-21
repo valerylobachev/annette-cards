@@ -177,7 +177,15 @@ be removed — confirm sheet), **Cancel**. Progress view with determinate bar du
 - Tag filter chips (horizontal scroll).
 - Card list rows: front (bold), back (secondary), small speaker button, status dot (color by state), due date.
   Virtualized list for 5 000+ cards.
-- Multi-select mode (long-press): move to deck, add/remove tag, reset progress, delete.
+- Multi-select mode (long-press, or "Select" in the overflow menu): move to deck, add/remove tag, reset progress,
+  delete (confirm + Undo snackbar). Swipe a row left → Delete (Undo snackbar).
+
+Filter definitions (a card with two directions can match several): **New** — any direction is New;
+**Learning** — any direction is Learning or Relearning; **Review** — any direction is in Review; **Difficult** —
+lapses ≥ 3 in any direction. Only directions active in the deck count. Search matches front, back, example and
+tags, ignoring case, extra spaces and Unicode form. Sort "Due ↑" puts never-studied cards last. The status dot
+shows the most urgent direction: learning (amber), review (green), new (blue). Reset progress keeps the answer
+history.
 
 **Empty state:** "This deck is empty" + "Add word", "Import".
 
