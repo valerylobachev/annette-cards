@@ -27,10 +27,12 @@ pub const PASSWORD: &str = "correct horse battery";
 pub const ORIGIN: &str = "https://cards.test";
 
 pub fn test_app(pool: SqlitePool) -> Router {
-    app::router(Arc::new(AppState {
-        pool,
-        config: test_config(),
-    }))
+    app::router(Arc::new(test_state(pool)))
+}
+
+/// The state of `test_app`, for tests that swap a provider for a fake.
+pub fn test_state(pool: SqlitePool) -> AppState {
+    AppState::new(pool, test_config()).unwrap()
 }
 
 pub fn test_config() -> Config {

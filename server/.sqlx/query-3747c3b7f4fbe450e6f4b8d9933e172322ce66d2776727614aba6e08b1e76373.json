@@ -1,0 +1,62 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT audio_id, updated_at, updated_by, server_seq FROM cards WHERE id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "audio_id",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "cards",
+            "name": "audio_id"
+          }
+        }
+      },
+      {
+        "name": "updated_at",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "cards",
+            "name": "updated_at"
+          }
+        }
+      },
+      {
+        "name": "updated_by",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "cards",
+            "name": "updated_by"
+          }
+        }
+      },
+      {
+        "name": "server_seq",
+        "ordinal": 3,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "cards",
+            "name": "server_seq"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "3747c3b7f4fbe450e6f4b8d9933e172322ce66d2776727614aba6e08b1e76373"
+}

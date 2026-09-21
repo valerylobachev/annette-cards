@@ -6,6 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './attachAudioRequest.ts';
+export * from './attachAudioResponse.ts';
+export * from './audioSource.ts';
 export * from './backup.ts';
 export * from './cardDto.ts';
 export * from './cardStateDto.ts';

@@ -1,0 +1,50 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT c.front, c.ipa, d.target_lang FROM cards c JOIN decks d ON d.id = c.deck_id\n         WHERE c.id = ? AND c.user_id = ? AND d.user_id = c.user_id\n           AND c.deleted_at IS NULL AND d.deleted_at IS NULL",
+  "describe": {
+    "columns": [
+      {
+        "name": "front",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "cards",
+            "name": "front"
+          }
+        }
+      },
+      {
+        "name": "ipa",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "cards",
+            "name": "ipa"
+          }
+        }
+      },
+      {
+        "name": "target_lang",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "decks",
+            "name": "target_lang"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "8c6cd9cdef94419e3115f77da674a5d2e8d29068e968074c40222ee9d508507f"
+}

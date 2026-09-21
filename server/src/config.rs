@@ -21,6 +21,33 @@ pub struct Config {
     pub dev_origins: bool,
     pub session_ttl_days: u32,
     pub log_format: LogFormat,
+    /// Azure AI Speech key (`ANNETTE_AZURE_TTS_KEY`); TTS is enabled when the key and the region are both set.
+    pub azure_tts_key: Option<Secret>,
+    /// Azure region of the Speech resource, e.g. `westeurope` (`ANNETTE_AZURE_TTS_REGION`).
+    pub azure_tts_region: Option<String>,
+}
+
+/// A secret setting (API key). Its `Debug` output is redacted, so printing the config never leaks it.
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct Secret(String);
+
+impl Secret {
+    #[cfg(test)]
+    pub fn new(value: impl Into<String>) -> Self {
+        Self(value.into())
+    }
+
+    /// The real value, only for the request that needs it.
+    pub fn expose(&self) -> &str {
+        &self.0
+    }
+}
+
+impl std::fmt::Debug for Secret {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str("Secret(***)")
+    }
 }
 
 /// `pretty` for people, `json` for journald and log tools.
@@ -54,6 +81,8 @@ impl Default for Config {
             } else {
                 LogFormat::Json
             },
+            azure_tts_key: None,
+            azure_tts_region: None,
         }
     }
 }
@@ -76,6 +105,24 @@ impl Config {
             .as_deref()
             .is_some_and(|url| url.trim_end_matches('/') == origin);
         public || (self.dev_origins && DEV_ORIGINS.contains(&origin))
+    }
+
+    /// Azure key and region, when both are set (and not blank).
+    pub fn azure_tts(&self) -> Option<(&Secret, &str)> {
+        let key = self
+            .azure_tts_key
+            .as_ref()
+            .filter(|key| !key.expose().trim().is_empty())?;
+        let region = self
+            .azure_tts_region
+            .as_deref()
+            .map(str::trim)
+            .filter(|region| !region.is_empty())?;
+        Some((key, region))
+    }
+
+    pub fn tts_enabled(&self) -> bool {
+        self.azure_tts().is_some()
     }
 
     fn figment() -> Figment {
@@ -124,11 +171,39 @@ mod tests {
     }
 
     #[test]
+    fn tts_needs_both_azure_settings() {
+        let mut config = Config::default();
+        assert!(!config.tts_enabled());
+        config.azure_tts_key = Some(Secret::new("key"));
+        assert!(!config.tts_enabled());
+        config.azure_tts_region = Some("westeurope".to_string());
+        assert!(config.tts_enabled());
+        config.azure_tts_key = Some(Secret::new(" "));
+        assert!(
+            !config.tts_enabled(),
+            "a blank value from .env counts as unset"
+        );
+    }
+
+    #[test]
+    fn secrets_are_redacted_in_debug_output() {
+        let config = Config {
+            azure_tts_key: Some(Secret::new("super-secret")),
+            ..Config::default()
+        };
+        let printed = format!("{config:?}");
+        assert!(!printed.contains("super-secret"));
+        assert!(printed.contains("Secret(***)"));
+    }
+
+    #[test]
     fn later_sources_override_defaults() {
         let config: Config = Figment::from(Serialized::defaults(Config::default()))
             .merge(("bind", "127.0.0.1:9090"))
             .merge(("public_url", "https://cards.example.com"))
             .merge(("log_format", "json"))
+            .merge(("azure_tts_key", "key"))
+            .merge(("azure_tts_region", "westeurope"))
             .extract()
             .unwrap();
         assert_eq!(config.bind.port(), 9090);
@@ -138,5 +213,9 @@ mod tests {
         );
         assert_eq!(config.database_url, "sqlite://data/annette.db");
         assert_eq!(config.log_format, LogFormat::Json);
+        assert_eq!(
+            config.azure_tts(),
+            Some((&Secret::new("key"), "westeurope"))
+        );
     }
 }

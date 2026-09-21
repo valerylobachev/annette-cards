@@ -15,6 +15,6 @@ mod convergence_tests;
 #[cfg(test)]
 mod pull_tests;
 #[cfg(test)]
-mod test_rows;
+pub(crate) mod test_rows;
 #[cfg(test)]
 mod tests;

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE cards SET audio_id = ?, updated_at = MAX(?, updated_at + 1), updated_by = ?, server_seq = ?\n         WHERE id = ? AND user_id = ? AND deleted_at IS NULL",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 6
+    },
+    "nullable": []
+  },
+  "hash": "09ced46923beb264aaee9312ca0df17dfe32c2b51a499778e8f9d87d03832993"
+}

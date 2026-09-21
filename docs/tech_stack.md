@@ -52,7 +52,7 @@ rejected. Versions: use the latest stable release at bootstrap time and pin them
 | Async runtime | `tokio` | De facto standard |
 | HTTP framework | `axum` | Ergonomic extractors, tower middleware, close in spirit to Go's chi |
 | Middleware | `tower-http` | CORS (dev only), compression, request tracing, timeouts, request ids, security headers |
-| Rate limiting | `tower_governor` (default features off except `axum`) | Per-IP/per-user limits for login, enrich, audio |
+| Rate limiting | `tower_governor` (default features off except `axum`) | Per-IP limits for login and registration; per-user limits (audio) are a small in-memory sliding window (`security::PerUserLimit`) |
 | Database | `sqlx` with SQLite | Compile-time checked SQL, migrations, offline mode (`.sqlx/`) |
 | Serialization | `serde`, `serde_json` | Standard |
 | OpenAPI | `utoipa`, `utoipa-axum` | Spec generated from handler/DTO types; exported via CLI for orval |
@@ -63,7 +63,8 @@ rejected. Versions: use the latest stable release at bootstrap time and pin them
 | Password hashing | `argon2` (Argon2id) | Current best practice |
 | Sessions | Opaque random tokens (`rand`, encoded with `base64` as base64url) stored hashed (`sha2`) in SQLite, `axum-extra` cookies (`cookie` directly only for its `time` re-export, which sets `Max-Age`) | Simple, revocable, no JWT key management |
 | CLI password prompt | `rpassword` | Hidden input for `create-user`; `--password-stdin` covers scripts |
-| HTTP client | `reqwest` (rustls) | Calls to TTS, Wikimedia, LLM APIs |
+| HTTP client | `reqwest` (default features off, `rustls`) | Calls to TTS, Wikimedia, LLM APIs. One shared client (10 s timeout, `User-Agent: annette-cards/<version>`). TLS in Rust (rustls with aws-lc-rs, system CA store via the platform verifier), so the musl binary stays static without OpenSSL |
+| Async traits | `async-trait` | Provider traits (`TtsProvider`, later `Enricher`) used as `Arc<dyn …>`: native `async fn` in traits cannot be called through `dyn` yet |
 | Static assets | `rust-embed` + `mime_guess` | PWA embedded into the binary; one-file deployment; `mime_guess` sets `Content-Type` from the file extension |
 | IDs | `uuid` (v7) | Same format as the client |
 | Web Push | `web-push` | VAPID-signed notifications (Phase 4) |

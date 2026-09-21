@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT audio_id FROM cards WHERE id = ? AND user_id = ? AND deleted_at IS NULL",
+  "describe": {
+    "columns": [
+      {
+        "name": "audio_id",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "cards",
+            "name": "audio_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "6c72faa6ca7fc32c468e3e30ee01e2106874b846d795a2198d2534ebd53c8f5e"
+}

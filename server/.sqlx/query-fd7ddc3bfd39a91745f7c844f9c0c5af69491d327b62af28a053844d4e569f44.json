@@ -1,0 +1,62 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT source, mime, attribution, bytes FROM audio_assets WHERE id = ? AND user_id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "source",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "audio_assets",
+            "name": "source"
+          }
+        }
+      },
+      {
+        "name": "mime",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "audio_assets",
+            "name": "mime"
+          }
+        }
+      },
+      {
+        "name": "attribution",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "audio_assets",
+            "name": "attribution"
+          }
+        }
+      },
+      {
+        "name": "bytes",
+        "ordinal": 3,
+        "type_info": "Blob",
+        "origin": {
+          "Table": {
+            "table": "audio_assets",
+            "name": "bytes"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "fd7ddc3bfd39a91745f7c844f9c0c5af69491d327b62af28a053844d4e569f44"
+}

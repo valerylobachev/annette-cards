@@ -189,6 +189,82 @@
         ]
       }
     },
+    "/api/audio/{id}": {
+      "get": {
+        "tags": [
+          "audio"
+        ],
+        "summary": "The clip's bytes. `X-Audio-Source` says where it came from; `X-Audio-Attribution` (percent-encoded UTF-8) names\nthe author and license of a recording, so a cached clip carries its attribution offline.",
+        "operationId": "get_audio",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Audio id (`cards.audio_id`)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The clip, cached for a year",
+            "headers": {
+              "X-Audio-Attribution": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Percent-encoded author and license, when known"
+              },
+              "X-Audio-Source": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "`azure` or `commons`"
+              }
+            },
+            "content": {
+              "audio/mpeg": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "format": "int32",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      }
+    },
     "/api/auth/login": {
       "post": {
         "tags": [
@@ -442,6 +518,161 @@
             }
           }
         }
+      }
+    },
+    "/api/cards/{id}/audio": {
+      "post": {
+        "tags": [
+          "audio"
+        ],
+        "summary": "Generates or finds audio for the card and attaches it (`cards.audio_id`); every device gets the change on its\nnext pull.",
+        "operationId": "attach_audio",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Card id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttachAudioRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Audio attached",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachAudioResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`validation_failed`, `unsupported_language` (no voice for the deck's language) or `not_implemented` (`commons`, until it is available)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: no such card (or it is deleted)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`tts_disabled`: the server has no TTS provider",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`rate_limited`: more than 60 requests an hour",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "`provider_error`: the TTS provider failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "audio"
+        ],
+        "summary": "Removes the audio from the card. The clip stays downloadable, so devices that cached it keep working.",
+        "operationId": "remove_audio",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Card id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed (or the card had no audio)"
+          },
+          "401": {
+            "description": "`unauthorized`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
       }
     },
     "/api/export": {
@@ -771,6 +1002,51 @@
   },
   "components": {
     "schemas": {
+      "AttachAudioRequest": {
+        "type": "object",
+        "required": [
+          "source"
+        ],
+        "properties": {
+          "source": {
+            "$ref": "#/components/schemas/AudioSource"
+          },
+          "voice": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "TTS voice name (e.g. `en-GB-RyanNeural`); default: the voice of the deck's language."
+          }
+        }
+      },
+      "AttachAudioResponse": {
+        "type": "object",
+        "required": [
+          "audio_id"
+        ],
+        "properties": {
+          "attribution": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Author and license of a recording; `null` for generated audio."
+          },
+          "audio_id": {
+            "type": "string",
+            "description": "The new `cards.audio_id`; the clip is at `GET /api/audio/{audio_id}`."
+          }
+        }
+      },
+      "AudioSource": {
+        "type": "string",
+        "description": "Where the clip should come from.",
+        "enum": [
+          "tts",
+          "commons"
+        ]
+      },
       "Backup": {
         "type": "object",
         "description": "A full backup (architecture.md §6.5), the same format as the client's local backup.",

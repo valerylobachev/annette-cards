@@ -1,5 +1,6 @@
 mod admin;
 mod app;
+mod audio;
 mod auth;
 mod clock;
 mod config;
@@ -110,7 +111,9 @@ async fn serve() -> anyhow::Result<()> {
     tracing::info!(address = %config.bind, version = env!("CARGO_PKG_VERSION"), "listening");
 
     auth::spawn_session_cleanup(pool.clone());
-    let app = app::router(Arc::new(AppState { pool, config }));
+    tracing::info!(tts = config.tts_enabled(), "optional features");
+    let state = AppState::new(pool, config)?;
+    let app = app::router(Arc::new(state));
     // The peer address is the rate limiter's fallback key when no X-Forwarded-For header is present.
     let app = app.into_make_service_with_connect_info::<SocketAddr>();
     axum::serve(listener, app)

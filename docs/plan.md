@@ -245,13 +245,13 @@ owner).
 ### 3.1 Server audio
 Tasks: [P3-T01](../dev/impl/phase-03-audio-ai/task-01-tts-audio-server.md) · [P3-T02](../dev/impl/phase-03-audio-ai/task-02-commons-recordings.md)
 
-- [ ] `audio_assets` migration; `GET /api/audio/{id}` with immutable caching headers
-- [ ] `TtsProvider` trait and Azure implementation (SSML, voice per language, IPA `<phoneme>`)
+- [x] `audio_assets` migration; `GET /api/audio/{id}` with immutable caching headers
+- [x] `TtsProvider` trait and Azure implementation (SSML, voice per language, IPA `<phoneme>`)
 - [ ] Wikimedia Commons lookup for EN and PL pronunciations with attribution
 - [ ] Verify OGG playback on iOS Safari; if unsupported, add transcoding to MP3/AAC (decision recorded in
       `architecture.md`)
-- [ ] (added) `X-Audio-Source` / `X-Audio-Attribution` headers on `GET /api/audio/{id}`; server edits use `updated_by = 'server'`
-- [ ] Card update on audio attach/remove (bumps `server_seq`), rate limiting, feature flags in `/api/meta`
+- [x] (added) `X-Audio-Source` / `X-Audio-Attribution` headers on `GET /api/audio/{id}`; server edits use `updated_by = 'server'`
+- [x] Card update on audio attach/remove (bumps `server_seq`), rate limiting, feature flags in `/api/meta`
 
 ### 3.2 Client audio
 Task: [P3-T03](../dev/impl/phase-03-audio-ai/task-03-client-audio.md)

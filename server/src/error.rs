@@ -38,6 +38,9 @@ pub enum AppError {
     Conflict(&'static str),
     #[error("service unavailable")]
     ServiceUnavailable,
+    /// An external service (TTS, Wikimedia, LLM) failed or answered with an error.
+    #[error("provider error")]
+    ProviderError,
     #[error("database error: {0}")]
     Database(#[from] sqlx::Error),
     #[error("internal error: {0}")]
@@ -64,6 +67,7 @@ impl AppError {
             AppError::NotFound => StatusCode::NOT_FOUND,
             AppError::Conflict(_) => StatusCode::CONFLICT,
             AppError::ServiceUnavailable => StatusCode::SERVICE_UNAVAILABLE,
+            AppError::ProviderError => StatusCode::BAD_GATEWAY,
             AppError::Database(_) | AppError::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
@@ -79,6 +83,7 @@ impl AppError {
             AppError::RateLimited => "rate_limited",
             AppError::NotFound => "not_found",
             AppError::ServiceUnavailable => "service_unavailable",
+            AppError::ProviderError => "provider_error",
             AppError::Database(_) | AppError::Internal(_) => "internal_error",
         }
     }

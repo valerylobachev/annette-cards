@@ -1,7 +1,11 @@
 //! Cross-cutting request security (architecture.md §5.2, §9): Origin check, per-IP rate limits, security headers
 //! and request ids.
 
-use std::{sync::Arc, time::Duration};
+use std::{
+    collections::{HashMap, VecDeque},
+    sync::{Arc, Mutex},
+    time::Duration,
+};
 
 use axum::{
     extract::{Request, State},
@@ -108,6 +112,52 @@ fn rate_limit_response(error: GovernorError) -> Response {
     }
 }
 
+/// A limit per signed-in user: at most `max` requests in any `window_ms` (a sliding window). Used where one user,
+/// not one IP, costs money: audio generation (60 an hour).
+pub struct PerUserLimit {
+    max: usize,
+    window_ms: i64,
+    /// Times of each user's recent requests, oldest first. Only in memory: a restart forgives everyone.
+    recent: Mutex<HashMap<String, VecDeque<i64>>>,
+}
+
+/// `POST /api/cards/{id}/audio`: 60 requests an hour per user (architecture.md §7).
+pub const AUDIO_REQUESTS_PER_HOUR: usize = 60;
+
+impl PerUserLimit {
+    pub fn new(max: usize, window_ms: i64) -> Self {
+        Self {
+            max,
+            window_ms,
+            recent: Mutex::new(HashMap::new()),
+        }
+    }
+
+    /// Counts a request at `now`, or refuses it with 429 `rate_limited` when the user is over the limit.
+    pub fn check(&self, user_id: &str, now: i64) -> Result<(), AppError> {
+        // A panic while the lock was held cannot leave the map inconsistent, so a poisoned lock is still usable.
+        let mut recent = self
+            .recent
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
+        recent.retain(|_, times| {
+            while times
+                .front()
+                .is_some_and(|time| *time <= now - self.window_ms)
+            {
+                times.pop_front();
+            }
+            !times.is_empty()
+        });
+        let times = recent.entry(user_id.to_string()).or_default();
+        if times.len() >= self.max {
+            return Err(AppError::RateLimited);
+        }
+        times.push_back(now);
+        Ok(())
+    }
+}
+
 /// `x-request-id` values: UUIDv7, like every other id in the project. An id already set by the proxy is kept.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct UuidV7RequestId;
@@ -121,6 +171,8 @@ impl MakeRequestId for UuidV7RequestId {
 
 #[cfg(test)]
 mod tests {
+    use super::PerUserLimit;
+    use crate::error::AppError;
     use axum::{
         body::Body,
         http::{Request, StatusCode, header},
@@ -230,5 +282,26 @@ mod tests {
         let id = crate::auth::extractor::user_log_id("0192f6c1-0000-7000-8000-000000000000");
         assert_eq!(id.len(), 12);
         assert!(id.chars().all(|c| c.is_ascii_hexdigit()));
+    }
+
+    #[test]
+    fn per_user_limit_counts_each_user_in_a_sliding_window() {
+        let limit = PerUserLimit::new(2, 1_000);
+        assert!(limit.check("anna", 0).is_ok());
+        assert!(limit.check("anna", 500).is_ok());
+        assert!(matches!(
+            limit.check("anna", 900),
+            Err(AppError::RateLimited)
+        ));
+        assert!(
+            limit.check("boris", 900).is_ok(),
+            "other users have their own budget"
+        );
+        // The first request leaves the window after 1 000 ms; the refused one was not counted.
+        assert!(limit.check("anna", 1_000).is_ok());
+        assert!(matches!(
+            limit.check("anna", 1_400),
+            Err(AppError::RateLimited)
+        ));
     }
 }

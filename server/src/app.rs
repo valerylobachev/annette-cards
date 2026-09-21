@@ -26,20 +26,48 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     admin,
+    audio::{self, azure::AzureTts, tts::TtsProvider},
     auth::{self, SESSION_COOKIE},
+    clock::HOUR_MS,
     config::Config,
     error::ErrorBody,
     health,
-    security::{self, UuidV7RequestId},
+    security::{self, PerUserLimit, UuidV7RequestId},
     static_files, sync,
 };
 
 const REQUEST_ID: HeaderName = HeaderName::from_static("x-request-id");
 
+/// Timeout of calls to external services (TTS, Wikimedia, LLM).
+const PROVIDER_TIMEOUT: Duration = Duration::from_secs(10);
+
 /// Shared by all requests through `Arc` (cheap to clone, read-only).
 pub struct AppState {
     pub pool: SqlitePool,
     pub config: Config,
+    /// The text-to-speech provider; `None` when TTS is not configured (`features.tts = false`).
+    pub tts: Option<Arc<dyn TtsProvider>>,
+    /// Per-user limit of `POST /api/cards/{id}/audio`.
+    pub audio_limit: PerUserLimit,
+}
+
+impl AppState {
+    /// The state for `config`: providers are created for the features that have their settings.
+    pub fn new(pool: SqlitePool, config: Config) -> anyhow::Result<Self> {
+        let http = reqwest::Client::builder()
+            .timeout(PROVIDER_TIMEOUT)
+            .user_agent(concat!("annette-cards/", env!("CARGO_PKG_VERSION")))
+            .build()?;
+        let tts = config.azure_tts().map(|(key, region)| {
+            Arc::new(AzureTts::new(http.clone(), key.clone(), region)) as Arc<dyn TtsProvider>
+        });
+        Ok(Self {
+            pool,
+            config,
+            tts,
+            audio_limit: PerUserLimit::new(security::AUDIO_REQUESTS_PER_HOUR, HOUR_MS),
+        })
+    }
 }
 
 #[derive(OpenApi)]
@@ -87,6 +115,11 @@ fn api_routes() -> OpenApiRouter<Arc<AppState>> {
         ))
         .routes(routes!(admin::handlers::revoke_invite))
         .merge(sync_routes())
+        .routes(routes!(
+            audio::handlers::attach_audio,
+            audio::handlers::remove_audio
+        ))
+        .routes(routes!(audio::handlers::get_audio))
 }
 
 fn sync_routes() -> OpenApiRouter<Arc<AppState>> {
@@ -199,10 +232,7 @@ mod tests {
     use tower::ServiceExt;
 
     fn test_app(pool: SqlitePool) -> Router {
-        router(Arc::new(AppState {
-            pool,
-            config: Config::default(),
-        }))
+        router(Arc::new(AppState::new(pool, Config::default()).unwrap()))
     }
 
     async fn get_json(app: Router, uri: &str) -> (StatusCode, serde_json::Value) {

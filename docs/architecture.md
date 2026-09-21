@@ -356,6 +356,24 @@ answers like login (`MeResponse` + cookie). The code is matched case-insensitive
 characters after trimming. The invite check, the new user, marking the invite used and the session are one
 transaction (`BEGIN IMMEDIATE`), so a failed registration leaves the invite usable.
 
+**Audio** (§7):
+
+- `POST /api/cards/{id}/audio` takes `{source: "tts" | "commons", voice?}` (voice: letters, digits, `-`, `:`) and
+  returns `{audio_id, attribution}`.
+- `GET /api/audio/{id}` returns the clip (`Content-Type` from the asset, `Cache-Control: private, max-age=31536000,
+  immutable`) with `X-Audio-Source: azure | commons` and, when known, `X-Audio-Attribution` (author and license,
+  percent-encoded UTF-8; decode with `decodeURIComponent`). A cached clip thus carries its attribution to devices
+  that only received `audio_id` through sync. Another user's clip is 404 `not_found`.
+
+| Code | Status | When |
+| --- | --- | --- |
+| `not_found` | 404 | The card (or clip) does not exist, is deleted or belongs to another user |
+| `tts_disabled` | 409 | `source: "tts"` on a server without TTS settings |
+| `unsupported_language` | 400 | No voice for the deck's language and no `voice` given |
+| `not_implemented` | 400 | `source: "commons"` before P3-T02 |
+| `provider_error` | 502 | The TTS provider failed or could not be reached |
+| `rate_limited` | 429 | More than 60 audio requests in an hour |
+
 **Export and restore** (backup format §6.5):
 
 - `GET /api/export` → the backup JSON with `Content-Disposition: attachment;
@@ -728,14 +746,23 @@ A full backup (UC-24, UC-25) is one JSON document. The client writes it locally 
 
 ## 7. Audio pipeline (server)
 
-1. `POST /api/cards/{id}/audio {source: "tts", voice?}`: build SSML from `card.front`; if `card.ipa` is set, wrap
-   the text in `<phoneme alphabet="ipa" ph="…">`; call Azure; store MP3 in `audio_assets`; set `card.audio_id`,
-   bump `updated_at` and `server_seq` so other devices pick it up.
+1. `POST /api/cards/{id}/audio {source: "tts", voice?}`: load the user's card (not deleted, deck not deleted); build
+   SSML from `card.front` in the deck's `target_lang` (`xml:lang` and a default neural voice per language, e.g.
+   `en-GB-SoniaNeural`, `en-US-JennyNeural`, `pl-PL-ZofiaNeural`; `voice` overrides it); every value is XML-escaped;
+   if `card.ipa` is set (surrounding `/…/` or `[…]` stripped), wrap the text in `<phoneme alphabet="ipa" ph="…">`;
+   call Azure (`audio-24khz-48kbitrate-mono-mp3`, 10 s timeout). Only then, in one transaction: store the MP3 in
+   `audio_assets` (`source = 'azure'`) and set `card.audio_id`. A provider failure writes nothing.
 2. `source: "commons"`: query Wiktionary/Commons for pronunciation files matching the word and language; download,
-   ensure a Safari-playable format (see open questions), store with attribution; same card update.
-3. Responses: `{ "audio_id": "...", "attribution": "..." }` or error codes `tts_disabled`, `not_found`,
-   `provider_error`.
-4. Rate limit: 60 requests/hour per user.
+   ensure a Safari-playable format (see open questions), store with attribution; same card update. Until P3-T02:
+   400 `not_implemented`.
+3. **Server edits of synced rows.** Attaching or removing audio is an edit of the card, stamped like a device edit:
+   `updated_by = "server"`, `updated_at = max(now, card.updated_at + 1)` (so it wins LWW even over a device whose
+   clock runs ahead) and a new `server_seq`, so every device pulls it. A device that edited the same card offline
+   loses that edit to the server's (row-level LWW, §6.1).
+4. `DELETE /api/cards/{id}/audio` sets `audio_id = NULL` the same way (nothing changes if the card has no audio).
+   The `audio_assets` row stays: devices that cached the clip keep playing it; the purge job removes orphans.
+5. Responses: `{ "audio_id": "...", "attribution": "..." | null }` or the error codes in §5.3.
+6. Rate limit: 60 requests/hour per user (sliding window in memory, `security::PerUserLimit`).
 
 ## 8. Enrichment (server)
 
@@ -771,7 +798,7 @@ recipes load it).
 | `ANNETTE_PUBLIC_URL` | — | Public origin: the Origin check and invite links printed by the CLI |
 | `ANNETTE_DEV_ORIGINS` | `true` in debug builds, `false` in release | Also accept API writes from the Vite dev server (`http://localhost:5173`, `http://127.0.0.1:5173`, `https://localhost:5173`) |
 | `ANNETTE_SESSION_TTL_DAYS` | `90` | Sliding session lifetime |
-| `ANNETTE_AZURE_TTS_KEY` / `_REGION` | — | Enables TTS |
+| `ANNETTE_AZURE_TTS_KEY` / `_REGION` | — | Azure AI Speech key and region (e.g. `westeurope`); TTS is enabled when both are set (blank = unset). The key is never logged |
 | `ANNETTE_COMMONS_ENABLED` | `true` | Enables Wikimedia lookup |
 | `ANTHROPIC_API_KEY` | — | Enables enrichment |
 | `ANNETTE_LLM_MODEL` | configurable | Model name for enrichment |
