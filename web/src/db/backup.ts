@@ -1,7 +1,6 @@
 import { BACKUP_FORMAT, BACKUP_VERSION, type BackupV1 } from '@/domain/backup/format'
 import { remapIds } from '@/domain/backup/regenerate'
 import { deckToCsv } from '@/domain/export/csv'
-import { mergeSettings } from '@/domain/settings'
 import type { Card, CardState, Deck, ReviewLog } from '@/domain/types'
 import { now } from '@/lib/clock'
 import { newId } from '@/lib/ids'
@@ -10,7 +9,7 @@ import { listCards, writeCard } from './cards'
 import { writeDeck } from './decks'
 import { addToOutbox } from './outbox'
 import { db } from './schema'
-import { getSettings } from './settings'
+import { getStoredSettings } from './settings'
 import { mutate, stamp, type WriteContext } from './write'
 
 const BATCH_SIZE = 500
@@ -33,7 +32,7 @@ export async function exportAll(): Promise<BackupV1> {
       cards,
       card_states: await db.card_states.filter(live).toArray(),
       review_log: await db.review_log.filter(live).toArray(),
-      settings: await getSettings(),
+      settings: await getStoredSettings(),
     }
   })
 }
@@ -52,7 +51,7 @@ export function restoreReplace(backup: BackupV1): Promise<void> {
   return mutate(['decks', 'cards', 'card_states', 'review_log', 'settings'], async (ctx) => {
     await softDeleteEverything(ctx)
     await writeRows(ctx, backup.decks, backup.cards, backup.card_states, backup.review_log)
-    await ctx.db.settings.put(stamp(ctx, { ...mergeSettings(backup.settings), id: 'user' as const }))
+    await ctx.db.settings.put(stamp(ctx, { ...backup.settings, id: 'user' as const }))
     await addToOutbox(ctx, 'settings', 'user')
   })
 }

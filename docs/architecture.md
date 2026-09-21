@@ -88,7 +88,13 @@ They are stored in `meta` because voices differ between devices. `meta` keys (ty
 `device_id`, `sync_cursor`, `last_sync_at`, `account`, `voice_pref` (voice per language), `speech_rate`, `theme`,
 `audio_prefetch`, `last_quick_add_deck` (deck preselected in Quick add), `extra_new` (`{ study_day, count }`,
 extra new cards allowed today), `study_session` (snapshot of the current or last study session for resume within
-30 min and the summary; `domain/studySession.ts`). Writes to `meta` never create outbox entries.
+30 min and the summary; `domain/studySession.ts`), `install_hint_shown` (the one-time iOS install hint was closed),
+`storage_persisted` (answer of `navigator.storage.persist()`). Writes to `meta` never create outbox entries.
+
+`theme` (`system` | `light` | `dark`) is applied as `data-theme` on `<html>` (the `dark` variant in `index.css`;
+`system` removes the attribute and follows `prefers-color-scheme`). Because IndexedDB is asynchronous, the value is
+mirrored to `localStorage` (`annette.theme`) and applied by `public/theme.js`, a classic script in `<head>` that
+runs before the first paint (a file, not an inline script, because of the CSP `default-src 'self'`).
 
 ### 4.3 Write path
 
@@ -213,7 +219,10 @@ flowchart TD
 ### 4.6 Internationalization
 
 - `react-i18next` with `en.json` and `ru.json`; Russian plural forms via i18next plural suffixes.
-- Initial UI language: settings value, else `navigator.language` starting with `ru` → Russian, else English.
+- Initial UI language: settings value, else `navigator.language` starting with `ru` → Russian, else English. The
+  settings document stores only fields that were set (defaults are merged on read), so `ui_language` is present
+  only after the learner chose a language; until then the device's detection applies. The last language is also
+  cached in `localStorage` (`annette.uiLanguage`) for the first render.
 - Server errors are codes; the client maps them to translation keys (`errors.<code>`).
 - Dates and numbers via `Intl` with the UI locale.
 
@@ -562,6 +571,8 @@ A full backup (UC-24, UC-25) is one JSON document. The client writes it locally 
 - **Replace local data**: one transaction soft-deletes every local deck, card, state and log entry, then writes
   the backup rows and settings. **Add as new decks**: decks, cards and logs get new UUIDv7 ids (states follow
   their card), written in transactions of about 500 rows; settings stay unchanged.
+- `settings` holds only the fields that were set on the exporting device (defaults fill the rest on read), so a
+  restore does not impose, for example, a default UI language that was never chosen.
 - Restored rows are stamped with this device (`updated_at = now`) and outboxed, so they sync like new edits.
   Cards without a state for an active direction get a New state.
 - Deck CSV export uses the import format (README "Import format"), tags joined by spaces, with a UTF-8 BOM.

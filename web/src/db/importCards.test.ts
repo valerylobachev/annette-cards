@@ -35,7 +35,7 @@ describe('importRows', () => {
     expect(outbox.filter((entry) => entry.entity === 'cards')).toHaveLength(1200)
     expect(outbox.filter((entry) => entry.entity === 'card_states')).toHaveLength(2400)
     expect(cards.every((card) => card.updated_by !== '' && card.updated_at > 0)).toBe(true)
-  })
+  }, 20_000) // 1 200 rows through IndexedDB: slow when the whole suite runs in parallel
 
   it('skip leaves the existing card unchanged', async () => {
     const deck = await createDeck(deckInput)

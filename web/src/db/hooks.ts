@@ -74,3 +74,8 @@ export function useToday() {
 export function useFinishedSession(id: string) {
   return useLiveQuery(() => loadFinishedSession(id), [id])
 }
+
+/** The UI language stored in the settings document; `null` when it was never chosen (then the device decides). */
+export function useStoredUiLanguage() {
+  return useLiveQuery(async () => (await db.settings.get('user'))?.ui_language ?? null)
+}

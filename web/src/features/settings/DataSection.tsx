@@ -10,8 +10,9 @@ import { restoreAsNew, restoreReplace } from '@/db/backup'
 import { type BackupV1, backupCounts, parseBackup } from '@/domain/backup/format'
 import { shareBackup } from '@/features/export/exportFiles'
 import { formatNumber } from '@/lib/intl'
+import { SettingsGroup } from './SettingsList'
 
-/** S-14 Data: export a full backup and restore one (UC-24, UC-25). P1-T12 moves it into the grouped Settings list. */
+/** S-14 Data: export a full backup and restore one (UC-24, UC-25); CSV per deck is in the deck menus. */
 export function DataSection() {
   const { t } = useTranslation()
   const fileInput = useRef<HTMLInputElement>(null)
@@ -35,35 +36,36 @@ export function DataSection() {
   }
 
   return (
-    <section className="flex flex-col gap-2">
-      <h2 className="font-medium">{t('backup.section')}</h2>
-      <Button size="xl" variant="outline" className="justify-start" onClick={() => shareBackup()}>
-        <Download className="size-4" aria-hidden />
-        {t('backup.export')}
-      </Button>
-      <input
-        ref={fileInput}
-        type="file"
-        accept=".json,application/json"
-        aria-label={t('backup.import')}
-        className="sr-only"
-        onChange={(event) => {
-          void pick(event.target.files?.[0])
-          event.target.value = ''
-        }}
-      />
-      <Button size="xl" variant="outline" className="justify-start" onClick={() => fileInput.current?.click()}>
-        <Upload className="size-4" aria-hidden />
-        {t('backup.import')}
-      </Button>
-      <p className="text-sm text-muted-foreground">{t('backup.hint')}</p>
-      {error && (
-        <p role="alert" className="text-sm text-destructive">
-          {error}
-        </p>
-      )}
+    <SettingsGroup title={t('backup.section')}>
+      <div className="flex flex-col gap-2 p-4">
+        <Button size="xl" variant="outline" className="justify-start" onClick={() => shareBackup()}>
+          <Download className="size-4" aria-hidden />
+          {t('backup.export')}
+        </Button>
+        <input
+          ref={fileInput}
+          type="file"
+          accept=".json,application/json"
+          aria-label={t('backup.import')}
+          className="sr-only"
+          onChange={(event) => {
+            void pick(event.target.files?.[0])
+            event.target.value = ''
+          }}
+        />
+        <Button size="xl" variant="outline" className="justify-start" onClick={() => fileInput.current?.click()}>
+          <Upload className="size-4" aria-hidden />
+          {t('backup.import')}
+        </Button>
+        <p className="text-sm text-muted-foreground">{t('backup.hint')}</p>
+        {error && (
+          <p role="alert" className="text-sm text-destructive">
+            {error}
+          </p>
+        )}
+      </div>
       <RestoreSheet backup={backup} onClose={() => setBackup(null)} />
-    </section>
+    </SettingsGroup>
   )
 }
 

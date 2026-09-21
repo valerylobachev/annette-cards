@@ -1,10 +1,10 @@
 import { expect, type Page, test } from '@playwright/test'
-import { cardRow, deckRow, newStateRow, seed, useUiLanguage } from './helpers'
+import { cardRow, deckRow, newStateRow, seed, setUpApp } from './helpers'
 
 const WORDS = ['one', 'two', 'three', 'four', 'five']
 
 test.beforeEach(async ({ page }) => {
-  await useUiLanguage(page)
+  await setUpApp(page)
   await page.goto('/decks')
   await seed(page, {
     decks: [deckRow('d1', 'English B2', { directions: 'forward' })],

@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { fileURLToPath, URL } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
 import basicSsl from '@vitejs/plugin-basic-ssl'
@@ -9,8 +10,16 @@ import packageJson from './package.json' with { type: 'json' }
 // `just dev-https` sets VITE_HTTPS=1 to serve over HTTPS with a self-signed certificate (iPhone testing).
 const https = process.env.VITE_HTTPS === '1'
 
+/** Runtime dependencies with their licenses, for Settings → About. */
+const licenses = Object.keys(packageJson.dependencies)
+  .sort()
+  .map((name) => {
+    const manifest = JSON.parse(readFileSync(new URL(`./node_modules/${name}/package.json`, import.meta.url), 'utf8'))
+    return { name, version: String(manifest.version), license: String(manifest.license ?? 'unknown') }
+  })
+
 export default defineConfig({
-  define: { __APP_VERSION__: JSON.stringify(packageJson.version) },
+  define: { __APP_VERSION__: JSON.stringify(packageJson.version), __LICENSES__: JSON.stringify(licenses) },
   plugins: [
     react(),
     tailwindcss(),

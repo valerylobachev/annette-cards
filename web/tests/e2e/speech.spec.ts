@@ -1,5 +1,5 @@
 import { expect, type Page, test } from '@playwright/test'
-import { cardRow, deckRow, newStateRow, seed, useUiLanguage } from './helpers'
+import { cardRow, deckRow, newStateRow, seed, setUpApp } from './helpers'
 
 type Spoken = { text: string; lang: string; voice: string | null; rate: number }
 
@@ -61,7 +61,7 @@ const spoken = (page: Page) =>
   page.evaluate(() => (window as unknown as { __spoken: Spoken[] }).__spoken.filter((s) => s.text !== ''))
 
 test.beforeEach(async ({ page }) => {
-  await useUiLanguage(page)
+  await setUpApp(page)
   await stubSpeech(page)
   await page.goto('/decks')
   await seed(page, {

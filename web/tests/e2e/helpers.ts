@@ -2,11 +2,19 @@ import type { Page } from '@playwright/test'
 
 type Row = Record<string, unknown>
 
-/** Starts the app in the given UI language (default English) regardless of the browser locale. */
-export async function useUiLanguage(page: Page, language: 'en' | 'ru' = 'en') {
-  await page.addInitScript((lang) => {
-    if (!localStorage.getItem('annette.uiLanguage')) localStorage.setItem('annette.uiLanguage', lang)
-  }, language)
+/**
+ * Starts the app in the given UI language (default English) regardless of the browser locale, as the installed
+ * Home Screen app: the WebKit project emulates iPhone Safari, where the one-time install hint would cover every
+ * screen. Pass `installed: false` to test the hint.
+ */
+export async function setUpApp(page: Page, language: 'en' | 'ru' = 'en', { installed = true } = {}) {
+  await page.addInitScript(
+    ({ lang, standalone }) => {
+      if (!localStorage.getItem('annette.uiLanguage')) localStorage.setItem('annette.uiLanguage', lang)
+      if (standalone) Object.defineProperty(navigator, 'standalone', { value: true, configurable: true })
+    },
+    { lang: language, standalone: installed },
+  )
 }
 
 /**
@@ -93,4 +101,25 @@ export function newStateRow(card_id: string, direction: 'forward' | 'reverse' = 
     ...stamp,
     ...extra,
   }
+}
+
+/** Reads one row of the app's IndexedDB (for waiting until a write has been committed). */
+export async function readRow(page: Page, store: string, key: string): Promise<Row | undefined> {
+  const row: unknown = await page.evaluate(
+    ({ store, key }) =>
+      new Promise((resolve, reject) => {
+        const request = indexedDB.open('annette')
+        request.onerror = () => reject(request.error)
+        request.onsuccess = () => {
+          const get = request.result.transaction(store).objectStore(store).get(key)
+          get.onsuccess = () => {
+            request.result.close()
+            resolve(get.result)
+          }
+          get.onerror = () => reject(get.error)
+        }
+      }),
+    { store, key },
+  )
+  return row as Row | undefined
 }

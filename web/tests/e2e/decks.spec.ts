@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test'
-import { cardRow, deckRow, seed, useUiLanguage } from './helpers'
+import { cardRow, deckRow, seed, setUpApp } from './helpers'
 
 test('create, rename, delete and undo a deck', async ({ page }) => {
-  await useUiLanguage(page)
+  await setUpApp(page)
   await page.goto('/decks')
   await expect(page.getByText('No decks yet')).toBeVisible()
 
@@ -31,7 +31,7 @@ test('create, rename, delete and undo a deck', async ({ page }) => {
 })
 
 test('Russian UI uses plural forms', async ({ page }) => {
-  await useUiLanguage(page, 'ru')
+  await setUpApp(page, 'ru')
   await page.goto('/decks')
   await expect(page.getByText('Колод пока нет')).toBeVisible()
   await seed(page, {
@@ -55,7 +55,7 @@ test('Russian UI uses plural forms', async ({ page }) => {
 })
 
 test('swipe left reveals Archive; long-press opens the context menu', async ({ page }) => {
-  await useUiLanguage(page)
+  await setUpApp(page)
   await page.goto('/decks')
   await seed(page, { decks: [deckRow('d1', 'Swipe me'), deckRow('d2', 'Hold me')] })
   await page.reload()

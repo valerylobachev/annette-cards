@@ -4,19 +4,18 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { createCard } from '@/db/cards'
 import { createDeck } from '@/db/decks'
 import { getMeta } from '@/db/meta'
-import { updateSettings } from '@/db/settings'
 import { resetDb } from '@/test/db'
 import { renderApp } from '@/test/render'
 
 beforeEach(resetDb)
 
-async function deckWithWords(count: number) {
+async function deckWithWords(count: number, new_per_day: number | null = null) {
   const deck = await createDeck({
     name: 'English',
     target_lang: 'en-GB',
     native_lang: 'ru',
     directions: 'forward',
-    new_per_day: null,
+    new_per_day,
   })
   for (let i = 0; i < count; i++) await createCard({ deck_id: deck.id, front: `word ${i}`, back: `слово ${i}` })
   return deck
@@ -34,8 +33,7 @@ describe('Today', () => {
   })
 
   it('offers extra new words when nothing is due, and they add 10 new cards', async () => {
-    await updateSettings({ new_per_day: 0 })
-    await deckWithWords(25)
+    await deckWithWords(25, 0)
     renderApp('/')
     expect(await screen.findByText(/Nothing due\./)).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Learn extra new words' }))

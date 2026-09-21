@@ -24,6 +24,10 @@ export type MetaValues = {
   extra_new: { study_day: string; count: number }
   /** The current or last study session, resumed within 30 min (S-11). */
   study_session: StudySessionSnapshot
+  /** The one-time iOS install hint was shown and closed. */
+  install_hint_shown: boolean
+  /** Answer of `navigator.storage.persist()`: `false` shows the data-loss warning. */
+  storage_persisted: boolean
 }
 
 export type MetaKey = keyof MetaValues

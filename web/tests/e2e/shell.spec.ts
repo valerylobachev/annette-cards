@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test'
-import { useUiLanguage } from './helpers'
+import { setUpApp } from './helpers'
 
 test.beforeEach(async ({ page }) => {
-  await useUiLanguage(page)
+  await setUpApp(page)
 })
 
 test('app loads and the four tabs navigate', async ({ page }) => {

@@ -34,6 +34,26 @@ describe('settings repository', () => {
     })
   })
 
+  it('stores only the fields that were set', async () => {
+    await updateSettings({ new_per_day: 20 })
+    const row = await db.settings.get('user')
+    expect(row).toMatchObject({ id: 'user', new_per_day: 20 })
+    expect(row).not.toHaveProperty('ui_language')
+    expect((await getSettings()).ui_language).toBe(DEFAULT_SETTINGS.ui_language)
+  })
+
+  it('changing new_per_day stamps the document and adds one outbox entry', async () => {
+    await updateSettings({ new_per_day: 30 })
+    await updateSettings({ new_per_day: 31 })
+    expect(await db.settings.get('user')).toMatchObject({ new_per_day: 31, updated_by: await getDeviceId() })
+    expect(await db.outbox.where('entity').equals('settings').count()).toBe(1)
+  })
+
+  it('rejects values out of range without writing', async () => {
+    await expect(updateSettings({ desired_retention: 0.99 })).rejects.toThrow('desired_retention invalid')
+    expect(await db.settings.count()).toBe(0)
+  })
+
   it('update stamps the row and adds an outbox entry', async () => {
     const settings = await updateSettings({ answer_mode: 'detailed' })
     expect(settings.answer_mode).toBe('detailed')

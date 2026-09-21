@@ -17,7 +17,8 @@ export type BackupV1 = {
   cards: Card[]
   card_states: CardState[]
   review_log: ReviewLog[]
-  settings: Settings
+  /** The fields of the settings document that were set; defaults fill the rest on read. */
+  settings: Partial<Settings>
 }
 
 export type BackupCounts = { decks: number; cards: number; reviews: number }

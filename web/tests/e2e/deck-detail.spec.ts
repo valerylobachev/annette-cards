@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { cardRow, deckRow, seed, useUiLanguage } from './helpers'
+import { cardRow, deckRow, seed, setUpApp } from './helpers'
 
 function stateRow(card_id: string, direction: string, extra: Record<string, unknown> = {}) {
   return {
@@ -25,7 +25,7 @@ function stateRow(card_id: string, direction: string, extra: Record<string, unkn
 const word = (i: number) => `word ${String(i).padStart(4, '0')}`
 
 test.beforeEach(async ({ page }) => {
-  await useUiLanguage(page)
+  await setUpApp(page)
   await page.goto('/decks')
 })
 

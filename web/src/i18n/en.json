@@ -76,7 +76,34 @@
     }
   },
   "settings": {
-    "language": "Interface language"
+    "language": "Interface language",
+    "sections": {
+      "study": "Study",
+      "appearance": "Appearance",
+      "about": "About"
+    },
+    "newPerDay": "New words per day",
+    "maxReviews": "Max reviews per day",
+    "defaultDirections": "Directions for new decks",
+    "answerMode": "Answer mode",
+    "answerModes": {
+      "simple": "Simple (2 buttons)",
+      "detailed": "Detailed (4 buttons)"
+    },
+    "showIpa": "Show IPA on the front",
+    "dayStart": "Day starts at",
+    "retention": "Desired retention",
+    "retentionHint": "How likely you should still remember a word when it is due. Higher means more reviews.",
+    "theme": "Theme",
+    "themes": {
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "version": "Version",
+    "installApp": "Install on iPhone",
+    "licenses": "Open-source licenses",
+    "changesNextSession": "Changes apply to the next session."
   },
   "languages": {
     "en": "English",
@@ -470,5 +497,18 @@
     "unsupported": "Speech is not available in this browser.",
     "guideTitle": "How to download better voices on iPhone",
     "guide": "Open Settings → Accessibility → Spoken Content → Voices, choose the language and download an Enhanced or Premium voice. Then come back here: the list updates."
+  },
+  "install": {
+    "title": "Install Annette on your iPhone",
+    "why": "It opens full screen, works offline and keeps your data safe.",
+    "share": "Tap Share in the Safari toolbar",
+    "addToHome": "Choose “Add to Home Screen”",
+    "addLabel": "Add",
+    "add": "Tap “Add” in the top corner",
+    "done": "Got it"
+  },
+  "storage": {
+    "warning": "Your data may be removed by Safari. Sign in or export a backup.",
+    "export": "Export a backup"
   }
 }

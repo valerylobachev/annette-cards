@@ -1,4 +1,5 @@
 import type { Settings } from './types'
+import type { FieldError } from './validation'
 
 /** Defaults of the settings document: architecture.md §5.5 plus decision D3. */
 export const DEFAULT_SETTINGS: Settings = {
@@ -22,4 +23,31 @@ export function mergeSettings(stored: Partial<Settings>): Settings {
     ...stored,
     reminder: { ...DEFAULT_SETTINGS.reminder, ...stored.reminder },
   }
+}
+
+/** Allowed ranges of the numeric settings (S-14). */
+export const SETTINGS_LIMITS = {
+  new_per_day: { min: 1, max: 200 },
+  max_reviews_per_day: { min: 10, max: 1000 },
+  day_start_hour: { min: 0, max: 23 },
+  desired_retention: { min: 0.8, max: 0.95 },
+} as const
+
+type LimitedField = keyof typeof SETTINGS_LIMITS
+const INTEGER_FIELDS: LimitedField[] = ['new_per_day', 'max_reviews_per_day', 'day_start_hour']
+
+/** Errors of a settings change: numbers outside their range (`SETTINGS_LIMITS`) or not whole where required. */
+export function validateSettingsPatch(patch: Partial<Settings>): FieldError[] {
+  const errors: FieldError[] = []
+  for (const field of Object.keys(SETTINGS_LIMITS) as LimitedField[]) {
+    const value = patch[field]
+    if (value === undefined) continue
+    const { min, max } = SETTINGS_LIMITS[field]
+    // A small tolerance keeps 0.95 from a float slider valid.
+    const inRange = value >= min - 1e-9 && value <= max + 1e-9
+    if (!inRange || (INTEGER_FIELDS.includes(field) && !Number.isInteger(value))) {
+      errors.push({ field, code: 'invalid' })
+    }
+  }
+  return errors
 }

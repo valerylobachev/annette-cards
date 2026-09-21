@@ -1,11 +1,11 @@
 import path from 'node:path'
 import { expect, test } from '@playwright/test'
-import { deckRow, seed, useUiLanguage } from './helpers'
+import { deckRow, seed, setUpApp } from './helpers'
 
 const fixture = (name: string) => path.join(import.meta.dirname, 'fixtures', name)
 
 test.beforeEach(async ({ page }) => {
-  await useUiLanguage(page)
+  await setUpApp(page)
 })
 
 test('imports a 300-word CSV into a new deck', async ({ page }) => {

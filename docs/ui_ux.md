@@ -339,7 +339,10 @@ snapshot, the summary shows "This session summary is no longer available".
 
 ### S-14 Settings
 
-Grouped list (iOS style):
+Grouped list (iOS style). Rows that arrive later: Account & sync (Phase 2, P2-T05), reminders (Phase 4, P4-T04),
+FSRS Optimize (Phase 4, P4-T05), storage usage and "Clear cached audio" (Phase 3, P3-T03), server version and
+Wikimedia attributions (Phases 2–3). Numeric settings use native pickers (new words 1–200, max reviews 10–1000 in
+steps of 10, day start 00:00–23:00); retention is a slider 0.80–0.95.
 
 - **Account & sync** → S-15.
 - **Study:** new words per day, max reviews per day, directions default, answer mode (Simple 2 buttons /
@@ -349,7 +352,12 @@ Grouped list (iOS style):
 - **Reminders:** enable, time; requires installed PWA (else explanation).
 - **Appearance:** theme (System / Light / Dark), UI language (Русский / English).
 - **Data:** Export (JSON full backup, CSV per deck), Import backup, storage usage, "Clear cached audio".
-- **About:** version, server version, licenses (including Wikimedia attributions list).
+- **About:** version, server version, "Install on iPhone" (opens the install hint; hidden in the installed app),
+  licenses (runtime dependencies with versions and licenses, collected at build time; Wikimedia attributions list
+  in Phase 3).
+
+The storage warning (§7) sits at the top of Settings and Today while persistence is denied and no account is
+signed in, with an "Export a backup" button.
 
 ### S-15 Account & sync
 

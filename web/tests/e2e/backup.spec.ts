@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test'
-import { cardRow, deckRow, seed, useUiLanguage } from './helpers'
+import { cardRow, deckRow, seed, setUpApp } from './helpers'
 
 test.beforeEach(async ({ page }) => {
-  await useUiLanguage(page)
+  await setUpApp(page)
   // Force the download path: headless browsers may offer a share sheet that a test cannot close.
   await page.addInitScript(() => {
     Object.defineProperty(navigator, 'canShare', { value: undefined, configurable: true })
@@ -59,7 +59,9 @@ test('rejects a backup from a newer app version', async ({ page }, testInfo) => 
   await writeFile(path, JSON.stringify({ format: 'annette-cards-backup', version: 2, app_version: '3.0.0' }))
   await page.goto('/settings')
   await page.getByLabel('Import backup').setInputFiles(path)
-  await expect(page.getByRole('alert')).toHaveText('This backup needs app version 3.0.0 or newer.')
+  await expect(page.getByRole('alert').filter({ hasText: 'This backup needs' })).toHaveText(
+    'This backup needs app version 3.0.0 or newer.',
+  )
 })
 
 test('exports a deck as CSV from the deck menu', async ({ page }) => {

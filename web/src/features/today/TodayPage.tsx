@@ -2,6 +2,7 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import { ChevronRight, Flame } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { EmptyState } from '@/components/EmptyState'
+import { StorageWarning } from '@/components/StorageWarning'
 import { Button } from '@/components/ui/button'
 import { useToday } from '@/db/hooks'
 import type { TodayData } from '@/db/studyQueries'
@@ -31,6 +32,7 @@ export function TodayPage() {
       <header className="flex min-h-11 items-center">
         <h1 className="text-2xl font-semibold">{t('today.greeting')}</h1>
       </header>
+      <StorageWarning />
       {empty ? (
         <EmptyState
           message={t('today.empty')}

@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test'
-import { cardRow, deckRow, seed, useUiLanguage } from './helpers'
+import { cardRow, deckRow, seed, setUpApp } from './helpers'
 
 test.beforeEach(async ({ page }) => {
-  await useUiLanguage(page)
+  await setUpApp(page)
   await page.goto('/decks')
   await seed(page, {
     decks: [deckRow('d1', 'English'), deckRow('d2', 'Polish', { target_lang: 'pl-PL' })],
