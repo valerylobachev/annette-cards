@@ -258,12 +258,23 @@ flowchart TD
 | `push/` | Web Push subscriptions, VAPID, reminder task |
 | `fsrs/` | Weight optimization from review logs (Phase 4) |
 | `admin/` | Invite management (CLI + admin-only endpoints); the invite code generator |
+| `security.rs` | Origin check, per-IP rate limits, security headers, request ids |
 | `static_files.rs` | Serve embedded PWA with SPA fallback and cache headers |
 
 ### 5.2 Request pipeline
 
-`Caddy (TLS)` → `TraceLayer` → `CompressionLayer` → `TimeoutLayer (30 s)` → origin check for unsafe methods →
-rate limiter (route-specific) → handler → service → sqlx.
+`Caddy (TLS)` → request id (`x-request-id`, UUIDv7; kept if the proxy set one; echoed in the response) →
+`TraceLayer` → security headers → `CompressionLayer` → `TimeoutLayer (30 s)` → origin check for unsafe methods →
+rate limiter (route-specific) → handler → service → sqlx. In debug builds a permissive `CorsLayer` wraps everything.
+The layers are assembled in `app.rs` (`router`), the security pieces live in `security.rs`.
+
+- **Origin check** (`security::check_origin`): POST, PUT, PATCH and DELETE under `/api` need an `Origin` header
+  equal to `ANNETTE_PUBLIC_URL` (or, with `ANNETTE_DEV_ORIGINS`, `http://localhost:5173` / `http://127.0.0.1:5173`);
+  otherwise 403 `origin_mismatch`.
+- **Rate limits** (`security::limit_per_ip`): a token bucket per client IP (`X-Forwarded-For` from Caddy, else the
+  TCP peer). `POST /api/auth/login` and `/api/auth/register` share 10 requests per minute (burst 10, one more
+  every 6 s); over the limit → 429 `rate_limited` with `Retry-After`. Audio and enrich reuse the same function
+  with their own limits.
 
 ### 5.3 API
 
@@ -312,7 +323,27 @@ expiry to now + TTL at most once an hour (on the first request an hour after the
 | `password_too_short` | 400 | New password shorter than 10 characters |
 | `validation_failed` | 400 | Malformed email or display name |
 | `unauthorized` | 401 | Missing, unknown or expired session cookie |
-| `forbidden` | 403 | Signed in but not an admin (admin endpoints, P2-T02) |
+| `forbidden` | 403 | Signed in but not an admin (admin endpoints) |
+| `invite_invalid` | 400 | Register with an unknown or already used invite code |
+| `invite_expired` | 400 | Register with an expired invite code |
+| `email_taken` | 409 | Register with an email that has an account (letter case ignored) |
+| `invite_used` | 409 | Revoke an invite that was already used |
+| `origin_mismatch` | 403 | Unsafe request without this site's `Origin` |
+| `rate_limited` | 429 | More than 10 login/register attempts a minute from one IP |
+
+**Register.** `POST /api/auth/register` takes `{invite_code, display_name, email, password, device_label?}` and
+answers like login (`MeResponse` + cookie). The code is matched case-insensitively. Display name: 1–100
+characters after trimming. The invite check, the new user, marking the invite used and the session are one
+transaction (`BEGIN IMMEDIATE`), so a failed registration leaves the invite usable.
+
+**Admin invites** (admin session required; others get 403 `forbidden`):
+
+- `GET /api/admin/invites` → `[{code, note, expires_at, used_by_email, used_at, status}]`, newest expiry first;
+  `status` is `active` | `used` | `expired`, computed by the server.
+- `POST /api/admin/invites` `{note?, days?}` (days 1–90, default 7; note ≤ 200 characters) → 201 with the same
+  shape. The CLI `invite` subcommand uses the same function (`admin::invites::create_invite`).
+- `DELETE /api/admin/invites/{code}` → 204 (the row is deleted; invites are not synced); used → 409
+  `invite_used`; unknown → 404 `not_found`.
 
 ### 5.4 Server data model (SQLite)
 
@@ -628,7 +659,7 @@ A full backup (UC-24, UC-25) is one JSON document. The client writes it locally 
 | Registration | Invite-only (single-use codes with expiry) |
 | Input limits | Body size 2 MB (push batches), field length limits (front/back ≤ 500 chars, notes ≤ 2000; client also: example and its translation ≤ 2000, IPA ≤ 200, each tag ≤ 50 — `domain/cardValidation.ts`) |
 | Secrets | Env file readable only by the service user |
-| Headers | CSP (`default-src 'self'`), `X-Content-Type-Options`, `Referrer-Policy` |
+| Headers | `Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'` (inline styles only because `react-remove-scroll`, used by the dialogs, injects a computed `<style>`; scripts stay same-origin), `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin`, on every response |
 
 ## 10. Configuration
 
@@ -640,7 +671,8 @@ recipes load it).
 | --- | --- | --- |
 | `ANNETTE_BIND` | `127.0.0.1:8080` | Listen address |
 | `ANNETTE_DATABASE_URL` | `sqlite://data/annette.db` | SQLite path |
-| `ANNETTE_PUBLIC_URL` | — | Public origin, used for the Origin check |
+| `ANNETTE_PUBLIC_URL` | — | Public origin: the Origin check and invite links printed by the CLI |
+| `ANNETTE_DEV_ORIGINS` | `true` in debug builds, `false` in release | Also accept API writes from the Vite dev server (`localhost:5173`, `127.0.0.1:5173`) |
 | `ANNETTE_SESSION_TTL_DAYS` | `90` | Sliding session lifetime |
 | `ANNETTE_AZURE_TTS_KEY` / `_REGION` | — | Enables TTS |
 | `ANNETTE_COMMONS_ENABLED` | `true` | Enables Wikimedia lookup |
@@ -648,6 +680,7 @@ recipes load it).
 | `ANNETTE_LLM_MODEL` | configurable | Model name for enrichment |
 | `ANNETTE_ENRICH_DAILY_LIMIT` | `200` | Per-user daily quota |
 | `ANNETTE_VAPID_PUBLIC_KEY` / `_PRIVATE_KEY` | — | Enables Web Push |
+| `ANNETTE_LOG_FORMAT` | `pretty` in debug builds, `json` in release | Log output format (`pretty` \| `json`) |
 | `RUST_LOG` | `info` | Log filter |
 
 ## 11. Background tasks
@@ -682,7 +715,9 @@ flowchart LR
 
 ## 13. Observability
 
-- Structured JSON logs (`tracing`) to journald; request id, user id (hashed), latency, status.
+- Structured JSON logs (`tracing`) to journald. Each request logs one `response` line in the `request` span with
+  `method`, `path` (no query string), `request_id`, `status`, `latency_ms` and, for signed-in requests, `user` = the
+  first 12 hex characters of `sha256(user_id)`. Logs never contain passwords, tokens, emails or raw user ids.
 - `GET /api/health` for uptime checks (DB ping).
 - Client: sync errors and last successful sync time visible in Settings → Sync.
 

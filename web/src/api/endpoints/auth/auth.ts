@@ -28,7 +28,8 @@ import type {
   ChangePasswordRequest,
   ErrorBody,
   LoginRequest,
-  MeResponse
+  MeResponse,
+  RegisterRequest
 } from '../../model';
 
 
@@ -60,10 +61,15 @@ export type loginResponse401 = {
   status: 401
 }
 
+export type loginResponse429 = {
+  data: ErrorBody
+  status: 429
+}
+
 export type loginResponseSuccess = (loginResponse200) & {
   headers: Headers;
 };
-export type loginResponseError = (loginResponse401) & {
+export type loginResponseError = (loginResponse401 | loginResponse429) & {
   headers: Headers;
 };
 
@@ -604,4 +610,127 @@ export const useChangePassword = <TError = ErrorBody,
         TContext
       > => {
       return useMutation(getChangePasswordMutationOptions(options), queryClient);
+    }
+    export type registerResponse200 = {
+  data: MeResponse
+  status: 200
+}
+
+export type registerResponse400 = {
+  data: ErrorBody
+  status: 400
+}
+
+export type registerResponse409 = {
+  data: ErrorBody
+  status: 409
+}
+
+export type registerResponse429 = {
+  data: ErrorBody
+  status: 429
+}
+
+export type registerResponseSuccess = (registerResponse200) & {
+  headers: Headers;
+};
+export type registerResponseError = (registerResponse400 | registerResponse409 | registerResponse429) & {
+  headers: Headers;
+};
+
+export type registerResponse = (registerResponseSuccess | registerResponseError)
+
+export const getRegisterUrl = () => {
+
+
+
+
+  return `/api/auth/register`
+}
+
+/**
+ * @summary Creates an account with an invite code and signs it in (sets the `ac_session` cookie like login).
+ */
+export const register = async (registerRequest: RegisterRequest, options?: RequestInit): Promise<registerResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+const res = await fetch(getRegisterUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(registerRequest)
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: registerResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as registerResponse
+}
+
+
+
+
+
+export const getRegisterMutationKey = () => ['register'] as const;
+
+export const getRegisterMutationOptions = <TError = ErrorBody,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof register>>, TError,RegisterMutationVariables, TContext>, fetch?: RequestInit}
+): UseMutationOptions<Awaited<ReturnType<typeof register>>, TError,RegisterMutationVariables, TContext> => {
+
+const mutationKey = getRegisterMutationKey();
+const {mutation: mutationOptions, fetch: fetchOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, fetch: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof register>>, RegisterMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  register(data,fetchOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RegisterMutationResult = NonNullable<Awaited<ReturnType<typeof register>>>
+    export type RegisterMutationBody = RegisterRequest
+    export type RegisterMutationError = ErrorBody
+    export type RegisterMutationVariables = {data: RegisterRequest}
+
+    /**
+ * @summary Creates an account with an invite code and signs it in (sets the `ac_session` cookie like login).
+ */
+export const useRegister = <TError = ErrorBody,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof register>>, TError,RegisterMutationVariables, TContext>, fetch?: RequestInit}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof register>>,
+        TError,
+        RegisterMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRegisterMutationOptions(options), queryClient);
     }

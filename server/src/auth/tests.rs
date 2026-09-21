@@ -207,3 +207,218 @@ async fn auth_endpoints_are_in_the_openapi_spec(pool: SqlitePool) {
         "ac_session"
     );
 }
+
+mod register {
+    use super::*;
+    use crate::{
+        admin::invites,
+        clock::{DAY_MS, now_ms},
+    };
+
+    async fn invite(pool: &SqlitePool, created_at: i64) -> String {
+        let admin = create_user(pool, "admin@example.com", true).await;
+        invites::create_invite(pool, &admin.id, Some("Anna"), 7, created_at)
+            .await
+            .unwrap()
+            .code
+    }
+
+    fn body(code: &str, email: &str) -> serde_json::Value {
+        json!({
+            "invite_code": code,
+            "display_name": "Anna",
+            "email": email,
+            "password": "anna's long password",
+        })
+    }
+
+    async fn used_by(pool: &SqlitePool, code: &str) -> Option<String> {
+        sqlx::query_scalar("SELECT used_by FROM invites WHERE code = ?")
+            .bind(code)
+            .fetch_one(pool)
+            .await
+            .unwrap()
+    }
+
+    #[sqlx::test]
+    async fn a_valid_invite_creates_a_signed_in_account(pool: SqlitePool) {
+        let code = invite(&pool, now_ms()).await;
+        let app = test_app(pool.clone());
+
+        // Codes work in any letter case.
+        let body = body(&code.to_lowercase(), "anna@example.com");
+        let response = send(&app, post_json("/api/auth/register", &body, None)).await;
+        assert_eq!(response.status, StatusCode::OK, "{}", response.body);
+        assert_eq!(response.body["email"], "anna@example.com");
+        assert_eq!(response.body["display_name"], "Anna");
+        assert_eq!(response.body["is_admin"], false);
+
+        let cookie = response.session_cookie();
+        let me = send(&app, get("/api/auth/me", Some(&cookie))).await;
+        assert_eq!(me.body["id"], response.body["id"]);
+        assert_eq!(
+            used_by(&pool, &code).await.as_deref(),
+            me.body["id"].as_str()
+        );
+    }
+
+    #[sqlx::test]
+    async fn an_invite_works_once(pool: SqlitePool) {
+        let code = invite(&pool, now_ms()).await;
+        let app = test_app(pool);
+        let first = send(
+            &app,
+            post_json("/api/auth/register", &body(&code, "anna@example.com"), None),
+        )
+        .await;
+        assert_eq!(first.status, StatusCode::OK);
+
+        let again = send(
+            &app,
+            post_json("/api/auth/register", &body(&code, "bob@example.com"), None),
+        )
+        .await;
+        assert_eq!(again.status, StatusCode::BAD_REQUEST);
+        assert_eq!(again.code(), "invite_invalid");
+    }
+
+    #[sqlx::test]
+    async fn unknown_and_expired_invites_are_rejected(pool: SqlitePool) {
+        let expired = invite(&pool, now_ms() - 8 * DAY_MS).await;
+        let app = test_app(pool);
+
+        let unknown = send(
+            &app,
+            post_json(
+                "/api/auth/register",
+                &body("NOPE23456789", "a@example.com"),
+                None,
+            ),
+        )
+        .await;
+        assert_eq!(unknown.status, StatusCode::BAD_REQUEST);
+        assert_eq!(unknown.code(), "invite_invalid");
+
+        let late = send(
+            &app,
+            post_json("/api/auth/register", &body(&expired, "a@example.com"), None),
+        )
+        .await;
+        assert_eq!(late.status, StatusCode::BAD_REQUEST);
+        assert_eq!(late.code(), "invite_expired");
+    }
+
+    #[sqlx::test]
+    async fn a_taken_email_leaves_the_invite_unused(pool: SqlitePool) {
+        let code = invite(&pool, now_ms()).await;
+        create_user(&pool, "anna@example.com", false).await;
+        let app = test_app(pool.clone());
+
+        let taken = send(
+            &app,
+            post_json("/api/auth/register", &body(&code, "ANNA@example.com"), None),
+        )
+        .await;
+        assert_eq!(taken.status, StatusCode::CONFLICT);
+        assert_eq!(taken.code(), "email_taken");
+        assert!(taken.session_set_cookie().is_none());
+        // The transaction rolled back: the invite still works for another email.
+        assert_eq!(used_by(&pool, &code).await, None);
+        let retry = send(
+            &app,
+            post_json(
+                "/api/auth/register",
+                &body(&code, "anna2@example.com"),
+                None,
+            ),
+        )
+        .await;
+        assert_eq!(retry.status, StatusCode::OK);
+    }
+
+    #[sqlx::test]
+    async fn invalid_account_details_are_rejected(pool: SqlitePool) {
+        let code = invite(&pool, now_ms()).await;
+        let app = test_app(pool.clone());
+        let cases = [
+            ("password", json!("short"), "password_too_short"),
+            ("display_name", json!("   "), "validation_failed"),
+            ("display_name", json!("x".repeat(101)), "validation_failed"),
+            ("email", json!("not-an-email"), "validation_failed"),
+        ];
+        for (field, value, code_expected) in cases {
+            let mut request = body(&code, "anna@example.com");
+            request[field] = value;
+            let response = send(&app, post_json("/api/auth/register", &request, None)).await;
+            assert_eq!(response.status, StatusCode::BAD_REQUEST, "{field}");
+            assert_eq!(response.code(), code_expected, "{field}");
+        }
+        assert_eq!(used_by(&pool, &code).await, None);
+    }
+}
+
+/// The whole account lifecycle through the API, starting from the CLI's service functions.
+#[sqlx::test]
+async fn full_account_flow(pool: SqlitePool) {
+    create_user(&pool, "admin@example.com", true).await;
+    let app = test_app(pool);
+    let admin = login(&app, "admin@example.com", PASSWORD).await;
+
+    let invite = send(
+        &app,
+        post_json(
+            "/api/admin/invites",
+            &json!({ "note": "Anna" }),
+            Some(&admin),
+        ),
+    )
+    .await;
+    assert_eq!(invite.status, StatusCode::CREATED);
+    let code = invite.body["code"].as_str().unwrap();
+
+    let body = json!({
+        "invite_code": code,
+        "display_name": "Anna",
+        "email": "anna@example.com",
+        "password": "anna's long password",
+        "device_label": "iPhone",
+    });
+    let registered = send(&app, post_json("/api/auth/register", &body, None)).await;
+    assert_eq!(registered.status, StatusCode::OK);
+    let phone = registered.session_cookie();
+    let laptop = login(&app, "anna@example.com", "anna's long password").await;
+
+    let me = send(&app, get("/api/auth/me", Some(&phone))).await;
+    assert_eq!(me.body["email"], "anna@example.com");
+
+    let others = send(
+        &app,
+        post_json("/api/auth/logout-others", &json!({}), Some(&phone)),
+    )
+    .await;
+    assert_eq!(others.status, StatusCode::NO_CONTENT);
+    assert_eq!(
+        send(&app, get("/api/auth/me", Some(&laptop))).await.status,
+        StatusCode::UNAUTHORIZED
+    );
+
+    let change = json!({ "current_password": "anna's long password", "new_password": "a brand new password" });
+    let changed = send(&app, post_json("/api/auth/password", &change, Some(&phone))).await;
+    assert_eq!(changed.status, StatusCode::NO_CONTENT);
+
+    let logout = send(
+        &app,
+        post_json("/api/auth/logout", &json!({}), Some(&phone)),
+    )
+    .await;
+    assert_eq!(logout.status, StatusCode::NO_CONTENT);
+    assert_eq!(
+        send(&app, get("/api/auth/me", Some(&phone))).await.status,
+        StatusCode::UNAUTHORIZED
+    );
+    login(&app, "anna@example.com", "a brand new password").await;
+
+    let invites = send(&app, get("/api/admin/invites", Some(&admin))).await;
+    assert_eq!(invites.body[0]["status"], "used");
+    assert_eq!(invites.body[0]["used_by_email"], "anna@example.com");
+}

@@ -56,7 +56,8 @@ annette-cards/
 │   └── src/
 │       ├── main.rs       # clap CLI: serve | create-user | invite | openapi
 │       ├── app.rs        # AppState, router assembly, OpenAPI, middleware
-│       ├── config.rs  error.rs  db.rs
+│       ├── config.rs  error.rs  db.rs  clock.rs
+│       ├── security.rs   # Origin check, rate limits, security headers, request ids
 │       ├── health.rs     # GET /api/health, GET /api/meta
 │       ├── auth/  sync/  audio/  enrich/  push/  admin/  fsrs/
 │       └── static_files.rs   # embedded PWA (rust-embed)

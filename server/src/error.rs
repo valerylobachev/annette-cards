@@ -19,6 +19,15 @@ pub enum AppError {
     /// No valid session cookie.
     #[error("unauthorized")]
     Unauthorized,
+    /// Signed in, but not allowed (e.g. not an admin).
+    #[error("forbidden")]
+    Forbidden,
+    /// An unsafe request (POST, PUT, DELETE…) from another origin, or without an `Origin` header.
+    #[error("origin mismatch")]
+    OriginMismatch,
+    /// Too many requests from this client; try again later.
+    #[error("rate limited")]
+    RateLimited,
     #[error("not found")]
     NotFound,
     /// The request conflicts with existing data; the code says how (`email_taken`, …).
@@ -46,6 +55,8 @@ impl AppError {
         match self {
             AppError::BadRequest(_) => StatusCode::BAD_REQUEST,
             AppError::InvalidCredentials | AppError::Unauthorized => StatusCode::UNAUTHORIZED,
+            AppError::Forbidden | AppError::OriginMismatch => StatusCode::FORBIDDEN,
+            AppError::RateLimited => StatusCode::TOO_MANY_REQUESTS,
             AppError::NotFound => StatusCode::NOT_FOUND,
             AppError::Conflict(_) => StatusCode::CONFLICT,
             AppError::ServiceUnavailable => StatusCode::SERVICE_UNAVAILABLE,
@@ -58,6 +69,9 @@ impl AppError {
             AppError::BadRequest(code) | AppError::Conflict(code) => code,
             AppError::InvalidCredentials => "invalid_credentials",
             AppError::Unauthorized => "unauthorized",
+            AppError::Forbidden => "forbidden",
+            AppError::OriginMismatch => "origin_mismatch",
+            AppError::RateLimited => "rate_limited",
             AppError::NotFound => "not_found",
             AppError::ServiceUnavailable => "service_unavailable",
             AppError::Database(_) | AppError::Internal(_) => "internal_error",

@@ -6,11 +6,12 @@ mod config;
 mod db;
 mod error;
 mod health;
+mod security;
 mod static_files;
 #[cfg(test)]
 mod test_support;
 
-use std::{io::BufRead, sync::Arc};
+use std::{io::BufRead, net::SocketAddr, sync::Arc};
 
 use anyhow::{Context, bail};
 use clap::{Parser, Subcommand};
@@ -25,7 +26,7 @@ use crate::{
         password,
         users::{self, NewUser},
     },
-    config::Config,
+    config::{Config, LogFormat},
 };
 
 /// Annette Cards server: API, sync and the embedded PWA.
@@ -90,7 +91,12 @@ async fn main() -> anyhow::Result<()> {
 
 async fn serve() -> anyhow::Result<()> {
     let config = Config::load().context("invalid configuration")?;
-    init_tracing();
+    init_tracing(config.log_format);
+    if config.public_url.is_none() && !config.dev_origins {
+        tracing::warn!(
+            "neither ANNETTE_PUBLIC_URL nor ANNETTE_DEV_ORIGINS is set: every POST/PUT/DELETE to /api is rejected"
+        );
+    }
 
     let pool = db::connect(&config.database_url).await?;
     db::migrate(&pool).await?;
@@ -103,6 +109,8 @@ async fn serve() -> anyhow::Result<()> {
 
     auth::spawn_session_cleanup(pool.clone());
     let app = app::router(Arc::new(AppState { pool, config }));
+    // The peer address is the rate limiter's fallback key when no X-Forwarded-For header is present.
+    let app = app.into_make_service_with_connect_info::<SocketAddr>();
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
         .await?;
@@ -196,14 +204,14 @@ fn print_openapi() -> anyhow::Result<()> {
     Ok(())
 }
 
-/// `RUST_LOG` controls the level (default `info`). Human-readable logs in debug builds, JSON in release builds.
-fn init_tracing() {
+/// `RUST_LOG` controls the level (default `info`); `ANNETTE_LOG_FORMAT` the format (default: `pretty` in debug
+/// builds, `json` in release builds).
+fn init_tracing(format: LogFormat) {
     let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
     let logs = tracing_subscriber::fmt().with_env_filter(filter);
-    if cfg!(debug_assertions) {
-        logs.init();
-    } else {
-        logs.json().init();
+    match format {
+        LogFormat::Pretty => logs.init(),
+        LogFormat::Json => logs.json().init(),
     }
 }
 

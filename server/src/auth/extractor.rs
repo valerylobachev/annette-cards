@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use axum::{extract::FromRequestParts, http::request::Parts};
 use axum_extra::extract::CookieJar;
+use sha2::{Digest, Sha256};
 
 use crate::{
     app::AppState,
@@ -63,6 +64,37 @@ impl FromRequestParts<Arc<AppState>> for CurrentUser {
             )
             .await?;
         }
+        tracing::Span::current().record("user", user_log_id(&user.id));
         Ok(Self::new(user, found.token_hash))
     }
+}
+
+/// A signed-in admin. Built on `CurrentUser`: first the session is checked (401 `unauthorized`), then the role
+/// (403 `forbidden`).
+#[derive(Debug, Clone)]
+pub struct AdminUser(pub CurrentUser);
+
+impl FromRequestParts<Arc<AppState>> for AdminUser {
+    type Rejection = AppError;
+
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &Arc<AppState>,
+    ) -> Result<Self, AppError> {
+        let user = CurrentUser::from_request_parts(parts, state).await?;
+        if !user.is_admin {
+            return Err(AppError::Forbidden);
+        }
+        Ok(Self(user))
+    }
+}
+
+/// How a user appears in logs: the first 12 hex characters of `sha256(user_id)`. Enough to follow one user's
+/// requests without writing the id or email into the log.
+pub fn user_log_id(user_id: &str) -> String {
+    Sha256::digest(user_id.as_bytes())
+        .iter()
+        .take(6)
+        .map(|byte| format!("{byte:02x}"))
+        .collect()
 }

@@ -10,9 +10,9 @@ use crate::{
     app::AppState,
     auth::{
         SESSION_COOKIE,
-        dto::{ChangePasswordRequest, LoginRequest, MeResponse},
+        dto::{ChangePasswordRequest, LoginRequest, MeResponse, RegisterRequest},
         extractor::CurrentUser,
-        password, session, users,
+        password, register, session, users,
     },
     clock::now_ms,
     error::{AppError, ErrorBody},
@@ -29,6 +29,8 @@ const MAX_DEVICE_LABEL_CHARS: usize = 100;
     responses(
         (status = 200, description = "Signed in; the response sets the session cookie", body = MeResponse),
         (status = 401, description = "`invalid_credentials`: unknown email or wrong password", body = ErrorBody),
+        (status = 429, description = "`rate_limited`: more than 10 attempts a minute from this address",
+            body = ErrorBody),
     )
 )]
 pub async fn login(
@@ -44,28 +46,40 @@ pub async fn login(
         return Err(AppError::InvalidCredentials);
     }
 
-    let label = request
-        .device_label
-        .map(|label| {
-            label
-                .trim()
-                .chars()
-                .take(MAX_DEVICE_LABEL_CHARS)
-                .collect::<String>()
-        })
-        .filter(|label| !label.is_empty());
+    let label = device_label(request.device_label);
     let ttl_ms = state.config.session_ttl_ms();
+    let mut conn = state.pool.acquire().await?;
     let (token, _) =
-        session::create_session(&state.pool, &user.id, label.as_deref(), now_ms(), ttl_ms).await?;
+        session::create_session(&mut conn, &user.id, label.as_deref(), now_ms(), ttl_ms).await?;
+    Ok((jar.add(session_cookie(token, &state)), Json(user.into())))
+}
 
-    let me = MeResponse {
-        id: user.id,
-        email: user.email,
-        display_name: user.display_name,
-        is_admin: user.is_admin,
-        created_at: user.created_at,
-    };
-    Ok((jar.add(session_cookie(token, &state)), Json(me)))
+/// Creates an account with an invite code and signs it in (sets the `ac_session` cookie like login).
+#[utoipa::path(
+    post,
+    path = "/api/auth/register",
+    tag = "auth",
+    request_body = RegisterRequest,
+    responses(
+        (status = 200, description = "Registered and signed in; the response sets the session cookie",
+            body = MeResponse),
+        (status = 400, description = "`invite_invalid` (unknown or used code), `invite_expired`, \
+            `password_too_short` or `validation_failed` (email, or display name empty or over 100 characters)",
+            body = ErrorBody),
+        (status = 409, description = "`email_taken`", body = ErrorBody),
+        (status = 429, description = "`rate_limited`: more than 10 attempts a minute from this address",
+            body = ErrorBody),
+    )
+)]
+pub async fn register(
+    State(state): State<Arc<AppState>>,
+    jar: CookieJar,
+    Json(mut request): Json<RegisterRequest>,
+) -> Result<(CookieJar, Json<MeResponse>), AppError> {
+    request.device_label = device_label(request.device_label.take());
+    let ttl_ms = state.config.session_ttl_ms();
+    let (user, token) = register::register(&state.pool, &request, now_ms(), ttl_ms).await?;
+    Ok((jar.add(session_cookie(token, &state)), Json(user.into())))
 }
 
 /// Signs out: revokes the current session and clears the cookie.
@@ -164,6 +178,19 @@ pub async fn change_password(
     users::update_password_hash(&state.pool, &user.user_id, &new_hash).await?;
     session::revoke_others(&state.pool, &user.user_id, &user.session_hash).await?;
     Ok(StatusCode::NO_CONTENT)
+}
+
+/// Trimmed, at most 100 characters, `None` when blank.
+fn device_label(label: Option<String>) -> Option<String> {
+    label
+        .map(|label| {
+            label
+                .trim()
+                .chars()
+                .take(MAX_DEVICE_LABEL_CHARS)
+                .collect::<String>()
+        })
+        .filter(|label| !label.is_empty())
 }
 
 /// `ac_session=<token>; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=<ttl>`. JavaScript cannot read it, and

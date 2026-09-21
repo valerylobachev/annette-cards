@@ -51,8 +51,8 @@ rejected. Versions: use the latest stable release at bootstrap time and pin them
 | Language | Rust (edition 2024) | Performance, single static binary, learning goal |
 | Async runtime | `tokio` | De facto standard |
 | HTTP framework | `axum` | Ergonomic extractors, tower middleware, close in spirit to Go's chi |
-| Middleware | `tower-http` | CORS (dev only), compression, request tracing, timeouts |
-| Rate limiting | `tower_governor` | Per-IP/per-user limits for login, enrich, audio |
+| Middleware | `tower-http` | CORS (dev only), compression, request tracing, timeouts, request ids, security headers |
+| Rate limiting | `tower_governor` (default features off except `axum`) | Per-IP/per-user limits for login, enrich, audio |
 | Database | `sqlx` with SQLite | Compile-time checked SQL, migrations, offline mode (`.sqlx/`) |
 | Serialization | `serde`, `serde_json` | Standard |
 | OpenAPI | `utoipa`, `utoipa-axum` | Spec generated from handler/DTO types; exported via CLI for orval |

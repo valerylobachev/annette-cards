@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM invites WHERE code = ? AND used_by IS NULL",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "528794df59dde444948f32a9ca76422f4548cbc462ebfffe2b126bb74db50824"
+}

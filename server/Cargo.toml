@@ -24,7 +24,8 @@ sha2 = "0.11.0"
 sqlx = { version = "0.9.0", default-features = false, features = ["runtime-tokio", "sqlite", "macros", "migrate"] }
 thiserror = "2.0.20"
 tokio = { version = "1.53.1", features = ["full"] }
-tower-http = { version = "0.7.1", features = ["trace", "compression-gzip", "compression-zstd", "timeout", "cors"] }
+tower-http = { version = "0.7.1", features = ["trace", "compression-gzip", "compression-zstd", "timeout", "cors", "request-id", "set-header", "util"] }
+tower_governor = { version = "0.8.0", default-features = false, features = ["axum"] }
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter", "json"] }
 utoipa = { version = "5.5.0", features = ["axum_extras"] }

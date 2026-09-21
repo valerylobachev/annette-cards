@@ -25,25 +25,31 @@ pub struct NewUser<'a> {
     pub is_admin: bool,
 }
 
-/// Validates the input, hashes the password and inserts the user. Used by the `create-user` CLI and by
-/// registration (inside its transaction).
+/// Validates the input, hashes the password and inserts the user (the `create-user` CLI).
 pub async fn create_user(conn: &mut SqliteConnection, new: NewUser<'_>) -> Result<User, AppError> {
+    let user = prepare_user(new).await?;
+    insert_user(conn, &user).await?;
+    Ok(user)
+}
+
+/// Validates the input and hashes the password, without touching the database. Registration does this before it
+/// opens its transaction, so the slow hashing does not hold the database lock.
+pub async fn prepare_user(new: NewUser<'_>) -> Result<User, AppError> {
     let email = validate_email(new.email)?;
     let display_name = validate_display_name(new.display_name)?;
     let password_hash = password::hash_password(new.password).await?;
-    let user = User {
+    Ok(User {
         id: Uuid::now_v7().to_string(),
         email,
         display_name,
         password_hash,
         is_admin: new.is_admin,
         created_at: now_ms(),
-    };
-    insert_user(conn, &user).await?;
-    Ok(user)
+    })
 }
 
-async fn insert_user(conn: &mut SqliteConnection, user: &User) -> Result<(), AppError> {
+/// Inserts a prepared user; an existing email (in any letter case) is `email_taken`.
+pub async fn insert_user(conn: &mut SqliteConnection, user: &User) -> Result<(), AppError> {
     let result = sqlx::query!(
         "INSERT INTO users (id, email, display_name, password_hash, is_admin, created_at)
          VALUES (?, ?, ?, ?, ?, ?)",

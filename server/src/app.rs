@@ -1,10 +1,22 @@
 use std::{sync::Arc, time::Duration};
 
-use axum::{Json, Router, http::StatusCode, routing::get};
+use axum::{
+    Json, Router,
+    body::Body,
+    http::{HeaderName, StatusCode},
+    middleware,
+    routing::get,
+};
 use sqlx::SqlitePool;
 use tower_http::{
-    compression::CompressionLayer, cors::CorsLayer, timeout::TimeoutLayer, trace::TraceLayer,
+    compression::CompressionLayer,
+    cors::CorsLayer,
+    request_id::{PropagateRequestIdLayer, SetRequestIdLayer},
+    set_header::SetResponseHeaderLayer,
+    timeout::TimeoutLayer,
+    trace::TraceLayer,
 };
+use tracing::Span;
 use utoipa::{
     Modify, OpenApi,
     openapi::security::{ApiKey, ApiKeyValue, SecurityScheme},
@@ -12,11 +24,16 @@ use utoipa::{
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
+    admin,
     auth::{self, SESSION_COOKIE},
     config::Config,
     error::ErrorBody,
-    health, static_files,
+    health,
+    security::{self, UuidV7RequestId},
+    static_files,
 };
+
+const REQUEST_ID: HeaderName = HeaderName::from_static("x-request-id");
 
 /// Shared by all requests through `Arc` (cheap to clone, read-only).
 pub struct AppState {
@@ -51,14 +68,23 @@ fn api_routes() -> OpenApiRouter<Arc<AppState>> {
     doc.info.description = Some(env!("CARGO_PKG_DESCRIPTION").to_string());
     doc.info.license = None;
 
+    let sign_in = OpenApiRouter::new()
+        .routes(routes!(auth::handlers::login))
+        .routes(routes!(auth::handlers::register));
+
     OpenApiRouter::with_openapi(doc)
         .routes(routes!(health::health))
         .routes(routes!(health::meta))
-        .routes(routes!(auth::handlers::login))
+        .merge(security::limit_per_ip(sign_in, security::AUTH_RATE_LIMIT))
         .routes(routes!(auth::handlers::logout))
         .routes(routes!(auth::handlers::logout_others))
         .routes(routes!(auth::handlers::me))
         .routes(routes!(auth::handlers::change_password))
+        .routes(routes!(
+            admin::handlers::list_invites,
+            admin::handlers::create_invite
+        ))
+        .routes(routes!(admin::handlers::revoke_invite))
 }
 
 /// The OpenAPI spec, printed by the `openapi` subcommand and served at `/api/openapi.json`.
@@ -66,6 +92,8 @@ pub fn openapi() -> utoipa::openapi::OpenApi {
     api_routes().into_openapi()
 }
 
+/// The whole app. A request passes the layers from the outside in (architecture.md §5.2): request id → trace →
+/// security headers → compression → timeout → Origin check → rate limit (sign-in routes only) → handler.
 pub fn router(state: Arc<AppState>) -> Router {
     let (api, spec) = api_routes().split_for_parts();
     let spec = Arc::new(spec);
@@ -77,21 +105,73 @@ pub fn router(state: Arc<AppState>) -> Router {
             get(move || async move { Json(spec.as_ref().clone()) }),
         )
         .fallback(static_files::serve)
-        .with_state(state)
-        // The last layer added runs first: trace → compression → timeout → handler (architecture.md §5.2).
-        .layer(TimeoutLayer::with_status_code(
-            StatusCode::REQUEST_TIMEOUT,
-            Duration::from_secs(30),
+        .layer(middleware::from_fn_with_state(
+            state.clone(),
+            security::check_origin,
         ))
-        .layer(CompressionLayer::new())
-        .layer(TraceLayer::new_for_http());
+        .with_state(state);
+    let app = with_timeout_and_compression(app);
+    let app = with_security_headers(app);
+    let app = with_request_tracing(app);
 
     if cfg!(debug_assertions) {
-        // Dev only: lets tools on other origins call the API. Production is same-origin behind Caddy.
+        // Dev only: lets tools on other origins read the API. Production is same-origin behind Caddy.
         app.layer(CorsLayer::permissive())
     } else {
         app
     }
+}
+
+fn with_timeout_and_compression(app: Router) -> Router {
+    app.layer(TimeoutLayer::with_status_code(
+        StatusCode::REQUEST_TIMEOUT,
+        Duration::from_secs(30),
+    ))
+    .layer(CompressionLayer::new())
+}
+
+fn with_security_headers(app: Router) -> Router {
+    security::security_headers()
+        .into_iter()
+        .fold(app, |app, (name, value)| {
+            app.layer(SetResponseHeaderLayer::overriding(name, value))
+        })
+}
+
+/// Every request gets an `x-request-id` (also returned in the response) and one log line on completion with
+/// method, path, request id, status, latency and the hashed user id (recorded by `CurrentUser`). Paths are logged
+/// without the query string.
+fn with_request_tracing(app: Router) -> Router {
+    let trace = TraceLayer::new_for_http()
+        .make_span_with(|request: &axum::http::Request<Body>| {
+            let request_id = request
+                .headers()
+                .get(REQUEST_ID)
+                .and_then(|value| value.to_str().ok())
+                .unwrap_or_default();
+            tracing::info_span!(
+                "request",
+                method = %request.method(),
+                path = %request.uri().path(),
+                request_id,
+                user = tracing::field::Empty,
+                status = tracing::field::Empty,
+                latency_ms = tracing::field::Empty,
+            )
+        })
+        .on_response(
+            |response: &axum::http::Response<_>, latency: Duration, span: &Span| {
+                span.record("status", response.status().as_u16());
+                span.record(
+                    "latency_ms",
+                    u64::try_from(latency.as_millis()).unwrap_or(u64::MAX),
+                );
+                tracing::info!("response");
+            },
+        );
+    app.layer(PropagateRequestIdLayer::new(REQUEST_ID))
+        .layer(trace)
+        .layer(SetRequestIdLayer::new(REQUEST_ID, UuidV7RequestId))
 }
 
 #[cfg(test)]

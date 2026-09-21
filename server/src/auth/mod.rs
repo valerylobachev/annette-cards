@@ -4,6 +4,7 @@ pub mod dto;
 pub mod extractor;
 pub mod handlers;
 pub mod password;
+pub mod register;
 pub mod session;
 pub mod users;
 

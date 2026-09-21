@@ -1,6 +1,6 @@
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 use sha2::{Digest, Sha256};
-use sqlx::SqlitePool;
+use sqlx::{SqliteConnection, SqlitePool};
 
 use crate::{auth::users::User, clock::HOUR_MS, error::AppError};
 
@@ -27,7 +27,7 @@ pub fn hash_token(token: &str) -> String {
 
 /// Stores a new session and returns its token (for the cookie) and expiry.
 pub async fn create_session(
-    pool: &SqlitePool,
+    conn: &mut SqliteConnection,
     user_id: &str,
     device_label: Option<&str>,
     now: i64,
@@ -46,7 +46,7 @@ pub async fn create_session(
         now,
         expires_at,
     )
-    .execute(pool)
+    .execute(conn)
     .await?;
     Ok((token, expires_at))
 }
@@ -164,6 +164,19 @@ mod tests {
         create_user(&mut conn, new).await.unwrap()
     }
 
+    async fn new_session(
+        pool: &SqlitePool,
+        user_id: &str,
+        label: Option<&str>,
+        now: i64,
+        ttl_ms: i64,
+    ) -> (String, i64) {
+        let mut conn = pool.acquire().await.unwrap();
+        create_session(&mut conn, user_id, label, now, ttl_ms)
+            .await
+            .unwrap()
+    }
+
     async fn expires_at(pool: &SqlitePool, token: &str) -> i64 {
         sqlx::query_scalar("SELECT expires_at FROM sessions WHERE token_hash = ?")
             .bind(hash_token(token))
@@ -190,9 +203,7 @@ mod tests {
     #[sqlx::test]
     async fn a_new_session_finds_its_user(pool: SqlitePool) {
         let anna = user(&pool, "anna@example.com").await;
-        let (token, expires) = create_session(&pool, &anna.id, Some("iPhone"), NOW, TTL)
-            .await
-            .unwrap();
+        let (token, expires) = new_session(&pool, &anna.id, Some("iPhone"), NOW, TTL).await;
         assert_eq!(expires, NOW + TTL);
 
         let (found, session) = find_user_by_token(&pool, &token, NOW)
@@ -217,9 +228,7 @@ mod tests {
     #[sqlx::test]
     async fn an_expired_session_finds_nothing(pool: SqlitePool) {
         let anna = user(&pool, "anna@example.com").await;
-        let (token, expires) = create_session(&pool, &anna.id, None, NOW, TTL)
-            .await
-            .unwrap();
+        let (token, expires) = new_session(&pool, &anna.id, None, NOW, TTL).await;
         assert!(
             find_user_by_token(&pool, &token, expires - 1)
                 .await
@@ -237,9 +246,7 @@ mod tests {
     #[sqlx::test]
     async fn touch_extends_the_expiry_at_most_hourly(pool: SqlitePool) {
         let anna = user(&pool, "anna@example.com").await;
-        let (token, _) = create_session(&pool, &anna.id, None, NOW, TTL)
-            .await
-            .unwrap();
+        let (token, _) = new_session(&pool, &anna.id, None, NOW, TTL).await;
         let hash = hash_token(&token);
 
         assert!(!touch(&pool, &hash, NOW + HOUR_MS - 1, TTL).await.unwrap());
@@ -253,15 +260,9 @@ mod tests {
     async fn revoke_others_keeps_only_the_current_session(pool: SqlitePool) {
         let anna = user(&pool, "anna@example.com").await;
         let bob = user(&pool, "bob@example.com").await;
-        let (current, _) = create_session(&pool, &anna.id, None, NOW, TTL)
-            .await
-            .unwrap();
-        let (other, _) = create_session(&pool, &anna.id, None, NOW, TTL)
-            .await
-            .unwrap();
-        let (bobs, _) = create_session(&pool, &bob.id, None, NOW, TTL)
-            .await
-            .unwrap();
+        let (current, _) = new_session(&pool, &anna.id, None, NOW, TTL).await;
+        let (other, _) = new_session(&pool, &anna.id, None, NOW, TTL).await;
+        let (bobs, _) = new_session(&pool, &bob.id, None, NOW, TTL).await;
 
         assert_eq!(
             revoke_others(&pool, &anna.id, &hash_token(&current))
@@ -300,12 +301,8 @@ mod tests {
     #[sqlx::test]
     async fn delete_expired_removes_only_expired_sessions(pool: SqlitePool) {
         let anna = user(&pool, "anna@example.com").await;
-        let (old, _) = create_session(&pool, &anna.id, None, NOW - TTL, TTL)
-            .await
-            .unwrap();
-        let (fresh, _) = create_session(&pool, &anna.id, None, NOW, TTL)
-            .await
-            .unwrap();
+        let (old, _) = new_session(&pool, &anna.id, None, NOW - TTL, TTL).await;
+        let (fresh, _) = new_session(&pool, &anna.id, None, NOW, TTL).await;
 
         assert_eq!(delete_expired(&pool, NOW).await.unwrap(), 1);
         let remaining: Vec<String> = sqlx::query_scalar("SELECT token_hash FROM sessions")

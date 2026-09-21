@@ -1,4 +1,6 @@
-use sqlx::SqlitePool;
+use serde::{Deserialize, Serialize};
+use sqlx::{SqliteConnection, SqlitePool};
+use utoipa::ToSchema;
 
 use crate::{clock::DAY_MS, error::AppError};
 
@@ -13,6 +15,45 @@ const MAX_NOTE_CHARS: usize = 200;
 pub struct Invite {
     pub code: String,
     pub note: Option<String>,
+    pub expires_at: i64,
+}
+
+/// An invite as the admin list shows it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+pub struct InviteSummary {
+    pub code: String,
+    pub note: Option<String>,
+    pub expires_at: i64,
+    /// Email of the account registered with this invite.
+    pub used_by_email: Option<String>,
+    pub used_at: Option<i64>,
+    pub status: InviteStatus,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum InviteStatus {
+    Active,
+    Used,
+    Expired,
+}
+
+impl InviteStatus {
+    pub fn of(used_at: Option<i64>, expires_at: i64, now: i64) -> Self {
+        if used_at.is_some() {
+            InviteStatus::Used
+        } else if expires_at <= now {
+            InviteStatus::Expired
+        } else {
+            InviteStatus::Active
+        }
+    }
+}
+
+/// The part of an invite registration needs.
+#[derive(Debug)]
+pub struct InviteForRegistration {
+    pub used_at: Option<i64>,
     pub expires_at: i64,
 }
 
@@ -53,6 +94,85 @@ pub async fn create_invite(
     .execute(pool)
     .await?;
     Ok(invite)
+}
+
+/// Codes are shown in upper case; accept them however they were typed.
+pub fn normalize_code(code: &str) -> String {
+    code.trim().to_ascii_uppercase()
+}
+
+pub async fn find_for_registration(
+    conn: &mut SqliteConnection,
+    code: &str,
+) -> Result<Option<InviteForRegistration>, AppError> {
+    let invite = sqlx::query_as!(
+        InviteForRegistration,
+        "SELECT used_at, expires_at FROM invites WHERE code = ?",
+        code,
+    )
+    .fetch_optional(conn)
+    .await?;
+    Ok(invite)
+}
+
+pub async fn mark_used(
+    conn: &mut SqliteConnection,
+    code: &str,
+    user_id: &str,
+    now: i64,
+) -> Result<(), AppError> {
+    sqlx::query!(
+        "UPDATE invites SET used_by = ?, used_at = ? WHERE code = ?",
+        user_id,
+        now,
+        code,
+    )
+    .execute(conn)
+    .await?;
+    Ok(())
+}
+
+/// All invites, newest expiry first.
+pub async fn list_invites(pool: &SqlitePool, now: i64) -> Result<Vec<InviteSummary>, AppError> {
+    let rows = sqlx::query!(
+        r#"SELECT i.code AS "code!", i.note, i.expires_at, i.used_at, u.email AS "used_by_email?"
+           FROM invites i LEFT JOIN users u ON u.id = i.used_by
+           ORDER BY i.expires_at DESC, i.code"#,
+    )
+    .fetch_all(pool)
+    .await?;
+    Ok(rows
+        .into_iter()
+        .map(|row| InviteSummary {
+            status: InviteStatus::of(row.used_at, row.expires_at, now),
+            code: row.code,
+            note: row.note,
+            expires_at: row.expires_at,
+            used_by_email: row.used_by_email,
+            used_at: row.used_at,
+        })
+        .collect())
+}
+
+/// Deletes an unused invite (invites are not synced, so there is nothing to soft-delete). A used invite is
+/// `invite_used`: it records who registered with it.
+pub async fn revoke_invite(pool: &SqlitePool, code: &str) -> Result<(), AppError> {
+    let deleted = sqlx::query!(
+        "DELETE FROM invites WHERE code = ? AND used_by IS NULL",
+        code
+    )
+    .execute(pool)
+    .await?;
+    if deleted.rows_affected() > 0 {
+        return Ok(());
+    }
+    let exists = sqlx::query_scalar!("SELECT 1 FROM invites WHERE code = ?", code)
+        .fetch_optional(pool)
+        .await?;
+    match exists {
+        Some(_) => Err(AppError::Conflict("invite_used")),
+        None => Err(AppError::NotFound),
+    }
 }
 
 /// The registration link for an invite, e.g. `https://cards.example.com/register?invite=ABCD…`.
@@ -121,6 +241,21 @@ mod tests {
             assert!(matches!(error, AppError::BadRequest("validation_failed")));
         }
         assert!(create_invite(&pool, &admin, None, 90, NOW).await.is_ok());
+    }
+
+    #[test]
+    fn status_is_computed_from_use_and_expiry() {
+        assert_eq!(InviteStatus::of(None, NOW + 1, NOW), InviteStatus::Active);
+        assert_eq!(InviteStatus::of(None, NOW, NOW), InviteStatus::Expired);
+        assert_eq!(
+            InviteStatus::of(Some(NOW - 1), NOW - 1, NOW),
+            InviteStatus::Used
+        );
+    }
+
+    #[test]
+    fn codes_are_normalized_to_upper_case() {
+        assert_eq!(normalize_code(" abcd2345efgh\n"), "ABCD2345EFGH");
     }
 
     #[test]

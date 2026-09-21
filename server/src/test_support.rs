@@ -1,10 +1,11 @@
 //! Helpers for router tests: build the app on a test database, send requests, read cookies and JSON.
 
-use std::sync::Arc;
+use std::{net::SocketAddr, sync::Arc};
 
 use axum::{
     Router,
     body::Body,
+    extract::ConnectInfo,
     http::{HeaderMap, Request, StatusCode, header},
 };
 use http_body_util::BodyExt;
@@ -22,12 +23,22 @@ use crate::{
 };
 
 pub const PASSWORD: &str = "correct horse battery";
+/// `ANNETTE_PUBLIC_URL` of the test app; `post_json` and `delete` send it as `Origin`.
+pub const ORIGIN: &str = "https://cards.test";
 
 pub fn test_app(pool: SqlitePool) -> Router {
     app::router(Arc::new(AppState {
         pool,
-        config: Config::default(),
+        config: test_config(),
     }))
+}
+
+pub fn test_config() -> Config {
+    Config {
+        public_url: Some(ORIGIN.to_string()),
+        dev_origins: false,
+        ..Config::default()
+    }
 }
 
 pub async fn create_user(pool: &SqlitePool, email: &str, is_admin: bool) -> User {
@@ -71,7 +82,11 @@ impl TestResponse {
     }
 }
 
-pub async fn send(app: &Router, request: Request<Body>) -> TestResponse {
+/// Sends a request as if from 127.0.0.1 (the rate limiter keys on the peer address, which `axum::serve` provides
+/// in production).
+pub async fn send(app: &Router, mut request: Request<Body>) -> TestResponse {
+    let peer = SocketAddr::from(([127, 0, 0, 1], 50_000));
+    request.extensions_mut().insert(ConnectInfo(peer));
     let response = app.clone().oneshot(request).await.unwrap();
     let status = response.status();
     let headers = response.headers().clone();
@@ -98,11 +113,21 @@ pub fn get(uri: &str, cookie: Option<&str>) -> Request<Body> {
 }
 
 pub fn post_json(uri: &str, body: &Value, cookie: Option<&str>) -> Request<Body> {
-    let mut builder = Request::post(uri).header(header::CONTENT_TYPE, "application/json");
+    let mut builder = Request::post(uri)
+        .header(header::CONTENT_TYPE, "application/json")
+        .header(header::ORIGIN, ORIGIN);
     if let Some(cookie) = cookie {
         builder = builder.header(header::COOKIE, cookie);
     }
     builder.body(Body::from(body.to_string())).unwrap()
+}
+
+pub fn delete(uri: &str, cookie: Option<&str>) -> Request<Body> {
+    let mut builder = Request::delete(uri).header(header::ORIGIN, ORIGIN);
+    if let Some(cookie) = cookie {
+        builder = builder.header(header::COOKIE, cookie);
+    }
+    builder.body(Body::empty()).unwrap()
 }
 
 /// Signs in and returns the `ac_session=<token>` cookie.
