@@ -6,6 +6,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '
 import { useMeta } from '@/db/hooks'
 import { setMeta } from '@/db/meta'
 import { isIosSafari, isStandalone } from '@/lib/platform'
+import { cn } from '@/lib/utils'
 
 type Props = { open: boolean; onOpenChange: (open: boolean) => void }
 
@@ -19,15 +20,7 @@ export function InstallHint({ open, onOpenChange }: Props) {
           <SheetTitle className="text-lg">{t('install.title')}</SheetTitle>
           <SheetDescription>{t('install.why')}</SheetDescription>
         </SheetHeader>
-        <ol className="flex flex-col gap-3 px-4">
-          <Step number={1} icon={<Share className="size-5" />} text={t('install.share')} />
-          <Step number={2} icon={<SquarePlus className="size-5" />} text={t('install.addToHome')} />
-          <Step
-            number={3}
-            icon={<span className="text-sm font-semibold">{t('install.addLabel')}</span>}
-            text={t('install.add')}
-          />
-        </ol>
+        <InstallSteps className="px-4" />
         <div className="p-4">
           <Button size="xl" className="w-full" onClick={() => onOpenChange(false)}>
             {t('install.done')}
@@ -35,6 +28,22 @@ export function InstallHint({ open, onOpenChange }: Props) {
         </div>
       </SheetContent>
     </Sheet>
+  )
+}
+
+/** The three illustrated steps, also shown by onboarding (S-01 step 5). */
+export function InstallSteps({ className }: { className?: string }) {
+  const { t } = useTranslation()
+  return (
+    <ol className={cn('flex flex-col gap-3', className)}>
+      <Step number={1} icon={<Share className="size-5" />} text={t('install.share')} />
+      <Step number={2} icon={<SquarePlus className="size-5" />} text={t('install.addToHome')} />
+      <Step
+        number={3}
+        icon={<span className="text-sm font-semibold">{t('install.addLabel')}</span>}
+        text={t('install.add')}
+      />
+    </ol>
   )
 }
 

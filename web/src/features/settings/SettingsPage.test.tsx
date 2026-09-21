@@ -41,7 +41,7 @@ describe('settings', () => {
 
 describe('install hint', () => {
   it('shows once in iOS Safari outside the Home Screen app', async () => {
-    renderApp('/')
+    renderApp('/decks')
     expect(await screen.findByText('Install Annette on your iPhone')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Got it' }))
     await waitFor(async () => expect((await db.meta.get('install_hint_shown'))?.value).toBe(true))
@@ -49,7 +49,7 @@ describe('install hint', () => {
 
   it('does not show in the installed app or after it was closed', async () => {
     platform.standalone = true
-    renderApp('/')
+    renderApp('/decks')
     await screen.findByRole('heading', { level: 1 })
     expect(screen.queryByText('Install Annette on your iPhone')).not.toBeInTheDocument()
   })

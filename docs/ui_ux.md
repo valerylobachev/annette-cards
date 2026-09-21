@@ -90,20 +90,28 @@ Each screen lists purpose, layout, elements, states and interactions.
 
 **Purpose:** first-run setup (UC-01). Shown once per device when no local data and no account.
 
+**First-run rule:** opening `/` redirects to `/welcome` while this device has no deck (soft-deleted decks count, so
+someone who deleted every deck is not new) and `meta.onboarding_done` is not set. Deep links to other screens are
+never redirected; `/welcome` redirects to `/` once onboarding is no longer needed. Onboarding writes nothing until
+the first-deck step except the UI language switch; then the goal (`settings.new_per_day`), the deck (named after the
+language, directions from `settings.default_directions`) and `onboarding_done` are stored in one transaction.
+
 **Steps (horizontal pager with dots, "Next"/"Back"):**
 
 1. **Welcome** — app name, one-line value proposition, UI language switch (RU/EN), buttons "Get started" and
-   "I have an account" (→ S-02).
+   "I have an account" (→ S-02; appears with sign-in in Phase 2).
 2. **Languages** — "I'm learning" (searchable list; EN and PL pinned at top, with locale variant chips en-GB /
    en-US) and "My language" (default Russian).
 3. **Daily goal** — new words per day: 5 / 10 / 15 / 25 / custom (default 15). Short explanation of spaced
    repetition (two sentences).
 4. **First deck** — "Import a file" (→ S-10), "Add words manually" (→ S-08), "Start with an empty deck".
 5. **Install & persist** (iOS Safari not in standalone) — install hint; call `storage.persist()` after the user
-   taps "Continue".
+   taps "Continue" (this also counts as the one-time install hint). Elsewhere `storage.persist()` is called when a
+   first-deck option is chosen; the app-wide first-run request waits while `/welcome` is open.
 
 **States:** language list loading voices (spinner next to "Voice available" markers); no voice for the chosen
-language → warning with link to iOS voice settings guide.
+language → warning with the iOS voice guide (expandable, so the onboarding state is kept); onboarding continues.
+Next is disabled until a studied language is chosen; a custom goal accepts whole numbers 1–200.
 
 ### S-02 Sign in / Register
 

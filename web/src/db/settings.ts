@@ -3,7 +3,7 @@ import type { Settings } from '@/domain/types'
 import { ValidationError } from '@/domain/validation'
 import { addToOutbox } from './outbox'
 import { db, type SettingsRow } from './schema'
-import { mutate, stamp } from './write'
+import { mutate, stamp, type WriteContext } from './write'
 
 const SETTINGS_ID = 'user'
 
@@ -35,11 +35,14 @@ export async function getSettings(): Promise<Settings> {
 export function updateSettings(patch: Partial<Settings>): Promise<Settings> {
   const errors = validateSettingsPatch(patch)
   if (errors.length > 0) return Promise.reject(new ValidationError(errors))
-  return mutate(['settings'], async (ctx) => {
-    const stored = await ctx.db.settings.get(SETTINGS_ID)
-    const row: SettingsRow = stamp(ctx, { ...stored, ...patch, id: SETTINGS_ID })
-    await ctx.db.settings.put(row)
-    await addToOutbox(ctx, 'settings', SETTINGS_ID)
-    return toSettings(row)
-  })
+  return mutate(['settings'], (ctx) => writeSettings(ctx, patch))
+}
+
+/** `updateSettings` inside the caller's transaction (which must include `settings`); `patch` must be valid. */
+export async function writeSettings(ctx: WriteContext, patch: Partial<Settings>): Promise<Settings> {
+  const stored = await ctx.db.settings.get(SETTINGS_ID)
+  const row: SettingsRow = stamp(ctx, { ...stored, ...patch, id: SETTINGS_ID })
+  await ctx.db.settings.put(row)
+  await addToOutbox(ctx, 'settings', SETTINGS_ID)
+  return toSettings(row)
 }

@@ -138,11 +138,11 @@ Task: [P1-T11](../dev/impl/phase-01-local-mvp/task-11-speech.md)
 ### 1.7 App shell and settings
 Tasks: [P1-T12](../dev/impl/phase-01-local-mvp/task-12-settings-install.md) · [P1-T13](../dev/impl/phase-01-local-mvp/task-13-onboarding-offline.md)
 
-- [ ] Onboarding (S-01) including language, daily goal, first deck, persistence request
+- [x] Onboarding (S-01) including language, daily goal, first deck, persistence request
 - [x] Settings (S-14): study, audio, appearance, UI language, data sections
 - [x] Install hint on iOS Safari; `storage.persist()` handling and warning banner
-- [ ] Offline verification: app shell precache, airplane-mode E2E test (Playwright offline context)
-- [ ] (added) Settings → About (app version, licenses); onboarding hides "I have an account" until Phase 2 — About done in P1-T12, onboarding part in P1-T13
+- [x] Offline verification: app shell precache, airplane-mode E2E test (the server is stopped: WebKit's `setOffline` also fails service-worker cache hits)
+- [x] (added) Settings → About (app version, licenses); onboarding hides "I have an account" until Phase 2
 - [x] (added) Theme override System / Light / Dark (device-local `meta.theme`, applied before first paint)
 
 Acceptance task: [P1-T14](../dev/impl/phase-01-local-mvp/task-14-phase-acceptance.md)

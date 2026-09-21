@@ -5,9 +5,10 @@ type Row = Record<string, unknown>
 /**
  * Starts the app in the given UI language (default English) regardless of the browser locale, as the installed
  * Home Screen app: the WebKit project emulates iPhone Safari, where the one-time install hint would cover every
- * screen. Pass `installed: false` to test the hint.
+ * screen. Pass `installed: false` to test the hint. Unless `onboarded` is false, the app is opened once and
+ * onboarding is marked done, so `/` shows Today instead of the first-run onboarding.
  */
-export async function setUpApp(page: Page, language: 'en' | 'ru' = 'en', { installed = true } = {}) {
+export async function setUpApp(page: Page, language: 'en' | 'ru' = 'en', { installed = true, onboarded = true } = {}) {
   await page.addInitScript(
     ({ lang, standalone }) => {
       if (!localStorage.getItem('annette.uiLanguage')) localStorage.setItem('annette.uiLanguage', lang)
@@ -15,6 +16,9 @@ export async function setUpApp(page: Page, language: 'en' | 'ru' = 'en', { insta
     },
     { lang: language, standalone: installed },
   )
+  if (!onboarded) return
+  await page.goto('/decks')
+  await seed(page, { meta: [{ key: 'onboarding_done', value: true }] })
 }
 
 /**

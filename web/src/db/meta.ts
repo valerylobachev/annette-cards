@@ -28,6 +28,8 @@ export type MetaValues = {
   install_hint_shown: boolean
   /** Answer of `navigator.storage.persist()`: `false` shows the data-loss warning. */
   storage_persisted: boolean
+  /** First-run onboarding (S-01) was finished on this device. */
+  onboarding_done: boolean
 }
 
 export type MetaKey = keyof MetaValues

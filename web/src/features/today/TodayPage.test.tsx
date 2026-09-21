@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createCard } from '@/db/cards'
 import { createDeck } from '@/db/decks'
-import { getMeta } from '@/db/meta'
+import { getMeta, setMeta } from '@/db/meta'
 import { resetDb } from '@/test/db'
 import { renderApp } from '@/test/render'
 
@@ -43,6 +43,7 @@ describe('Today', () => {
   })
 
   it('asks to add words when there is nothing to study at all', async () => {
+    await setMeta('onboarding_done', true)
     renderApp('/')
     expect(await screen.findByText('Add words to start studying.')).toBeInTheDocument()
   })

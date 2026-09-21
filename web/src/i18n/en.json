@@ -23,9 +23,6 @@
     "settings": "Settings"
   },
   "screens": {
-    "welcome": {
-      "title": "Welcome"
-    },
     "signIn": {
       "title": "Sign in"
     },
@@ -510,5 +507,36 @@
   "storage": {
     "warning": "Your data may be removed by Safari. Sign in or export a backup.",
     "export": "Export a backup"
+  },
+  "onboarding": {
+    "appName": "Annette Cards",
+    "tagline": "Learn words from your own dictionary. A few minutes a day, even offline.",
+    "getStarted": "Get started",
+    "next": "Next",
+    "continue": "Continue",
+    "stepOf": "Step {{step}} of {{total}}",
+    "languagesTitle": "Your languages",
+    "learning": "I'm learning",
+    "searchLanguages": "Search languages",
+    "noLanguagesFound": "No languages found.",
+    "checkingVoices": "Checking voices",
+    "voiceAvailable": "Voice available",
+    "noVoice": "This device has no voice for {{language}}. You can study without audio and add a voice later.",
+    "myLanguage": "My language",
+    "goalTitle": "New words per day",
+    "goalHint": "You can change it later in Settings.",
+    "goalCustom": "Custom",
+    "goalCustomLabel": "Words per day",
+    "goalRange": "Enter a whole number from {{min}} to {{max}}.",
+    "srsExplained": "Annette shows each word again just before you would forget it. Words you know well come back less and less often, so a few minutes a day are enough.",
+    "deckTitle": "Your first deck",
+    "start": {
+      "import": "Import a file",
+      "manual": "Add words manually",
+      "empty": "Start with an empty deck"
+    },
+    "startImportHint": "A CSV or TSV list of words and translations",
+    "startManualHint": "Type your first word now",
+    "startEmptyHint": "Add words later"
   }
 }

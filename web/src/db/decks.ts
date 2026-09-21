@@ -29,17 +29,20 @@ function validated(input: DeckInput): DeckInput {
 }
 
 export function createDeck(input: DeckInput): Promise<Deck> {
-  return mutate(['decks'], async (ctx) => {
-    const value = validated(input)
-    return writeDeck(ctx, {
-      id: newId(),
-      ...value,
-      archived_at: null,
-      created_at: ctx.now,
-      deleted_at: null,
-      updated_at: ctx.now,
-      updated_by: ctx.deviceId,
-    })
+  return mutate(['decks'], (ctx) => insertDeck(ctx, input))
+}
+
+/** `createDeck` inside the caller's transaction (which must include `decks`). */
+export function insertDeck(ctx: WriteContext, input: DeckInput): Promise<Deck> {
+  const value = validated(input)
+  return writeDeck(ctx, {
+    id: newId(),
+    ...value,
+    archived_at: null,
+    created_at: ctx.now,
+    deleted_at: null,
+    updated_at: ctx.now,
+    updated_by: ctx.deviceId,
   })
 }
 

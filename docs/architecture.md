@@ -89,7 +89,8 @@ They are stored in `meta` because voices differ between devices. `meta` keys (ty
 `audio_prefetch`, `last_quick_add_deck` (deck preselected in Quick add), `extra_new` (`{ study_day, count }`,
 extra new cards allowed today), `study_session` (snapshot of the current or last study session for resume within
 30 min and the summary; `domain/studySession.ts`), `install_hint_shown` (the one-time iOS install hint was closed),
-`storage_persisted` (answer of `navigator.storage.persist()`). Writes to `meta` never create outbox entries.
+`storage_persisted` (answer of `navigator.storage.persist()`), `onboarding_done` (first-run onboarding finished on
+this device). Writes to `meta` never create outbox entries.
 
 `theme` (`system` | `light` | `dark`) is applied as `data-theme` on `<html>` (the `dark` variant in `index.css`;
 `system` removes the attribute and follows `prefers-color-scheme`). Because IndexedDB is asynchronous, the value is
@@ -232,7 +233,7 @@ flowchart TD
 | --- | --- |
 | Manifest | `display: standalone`, theme colors for light/dark, maskable icons |
 | iOS meta | `apple-touch-icon`, `apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style` |
-| Precache | App shell (HTML, JS, CSS, fonts, icons) via Workbox |
+| Precache | App shell via Workbox: `index.html`, JS (incl. the CSV import worker; routes are not lazy-loaded), CSS, `theme.js`, icons, manifest; `navigateFallback: /index.html` so every route opens offline. Verified by `web/tests/e2e/offline.spec.ts` against the production build |
 | Runtime caching | `/api/audio/*` CacheFirst (`audio-v1`, max 5000 entries); other `/api/*` NetworkOnly |
 | Updates | `registerType: 'prompt'` → in-app banner "New version available — Reload" |
 | Storage | `navigator.storage.persist()` on first run; show a warning if denied and the user is not signed in |

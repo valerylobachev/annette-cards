@@ -16,7 +16,7 @@ afterEach(async () => {
 
 describe('app shell', () => {
   it('renders the tab bar with four tabs', async () => {
-    renderAt('/')
+    renderAt('/decks')
     const nav = await screen.findByRole('navigation', { name: 'Main navigation' })
     const tabs = within(nav).getAllByRole('link')
     expect(tabs.map((tab) => tab.textContent)).toEqual(['Today', 'Decks', 'Statistics', 'Settings'])
@@ -29,7 +29,7 @@ describe('app shell', () => {
   })
 
   it('switches tab labels between English and Russian', async () => {
-    renderAt('/')
+    renderAt('/decks')
     const nav = await screen.findByRole('navigation')
     expect(within(nav).getByText('Today')).toBeInTheDocument()
 
