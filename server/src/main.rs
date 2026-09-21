@@ -6,8 +6,10 @@ mod config;
 mod db;
 mod error;
 mod health;
+mod json;
 mod security;
 mod static_files;
+mod sync;
 #[cfg(test)]
 mod test_support;
 

@@ -3,6 +3,7 @@ use std::{sync::Arc, time::Duration};
 use axum::{
     Json, Router,
     body::Body,
+    extract::DefaultBodyLimit,
     http::{HeaderName, StatusCode},
     middleware,
     routing::get,
@@ -30,7 +31,7 @@ use crate::{
     error::ErrorBody,
     health,
     security::{self, UuidV7RequestId},
-    static_files,
+    static_files, sync,
 };
 
 const REQUEST_ID: HeaderName = HeaderName::from_static("x-request-id");
@@ -85,6 +86,13 @@ fn api_routes() -> OpenApiRouter<Arc<AppState>> {
             admin::handlers::create_invite
         ))
         .routes(routes!(admin::handlers::revoke_invite))
+        .merge(sync_routes())
+}
+
+fn sync_routes() -> OpenApiRouter<Arc<AppState>> {
+    OpenApiRouter::new()
+        .routes(routes!(sync::handlers::push))
+        .layer(DefaultBodyLimit::max(sync::handlers::PUSH_BODY_LIMIT))
 }
 
 /// The OpenAPI spec, printed by the `openapi` subcommand and served at `/api/openapi.json`.

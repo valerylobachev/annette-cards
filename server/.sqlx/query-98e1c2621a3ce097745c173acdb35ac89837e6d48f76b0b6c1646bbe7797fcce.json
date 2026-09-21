@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO cards (id, user_id, deck_id, front, back, example, example_translation, ipa, tags, notes,\n                            audio_id, created_at, updated_at, updated_by, deleted_at, server_seq)\n         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n         ON CONFLICT (id) DO UPDATE SET\n           deck_id = excluded.deck_id, front = excluded.front, back = excluded.back, example = excluded.example,\n           example_translation = excluded.example_translation, ipa = excluded.ipa, tags = excluded.tags,\n           notes = excluded.notes, audio_id = excluded.audio_id, created_at = excluded.created_at,\n           updated_at = excluded.updated_at, updated_by = excluded.updated_by,\n           deleted_at = excluded.deleted_at, server_seq = excluded.server_seq",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 16
+    },
+    "nullable": []
+  },
+  "hash": "98e1c2621a3ce097745c173acdb35ac89837e6d48f76b0b6c1646bbe7797fcce"
+}

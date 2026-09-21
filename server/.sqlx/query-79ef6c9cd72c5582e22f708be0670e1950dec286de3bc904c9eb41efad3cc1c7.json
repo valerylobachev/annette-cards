@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO user_settings (user_id, data, updated_at, updated_by, server_seq) VALUES (?, ?, ?, ?, ?)\n         ON CONFLICT (user_id) DO UPDATE SET\n           data = excluded.data, updated_at = excluded.updated_at, updated_by = excluded.updated_by,\n           server_seq = excluded.server_seq",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "79ef6c9cd72c5582e22f708be0670e1950dec286de3bc904c9eb41efad3cc1c7"
+}

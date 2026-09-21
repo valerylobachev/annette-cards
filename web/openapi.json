@@ -495,10 +495,242 @@
           }
         }
       }
+    },
+    "/api/sync/push": {
+      "post": {
+        "tags": [
+          "sync"
+        ],
+        "summary": "Uploads local changes: each row is applied, skipped (the server's row wins last-write-wins) or rejected.",
+        "operationId": "push",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PushRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Every row is listed in `applied`, `skipped` or `rejected`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PushResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`validation_failed`: malformed body or more than 500 rows",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "`payload_too_large`: body over 2 MB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      }
     }
   },
   "components": {
     "schemas": {
+      "CardDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "deck_id",
+          "front",
+          "back",
+          "tags",
+          "created_at",
+          "updated_at",
+          "updated_by"
+        ],
+        "properties": {
+          "audio_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "back": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "deck_id": {
+            "type": "string"
+          },
+          "deleted_at": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "example": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "example_translation": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "front": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "ipa": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "updated_at": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "updated_by": {
+            "type": "string"
+          }
+        }
+      },
+      "CardStateDto": {
+        "type": "object",
+        "description": "FSRS state of one card direction, stored as the client computed it (the server never reschedules).",
+        "required": [
+          "card_id",
+          "direction",
+          "state",
+          "due",
+          "stability",
+          "difficulty",
+          "elapsed_days",
+          "scheduled_days",
+          "learning_steps",
+          "reps",
+          "lapses",
+          "updated_at",
+          "updated_by"
+        ],
+        "properties": {
+          "card_id": {
+            "type": "string"
+          },
+          "deleted_at": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "difficulty": {
+            "type": "number",
+            "format": "double"
+          },
+          "direction": {
+            "$ref": "#/components/schemas/Direction"
+          },
+          "due": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "elapsed_days": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "lapses": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "last_review": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "learning_steps": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "reps": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduled_days": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "stability": {
+            "type": "number",
+            "format": "double"
+          },
+          "state": {
+            "type": "integer",
+            "format": "int64",
+            "description": "0 New, 1 Learning, 2 Review, 3 Relearning."
+          },
+          "updated_at": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "updated_by": {
+            "type": "string"
+          }
+        }
+      },
       "ChangePasswordRequest": {
         "type": "object",
         "required": [
@@ -511,6 +743,46 @@
           },
           "new_password": {
             "type": "string"
+          }
+        }
+      },
+      "Changes": {
+        "type": "object",
+        "description": "Rows of every synced entity. Missing arrays count as empty.",
+        "properties": {
+          "card_states": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CardStateDto"
+            }
+          },
+          "cards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CardDto"
+            }
+          },
+          "decks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeckDto"
+            }
+          },
+          "review_log": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReviewLogDto"
+            }
+          },
+          "settings": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SettingsDto"
+              }
+            ]
           }
         }
       },
@@ -531,6 +803,128 @@
               "null"
             ],
             "description": "Who the invite is for, e.g. \"Anna\"; at most 200 characters."
+          }
+        }
+      },
+      "DeckDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "target_lang",
+          "native_lang",
+          "directions",
+          "created_at",
+          "updated_at",
+          "updated_by"
+        ],
+        "properties": {
+          "archived_at": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "created_at": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "deleted_at": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "directions": {
+            "$ref": "#/components/schemas/Directions"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "native_lang": {
+            "type": "string"
+          },
+          "new_per_day": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "`null` = the global `new_per_day` setting."
+          },
+          "target_lang": {
+            "type": "string",
+            "description": "BCP-47, e.g. `en-GB`."
+          },
+          "updated_at": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "updated_by": {
+            "type": "string",
+            "description": "Device id of the writer."
+          }
+        }
+      },
+      "Direction": {
+        "type": "string",
+        "description": "One study direction of a card.",
+        "enum": [
+          "forward",
+          "reverse"
+        ]
+      },
+      "Directions": {
+        "type": "string",
+        "description": "Which directions of a deck are studied.",
+        "enum": [
+          "forward",
+          "reverse",
+          "both"
+        ]
+      },
+      "EntityIds": {
+        "type": "object",
+        "description": "Row ids per entity; card states as `\"{card_id}:{direction}\"`, settings as a flag.",
+        "required": [
+          "decks",
+          "cards",
+          "card_states",
+          "review_log",
+          "settings"
+        ],
+        "properties": {
+          "card_states": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "cards": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "decks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "review_log": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "settings": {
+            "type": "boolean"
           }
         }
       },
@@ -707,6 +1101,52 @@
           }
         }
       },
+      "PushRequest": {
+        "type": "object",
+        "required": [
+          "device_id",
+          "changes"
+        ],
+        "properties": {
+          "changes": {
+            "$ref": "#/components/schemas/Changes"
+          },
+          "device_id": {
+            "type": "string",
+            "description": "The pushing device (for logs)."
+          }
+        }
+      },
+      "PushResponse": {
+        "type": "object",
+        "required": [
+          "applied",
+          "skipped",
+          "rejected",
+          "server_time"
+        ],
+        "properties": {
+          "applied": {
+            "$ref": "#/components/schemas/EntityIds",
+            "description": "Written on the server (new or newer than the stored row)."
+          },
+          "rejected": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Rejected"
+            }
+          },
+          "server_time": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Server clock, for the client's clock-skew warning."
+          },
+          "skipped": {
+            "$ref": "#/components/schemas/EntityIds",
+            "description": "Not written because the server's row wins last-write-wins (or is identical); the client gets it on pull."
+          }
+        }
+      },
       "RegisterRequest": {
         "type": "object",
         "required": [
@@ -736,6 +1176,132 @@
             "type": "string"
           }
         }
+      },
+      "Rejected": {
+        "type": "object",
+        "description": "A row the server refused; the client keeps it out of the outbox and logs it.",
+        "required": [
+          "entity",
+          "id",
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "`validation_failed`, `not_owned`, `deck_not_owned` or `card_not_owned`."
+          },
+          "entity": {
+            "$ref": "#/components/schemas/SyncEntity"
+          },
+          "id": {
+            "type": "string",
+            "description": "Row id (`\"{card_id}:{direction}\"` for card states, `\"settings\"` for settings)."
+          }
+        }
+      },
+      "ReviewLogDto": {
+        "type": "object",
+        "description": "One answer. Append-only: after the first push only `deleted_at` (undo) may change.",
+        "required": [
+          "id",
+          "card_id",
+          "direction",
+          "rating",
+          "mode",
+          "state_before",
+          "reviewed_at",
+          "duration_ms",
+          "practice",
+          "updated_at",
+          "updated_by"
+        ],
+        "properties": {
+          "card_id": {
+            "type": "string"
+          },
+          "deleted_at": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "direction": {
+            "$ref": "#/components/schemas/Direction"
+          },
+          "duration_ms": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "id": {
+            "type": "string"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/ReviewMode"
+          },
+          "practice": {
+            "type": "boolean",
+            "description": "Answered in practice mode (UC-16, decision D2)."
+          },
+          "rating": {
+            "type": "integer",
+            "format": "int64",
+            "description": "1 Again, 2 Hard, 3 Good, 4 Easy."
+          },
+          "reviewed_at": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "state_before": {
+            "description": "The card state before the answer (JSON object with the `CardStateDto` scheduling fields)."
+          },
+          "updated_at": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "updated_by": {
+            "type": "string"
+          }
+        }
+      },
+      "ReviewMode": {
+        "type": "string",
+        "enum": [
+          "swipe",
+          "choice",
+          "listen",
+          "typing"
+        ]
+      },
+      "SettingsDto": {
+        "type": "object",
+        "description": "The settings document (architecture.md §5.5) with its LWW stamp. `data` holds only the fields set by the user.",
+        "required": [
+          "data",
+          "updated_at",
+          "updated_by"
+        ],
+        "properties": {
+          "data": {},
+          "updated_at": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "updated_by": {
+            "type": "string"
+          }
+        }
+      },
+      "SyncEntity": {
+        "type": "string",
+        "description": "The synced entities, as named in payloads.",
+        "enum": [
+          "decks",
+          "cards",
+          "card_states",
+          "review_log",
+          "settings"
+        ]
       }
     },
     "securitySchemes": {

@@ -252,7 +252,7 @@ flowchart TD
 | `db.rs` | Pool creation, pragmas, migrations |
 | `clock.rs` | `now_ms()` and the ms constants used for timestamps |
 | `auth/` | Login, logout, sessions, `CurrentUser` extractor, password change (SQL for `users` and `sessions` in `users.rs`, `session.rs`) |
-| `sync/` | Push/pull services, LWW merge, ownership validation, `server_seq` allocation |
+| `sync/` | Push/pull services, LWW merge (`lww.rs`), row validation (`validate.rs`), ownership checks, `server_seq` allocation (`seq.rs`) |
 | `audio/` | `TtsProvider` trait (Azure impl), Commons lookup, `audio_assets` storage and serving |
 | `enrich/` | `Enricher` trait (Anthropic impl), prompt, JSON validation, daily quota |
 | `push/` | Web Push subscriptions, VAPID, reminder task |
@@ -304,7 +304,9 @@ All endpoints are under `/api`, JSON, timestamps in ms since epoch. Auth = sessi
 | GET/POST/DELETE | `/api/admin/invites` | admin | List, create, revoke invites |
 | GET | `/api/openapi.json` | no | OpenAPI spec |
 
-Error response: `{ "code": "invalid_credentials", "details": null }` with the appropriate HTTP status.
+Error response: `{ "code": "invalid_credentials", "details": null }` with the appropriate HTTP status. A request
+body that is not valid JSON of the expected shape is 400 `validation_failed`; a body over the route's limit is 413
+`payload_too_large` (`json::AppJson`).
 
 **Auth DTOs.** `POST /api/auth/login` takes `{email, password, device_label?}` and returns `MeResponse`
 `{id, email, display_name, is_admin, created_at}` with the `ac_session` cookie (`HttpOnly; Secure; SameSite=Strict;
@@ -445,7 +447,7 @@ CREATE TABLE review_log (
   state_before TEXT NOT NULL,             -- JSON snapshot (for undo / rebuild)
   reviewed_at  INTEGER NOT NULL,
   duration_ms  INTEGER NOT NULL,
-  practice     INTEGER NOT NULL DEFAULT 0, -- 1 = answered in practice mode (UC-16); migration in P2-T03
+  practice     INTEGER NOT NULL DEFAULT 0, -- 1 = answered in practice mode (UC-16, decision D2)
   updated_at   INTEGER NOT NULL,
   updated_by   TEXT NOT NULL,
   deleted_at   INTEGER,
@@ -571,7 +573,8 @@ sequenceDiagram
 // response
 {
   "applied":  { "decks": ["..."], "cards": [], "card_states": [], "review_log": [], "settings": false },
-  "skipped":  { "cards": ["..."] },            // server version was newer (LWW lost); client will receive it on pull
+  "skipped":  { "decks": [], "cards": ["..."], "card_states": [], "review_log": [], "settings": false },
+                                              // server version won LWW (or was identical); client gets it on pull
   "rejected": [{ "entity": "cards", "id": "...", "code": "deck_not_owned" }],
   "server_time": 1758441601234
 }
@@ -584,10 +587,26 @@ sequenceDiagram
 }
 ```
 
-`review_log` rows carry `practice` (boolean in JSON, `0/1` in SQLite; decision D2).
+`review_log` rows carry `practice` (boolean in JSON, `0/1` in SQLite; decision D2). `settings` is
+`{ "data": { …§5.5, only the fields that were set… }, "updated_at": …, "updated_by": "…" }` or `null`. A card state
+is named `"{card_id}:{direction}"` in `applied`, `skipped` and `rejected`; settings as `"settings"`.
 
-Push is processed in one SQLite transaction per request; the client sends batches of at most 500 rows. Entities
-are applied in dependency order: decks → cards → card_states → review_log → settings.
+Push is processed in one SQLite transaction (`BEGIN IMMEDIATE`) per request. Entities are applied in dependency
+order: decks → cards → card_states → review_log → settings, so a card may reference a deck from the same batch.
+Every applied row gets `user_id` from the session (a client value is ignored) and a new `server_seq`. Per row:
+
+- **Mutable rows** (decks, cards, card states, settings): inserted if new; replaced if the incoming stamp wins LWW
+  (§6.1); otherwise `skipped`. A soft delete is an ordinary update.
+- **`review_log`**: inserted if the id is new. For a known id only a first `deleted_at` (undo) is taken over, with
+  its stamp → `applied`; anything else → `skipped`; other fields never change.
+- **Rejected** rows (`{entity, id, code}`) are left out; the rest of the batch still applies. Codes:
+  `validation_failed` (limits below), `not_owned` (the id belongs to another user), `deck_not_owned` (a card's
+  deck is not the user's or does not exist), `card_not_owned` (same for a state's or log's card).
+
+Row limits match the client: deck name ≤ 100 and languages ≤ 35 characters; front/back 1–500; example and its
+translation ≤ 2000; IPA ≤ 200; notes ≤ 2000; each tag 1–50; ids and `updated_by` ≤ 100; `state` 0–3; `rating`
+1–4; `state_before` a JSON object; settings `data` a JSON object ≤ 16 KiB. Whole-request errors: more than 500 rows
+→ 400 `validation_failed`; body over 2 MB → 413 `payload_too_large`; malformed JSON → 400 `validation_failed`.
 
 ### 6.4 Triggers and first sign-in
 
@@ -657,7 +676,7 @@ A full backup (UC-24, UC-25) is one JSON document. The client writes it locally 
 | CSRF | SameSite=Strict + `Origin` header check on non-GET requests |
 | Authorization | `user_id` filter in every query; parent ownership checks on push |
 | Registration | Invite-only (single-use codes with expiry) |
-| Input limits | Body size 2 MB (push batches), field length limits (front/back ≤ 500 chars, notes ≤ 2000; client also: example and its translation ≤ 2000, IPA ≤ 200, each tag ≤ 50 — `domain/cardValidation.ts`) |
+| Input limits | Body size 2 MB (push batches, 413 `payload_too_large`), at most 500 rows per push; field length limits, the same on client (`domain/cardValidation.ts`) and server (`sync/validate.rs`): front/back ≤ 500 chars, example and its translation ≤ 2000, IPA ≤ 200, notes ≤ 2000, each tag ≤ 50 (full list in §6.3) |
 | Secrets | Env file readable only by the service user |
 | Headers | `Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'` (inline styles only because `react-remove-scroll`, used by the dialogs, injects a computed `<style>`; scripts stay same-origin), `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin`, on every response |
 

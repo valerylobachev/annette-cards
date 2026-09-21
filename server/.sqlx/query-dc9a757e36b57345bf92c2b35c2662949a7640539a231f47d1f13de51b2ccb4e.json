@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO card_states (card_id, direction, user_id, state, due, stability, difficulty, elapsed_days,\n                                  scheduled_days, learning_steps, reps, lapses, last_review, updated_at,\n                                  updated_by, deleted_at, server_seq)\n         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n         ON CONFLICT (card_id, direction) DO UPDATE SET\n           state = excluded.state, due = excluded.due, stability = excluded.stability,\n           difficulty = excluded.difficulty, elapsed_days = excluded.elapsed_days,\n           scheduled_days = excluded.scheduled_days, learning_steps = excluded.learning_steps,\n           reps = excluded.reps, lapses = excluded.lapses, last_review = excluded.last_review,\n           updated_at = excluded.updated_at, updated_by = excluded.updated_by,\n           deleted_at = excluded.deleted_at, server_seq = excluded.server_seq",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 17
+    },
+    "nullable": []
+  },
+  "hash": "dc9a757e36b57345bf92c2b35c2662949a7640539a231f47d1f13de51b2ccb4e"
+}

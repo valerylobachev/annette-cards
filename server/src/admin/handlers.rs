@@ -14,6 +14,7 @@ use crate::{
     auth::extractor::AdminUser,
     clock::now_ms,
     error::{AppError, ErrorBody},
+    json::AppJson,
 };
 
 const DEFAULT_INVITE_DAYS: i64 = 7;
@@ -62,7 +63,7 @@ pub async fn list_invites(
 pub async fn create_invite(
     State(state): State<Arc<AppState>>,
     AdminUser(admin): AdminUser,
-    Json(request): Json<CreateInviteRequest>,
+    AppJson(request): AppJson<CreateInviteRequest>,
 ) -> Result<(StatusCode, Json<InviteSummary>), AppError> {
     let days = request.days.unwrap_or(DEFAULT_INVITE_DAYS);
     let note = request.note.as_deref();

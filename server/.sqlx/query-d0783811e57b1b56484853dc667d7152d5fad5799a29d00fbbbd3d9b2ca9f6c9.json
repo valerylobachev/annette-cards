@@ -1,0 +1,50 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT rating, deleted_at, practice AS \"practice: bool\" FROM review_log WHERE id = 'l1'",
+  "describe": {
+    "columns": [
+      {
+        "name": "rating",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "review_log",
+            "name": "rating"
+          }
+        }
+      },
+      {
+        "name": "deleted_at",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "review_log",
+            "name": "deleted_at"
+          }
+        }
+      },
+      {
+        "name": "practice: bool",
+        "ordinal": 2,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "review_log",
+            "name": "practice"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "d0783811e57b1b56484853dc667d7152d5fad5799a29d00fbbbd3d9b2ca9f6c9"
+}

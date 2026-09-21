@@ -16,6 +16,7 @@ use crate::{
     },
     clock::now_ms,
     error::{AppError, ErrorBody},
+    json::AppJson,
 };
 
 const MAX_DEVICE_LABEL_CHARS: usize = 100;
@@ -36,7 +37,7 @@ const MAX_DEVICE_LABEL_CHARS: usize = 100;
 pub async fn login(
     State(state): State<Arc<AppState>>,
     jar: CookieJar,
-    Json(request): Json<LoginRequest>,
+    AppJson(request): AppJson<LoginRequest>,
 ) -> Result<(CookieJar, Json<MeResponse>), AppError> {
     let Some(user) = users::find_by_email(&state.pool, &request.email).await? else {
         password::verify_dummy_password(&request.password).await?;
@@ -74,7 +75,7 @@ pub async fn login(
 pub async fn register(
     State(state): State<Arc<AppState>>,
     jar: CookieJar,
-    Json(mut request): Json<RegisterRequest>,
+    AppJson(mut request): AppJson<RegisterRequest>,
 ) -> Result<(CookieJar, Json<MeResponse>), AppError> {
     request.device_label = device_label(request.device_label.take());
     let ttl_ms = state.config.session_ttl_ms();
@@ -164,7 +165,7 @@ pub async fn me(
 pub async fn change_password(
     State(state): State<Arc<AppState>>,
     user: CurrentUser,
-    Json(request): Json<ChangePasswordRequest>,
+    AppJson(request): AppJson<ChangePasswordRequest>,
 ) -> Result<StatusCode, AppError> {
     password::check_password_policy(&request.new_password)?;
     let stored = users::find_by_id(&state.pool, &user.user_id)

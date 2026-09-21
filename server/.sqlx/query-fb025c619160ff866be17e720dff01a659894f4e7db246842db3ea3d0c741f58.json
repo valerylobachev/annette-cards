@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE review_log SET deleted_at = ?, updated_at = ?, updated_by = ?, server_seq = ?\n             WHERE id = ? AND user_id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 6
+    },
+    "nullable": []
+  },
+  "hash": "fb025c619160ff866be17e720dff01a659894f4e7db246842db3ea3d0c741f58"
+}

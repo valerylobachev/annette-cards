@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO review_log (id, user_id, card_id, direction, rating, mode, state_before, reviewed_at,\n                                 duration_ms, practice, updated_at, updated_by, deleted_at, server_seq)\n         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 14
+    },
+    "nullable": []
+  },
+  "hash": "711ee3b5848aff2ed5019e818ee466dddf0435735a4bf39ee3a76f3ca7670621"
+}

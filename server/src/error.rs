@@ -25,6 +25,9 @@ pub enum AppError {
     /// An unsafe request (POST, PUT, DELETE…) from another origin, or without an `Origin` header.
     #[error("origin mismatch")]
     OriginMismatch,
+    /// The request body is larger than the route allows.
+    #[error("payload too large")]
+    PayloadTooLarge,
     /// Too many requests from this client; try again later.
     #[error("rate limited")]
     RateLimited,
@@ -56,6 +59,7 @@ impl AppError {
             AppError::BadRequest(_) => StatusCode::BAD_REQUEST,
             AppError::InvalidCredentials | AppError::Unauthorized => StatusCode::UNAUTHORIZED,
             AppError::Forbidden | AppError::OriginMismatch => StatusCode::FORBIDDEN,
+            AppError::PayloadTooLarge => StatusCode::PAYLOAD_TOO_LARGE,
             AppError::RateLimited => StatusCode::TOO_MANY_REQUESTS,
             AppError::NotFound => StatusCode::NOT_FOUND,
             AppError::Conflict(_) => StatusCode::CONFLICT,
@@ -71,6 +75,7 @@ impl AppError {
             AppError::Unauthorized => "unauthorized",
             AppError::Forbidden => "forbidden",
             AppError::OriginMismatch => "origin_mismatch",
+            AppError::PayloadTooLarge => "payload_too_large",
             AppError::RateLimited => "rate_limited",
             AppError::NotFound => "not_found",
             AppError::ServiceUnavailable => "service_unavailable",

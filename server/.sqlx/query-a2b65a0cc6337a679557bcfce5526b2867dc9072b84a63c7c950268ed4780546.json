@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO decks (id, user_id, name, target_lang, native_lang, directions, new_per_day, archived_at,\n                            created_at, updated_at, updated_by, deleted_at, server_seq)\n         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n         ON CONFLICT (id) DO UPDATE SET\n           name = excluded.name, target_lang = excluded.target_lang, native_lang = excluded.native_lang,\n           directions = excluded.directions, new_per_day = excluded.new_per_day,\n           archived_at = excluded.archived_at, created_at = excluded.created_at,\n           updated_at = excluded.updated_at, updated_by = excluded.updated_by,\n           deleted_at = excluded.deleted_at, server_seq = excluded.server_seq",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 13
+    },
+    "nullable": []
+  },
+  "hash": "a2b65a0cc6337a679557bcfce5526b2867dc9072b84a63c7c950268ed4780546"
+}
