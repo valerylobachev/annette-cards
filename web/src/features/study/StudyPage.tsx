@@ -1,5 +1,5 @@
-import { useNavigate, useRouter, useSearch } from '@tanstack/react-router'
-import { Check, Undo2, X } from 'lucide-react'
+import { Link, useNavigate, useRouter, useSearch } from '@tanstack/react-router'
+import { Check, Undo2, VolumeX, X } from 'lucide-react'
 import { motion } from 'motion/react'
 import { type ReactNode, useCallback, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -13,6 +13,9 @@ import { answerRatings } from '@/domain/rating'
 import type { QueueItem } from '@/domain/session'
 import type { SessionProgress } from '@/domain/studySession'
 import type { AnswerMode, Rating } from '@/domain/types'
+import { languageName } from '@/lib/intl'
+import { unlock } from '@/lib/speech/speech'
+import { useSpeech } from '@/lib/speech/useSpeech'
 import { cn } from '@/lib/utils'
 import { FrontFace, promptOf, SwipeCard, type SwipeCardHandle } from './SwipeCard'
 import { stackLayer, useStudyMotion } from './studyAnimations'
@@ -98,7 +101,12 @@ export function StudyPage() {
             practice={params.practice}
             cards={session.progress.total - session.progress.done}
             resumed={session.resumed}
-            onStart={session.start}
+            languages={[...new Set([...(session.cards?.values() ?? [])].map(({ deck }) => deck.target_lang))]}
+            onStart={() => {
+              // Synchronously inside the tap: iOS allows speech only after a gesture-started utterance.
+              unlock()
+              void session.start()
+            }}
           />
         </>
       )}
@@ -127,6 +135,7 @@ export function StudyPage() {
                     direction={current.direction}
                     mode={settings.answer_mode}
                     showIpa={settings.show_ipa_on_front}
+                    autoplay={settings.autoplay}
                     onAnswer={(rating) => void session.answer(rating)}
                   />
                 </motion.div>
@@ -160,14 +169,19 @@ type StartGateProps = {
   practice: boolean
   cards: number
   resumed: boolean
+  /** Studied languages of the session's cards, for the missing-voice warning. */
+  languages: string[]
   onStart: () => void
 }
 
 /** The first screen of a session; its tap also unlocks speech synthesis on iOS (P1-T11). */
-function StartGate({ deck: deckId, practice, cards, resumed, onStart }: StartGateProps) {
-  const { t } = useTranslation()
+function StartGate({ deck: deckId, practice, cards, resumed, languages, onStart }: StartGateProps) {
+  const { t, i18n } = useTranslation()
   const deck = useDeck(deckId ?? '')
+  const { hasVoice } = useSpeech()
   const deckName = deckId ? deck?.name : t('study.allDecks')
+  // `hasVoice` is null while voices load: warn only once the list is known.
+  const silent = languages.filter((lang) => hasVoice(lang) === false)
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-4 px-4 pb-12 text-center">
       <h1 className="text-2xl font-semibold">{deckName}</h1>
@@ -177,6 +191,17 @@ function StartGate({ deck: deckId, practice, cards, resumed, onStart }: StartGat
       <Button size="xl" className="mt-4 w-full max-w-xs" onClick={onStart}>
         {t(resumed ? 'study.continue' : 'study.start')}
       </Button>
+      {silent.map((lang) => (
+        <Link
+          key={lang}
+          to="/settings/voices"
+          role="alert"
+          className="flex w-full max-w-xs items-start gap-2 rounded-xl bg-secondary p-3 text-left text-sm"
+        >
+          <VolumeX className="mt-0.5 size-4 shrink-0" aria-hidden />
+          {t('speech.noVoice', { language: languageName(lang.split('-')[0] ?? lang, i18n.language) })}
+        </Link>
+      ))}
     </div>
   )
 }

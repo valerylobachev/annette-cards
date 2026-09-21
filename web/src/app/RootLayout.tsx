@@ -1,6 +1,7 @@
 import { Outlet, useMatches } from '@tanstack/react-router'
 import { SnackbarProvider } from '@/components/Snackbar'
 import { UpdateBanner } from '@/components/UpdateBanner'
+import { SpeechProvider } from '@/lib/speech/useSpeech'
 import { TabBar } from './TabBar'
 
 export function RootLayout() {
@@ -8,14 +9,16 @@ export function RootLayout() {
   const fullScreen = useMatches({ select: (matches) => matches.some((match) => match.staticData.fullScreen) })
 
   return (
-    <SnackbarProvider aboveTabBar={!fullScreen}>
-      <div className="min-h-dvh pl-safe pr-safe pt-safe">
-        <UpdateBanner />
-        <main className={fullScreen ? 'pb-safe' : 'pb-[calc(4rem+env(safe-area-inset-bottom))]'}>
-          <Outlet />
-        </main>
-        {!fullScreen && <TabBar />}
-      </div>
-    </SnackbarProvider>
+    <SpeechProvider>
+      <SnackbarProvider aboveTabBar={!fullScreen}>
+        <div className="min-h-dvh pl-safe pr-safe pt-safe">
+          <UpdateBanner />
+          <main className={fullScreen ? 'pb-safe' : 'pb-[calc(4rem+env(safe-area-inset-bottom))]'}>
+            <Outlet />
+          </main>
+          {!fullScreen && <TabBar />}
+        </div>
+      </SnackbarProvider>
+    </SpeechProvider>
   )
 }

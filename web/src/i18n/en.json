@@ -441,5 +441,34 @@
     "frontForward": "Word: {{text}}. Double-tap to reveal the translation.",
     "frontReverse": "Translation: {{text}}. Double-tap to reveal the word.",
     "undone": "Answer undone. {{text}} is back."
+  },
+  "speech": {
+    "speak": "Pronounce “{{text}}”",
+    "noVoice": "No voice for {{language}} installed — tap to see how to add one",
+    "audio": "Audio",
+    "autoplay": "Autoplay",
+    "autoplayOptions": {
+      "off": "Off",
+      "front": "Front",
+      "front_and_back": "Front and answer"
+    },
+    "rate": "Speech rate",
+    "rateValue": "{{rate}}×",
+    "voices": "Voices"
+  },
+  "voices": {
+    "auto": "Automatic (best available)",
+    "sample": "Play a sample of {{name}}",
+    "quality": {
+      "premium": "Premium",
+      "enhanced": "Enhanced",
+      "default": "Default"
+    },
+    "deviceOnly": "This choice applies to this device only.",
+    "none": "No voices for this language on this device.",
+    "noLanguages": "Add a deck to choose voices for its language.",
+    "unsupported": "Speech is not available in this browser.",
+    "guideTitle": "How to download better voices on iPhone",
+    "guide": "Open Settings → Accessibility → Spoken Content → Voices, choose the language and download an Enhanced or Premium voice. Then come back here: the list updates."
   }
 }

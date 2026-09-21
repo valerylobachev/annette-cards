@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { EmptyState } from '@/components/EmptyState'
 import { FormField } from '@/components/FormField'
 import { useSnackbar } from '@/components/Snackbar'
+import { SpeakButton } from '@/components/SpeakButton'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -171,17 +172,20 @@ function CardEditor({ decks, card, initialDeckId }: EditorProps) {
 
         <div className="flex flex-col gap-1.5">
           <FormField id="card-front" label={`${t('cards.editor.front')} *`} error={errors.front}>
-            <Input
-              id="card-front"
-              ref={frontRef}
-              lang={deck?.target_lang}
-              autoCapitalize="none"
-              autoComplete="off"
-              autoFocus={!card}
-              value={fields.front}
-              onChange={set('front')}
-              {...errorProps('front')}
-            />
+            <div className="flex items-center gap-1">
+              <Input
+                id="card-front"
+                ref={frontRef}
+                lang={deck?.target_lang}
+                autoCapitalize="none"
+                autoComplete="off"
+                autoFocus={!card}
+                value={fields.front}
+                onChange={set('front')}
+                {...errorProps('front')}
+              />
+              {deck && <SpeakButton text={fields.front} lang={deck.target_lang} />}
+            </div>
           </FormField>
           {duplicate && <DuplicateWarning card={duplicate} />}
         </div>

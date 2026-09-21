@@ -129,11 +129,11 @@ Tasks: [P1-T09](../dev/impl/phase-01-local-mvp/task-09-study-session-swipe.md) Â
 ### 1.6 Speech
 Task: [P1-T11](../dev/impl/phase-01-local-mvp/task-11-speech.md)
 
-- [ ] Speech service: voice loading (`voiceschanged`), best-voice selection per locale, explicit `lang`, rate
-- [ ] Autoplay settings (off / front / front+answer), tap-to-speak word and example
-- [ ] Voices screen (S-16) with samples and iOS voice download guide
-- [ ] Missing-voice warning on study start
-- [ ] (added) Speaker buttons in deck rows, card view, card editor and the study card
+- [x] Speech service: voice loading (`voiceschanged`), best-voice selection per locale, explicit `lang`, rate
+- [x] Autoplay settings (off / front / front+answer), tap-to-speak word and example
+- [x] Voices screen (S-16) with samples and iOS voice download guide
+- [x] Missing-voice warning on study start
+- [x] (added) Speaker buttons in deck rows, card view, card editor and the study card
 
 ### 1.7 App shell and settings
 Tasks: [P1-T12](../dev/impl/phase-01-local-mvp/task-12-settings-install.md) Â· [P1-T13](../dev/impl/phase-01-local-mvp/task-13-onboarding-offline.md)

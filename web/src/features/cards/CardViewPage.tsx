@@ -1,5 +1,5 @@
 import { Link, useNavigate, useParams, useRouter } from '@tanstack/react-router'
-import { ChevronLeft, Pencil, RotateCcw, Trash2 } from 'lucide-react'
+import { ChevronLeft, Pencil, RotateCcw, Trash2, Volume2 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ConfirmSheet } from '@/components/ConfirmSheet'
@@ -11,6 +11,7 @@ import { useCard, useCardStates, useDeck, useRecentReviews } from '@/db/hooks'
 import { activeDirections } from '@/domain/directions'
 import type { Card, CardState, Deck, Direction, Rating } from '@/domain/types'
 import { formatNumber, relativeTime } from '@/lib/intl'
+import { useSpeech } from '@/lib/speech/useSpeech'
 import { cn } from '@/lib/utils'
 
 const ratingDotClass: Record<Rating, string> = {
@@ -44,6 +45,7 @@ export function CardView({ card, deck }: { card: Card; deck: Deck }) {
   const navigate = useNavigate()
   const snackbar = useSnackbar()
   const states = useCardStates(card.id)
+  const { speak } = useSpeech()
   const [confirm, setConfirm] = useState<'reset' | 'delete' | null>(null)
 
   function goBack() {
@@ -77,8 +79,16 @@ export function CardView({ card, deck }: { card: Card; deck: Deck }) {
       </header>
 
       <section className="flex flex-col gap-2">
-        <h1 lang={deck.target_lang} className="text-4xl font-bold break-words">
-          {card.front}
+        <h1 className="text-4xl font-bold break-words">
+          <button
+            type="button"
+            lang={deck.target_lang}
+            className="inline-flex items-start gap-2 text-left"
+            onClick={() => void speak(card.front, deck.target_lang)}
+          >
+            {card.front}
+            <Volume2 className="mt-2 size-6 shrink-0 text-muted-foreground" aria-hidden />
+          </button>
         </h1>
         {card.ipa && <p className="text-lg text-muted-foreground">[{card.ipa}]</p>}
         <p lang={deck.native_lang} className="text-2xl break-words">
@@ -89,9 +99,15 @@ export function CardView({ card, deck }: { card: Card; deck: Deck }) {
       {card.example && (
         <section className="flex flex-col gap-1">
           <h2 className="text-sm font-medium text-muted-foreground">{t('card.example')}</h2>
-          <p lang={deck.target_lang} className="italic">
+          <button
+            type="button"
+            lang={deck.target_lang}
+            className="inline-flex items-start gap-2 text-left italic"
+            onClick={() => card.example && void speak(card.example, deck.target_lang)}
+          >
             {card.example}
-          </p>
+            <Volume2 className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
+          </button>
           {card.example_translation && (
             <p lang={deck.native_lang} className="text-muted-foreground">
               {card.example_translation}

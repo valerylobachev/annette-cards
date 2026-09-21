@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { PlaceholderPage } from '@/components/PlaceholderPage'
 import { Button } from '@/components/ui/button'
 import { uiLanguages } from '@/i18n'
+import { AudioSettingsSection } from './AudioSettingsSection'
 import { DataSection } from './DataSection'
 
 export function SettingsPage() {
@@ -26,6 +27,7 @@ export function SettingsPage() {
           ))}
         </div>
       </section>
+      <AudioSettingsSection />
       <DataSection />
     </PlaceholderPage>
   )
@@ -35,6 +37,4 @@ export function AccountPage() {
   return <PlaceholderPage titleKey="screens.account.title" back />
 }
 
-export function VoicesPage() {
-  return <PlaceholderPage titleKey="screens.voices.title" back />
-}
+export { VoicesPage } from './VoicesPage'

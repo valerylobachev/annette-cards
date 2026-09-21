@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { ConfirmSheet } from '@/components/ConfirmSheet'
 import { EmptyState } from '@/components/EmptyState'
 import { useSnackbar } from '@/components/Snackbar'
+import { SpeakButton } from '@/components/SpeakButton'
 import { SwipeRow } from '@/components/SwipeRow'
 import { Button } from '@/components/ui/button'
 import {
@@ -272,6 +273,7 @@ function DeckDetail({ deck, items }: { deck: Deck; items: CardWithStates[] }) {
           ) : (
             <CardList
               items={visible}
+              lang={deck.target_lang}
               selection={selection}
               onToggle={toggleSelected}
               onStartSelection={(id) => setSelection(new Set([id]))}
@@ -308,6 +310,8 @@ function DeckDetail({ deck, items }: { deck: Deck; items: CardWithStates[] }) {
 
 type CardListProps = {
   items: CardWithStates[]
+  /** The deck's studied language, for the speaker buttons. */
+  lang: string
   selection: Set<string> | null
   onToggle: (id: string) => void
   onStartSelection: (id: string) => void
@@ -315,7 +319,7 @@ type CardListProps = {
 }
 
 /** Window-virtualized card list: only the rows on screen are rendered, so 5 000+ cards stay smooth. */
-function CardList({ items, selection, onToggle, onStartSelection, onDelete }: CardListProps) {
+function CardList({ items, lang, selection, onToggle, onStartSelection, onDelete }: CardListProps) {
   const { t } = useTranslation()
   const listRef = useRef<HTMLUListElement>(null)
   const [scrollMargin, setScrollMargin] = useState(0)
@@ -350,6 +354,7 @@ function CardList({ items, selection, onToggle, onStartSelection, onDelete }: Ca
           >
             <CardRow
               item={item}
+              lang={lang}
               selected={selection?.has(item.card.id) ?? null}
               onToggle={() => onToggle(item.card.id)}
               onLongPress={() => (selection ? onToggle(item.card.id) : onStartSelection(item.card.id))}
@@ -364,6 +369,7 @@ function CardList({ items, selection, onToggle, onStartSelection, onDelete }: Ca
 
 type CardRowProps = {
   item: CardWithStates
+  lang: string
   /** `null` outside selection mode. */
   selected: boolean | null
   onToggle: () => void
@@ -371,7 +377,7 @@ type CardRowProps = {
   onDelete: () => void
 }
 
-function CardRow({ item, selected, onToggle, onLongPress, onDelete }: CardRowProps) {
+function CardRow({ item, lang, selected, onToggle, onLongPress, onDelete }: CardRowProps) {
   const { t, i18n } = useTranslation()
   const { card } = item
   const status = cardStatus(item)
@@ -439,10 +445,11 @@ function CardRow({ item, selected, onToggle, onLongPress, onDelete }: CardRowPro
         to="/cards/$cardId"
         params={{ cardId: card.id }}
         draggable={false}
-        className="flex h-[67px] min-w-0 flex-1 items-center gap-3 px-4"
+        className="flex h-[67px] min-w-0 flex-1 items-center gap-3 pl-4"
       >
         {content}
       </Link>
+      <SpeakButton text={card.front} lang={lang} className="mr-1" />
     </SwipeRow>
   )
 }

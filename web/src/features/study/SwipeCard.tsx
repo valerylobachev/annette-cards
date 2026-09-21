@@ -1,10 +1,13 @@
+import { Volume2 } from 'lucide-react'
 import { animate, type MotionValue, motion, type PanInfo, useMotionValue, useTransform } from 'motion/react'
-import { type ReactNode, type Ref, useImperativeHandle, useRef, useState } from 'react'
+import { type ReactNode, type Ref, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FitText } from '@/components/FitText'
 import type { StudyCard } from '@/db/studySession'
 import { type SwipeDirection, swipeOutcome, swipeRating } from '@/domain/rating'
-import type { AnswerMode, Direction, Rating } from '@/domain/types'
+import type { AnswerMode, Autoplay, Direction, Rating } from '@/domain/types'
+import { shouldSpeak } from '@/lib/speech/speech'
+import { useSpeech } from '@/lib/speech/useSpeech'
 import { cn } from '@/lib/utils'
 import { FLY_DISTANCE, springBack, useStudyMotion } from './studyAnimations'
 
@@ -18,6 +21,7 @@ type Props = {
   direction: Direction
   mode: AnswerMode
   showIpa: boolean
+  autoplay: Autoplay
   onAnswer: (rating: Rating) => void
   ref?: Ref<SwipeCardHandle>
 }
@@ -30,7 +34,7 @@ const clamp = (value: number, min: number, max: number) => Math.min(max, Math.ma
  * card tilts and shows a labelled overlay while dragged; a drag below the threshold springs back. With reduced
  * motion the sides cross-fade instead of turning, the card does not tilt and fades out instead of flying.
  */
-export function SwipeCard({ study, direction, mode, showIpa, onAnswer, ref }: Props) {
+export function SwipeCard({ study, direction, mode, showIpa, autoplay, onAnswer, ref }: Props) {
   const { t } = useTranslation()
   const motionStyle = useStudyMotion()
   const { reduced } = motionStyle
@@ -65,10 +69,30 @@ export function SwipeCard({ study, direction, mode, showIpa, onAnswer, ref }: Pr
 
   useImperativeHandle(ref, () => ({ commit: (rating) => void commit(flyDirection(rating), rating) }))
 
+  const { speaker } = useSpeech()
+  const [speechBlocked, setSpeechBlocked] = useState(false)
+  // Each side is autoplayed once per card, even when React runs the mount effect twice (StrictMode).
+  const autoplayed = useRef({ front: false, back: false })
+
+  const pronounce = useCallback(async () => {
+    const result = await speaker.play(study.card, study.deck.target_lang, 'front')
+    setSpeechBlocked(result === 'blocked')
+  }, [speaker, study])
+
+  useEffect(() => {
+    if (autoplayed.current.front || !shouldSpeak(autoplay, direction, 'front')) return
+    autoplayed.current.front = true
+    void pronounce()
+  }, [autoplay, direction, pronounce])
+
   function flip(toBack: boolean) {
     if (dragged.current) return
     setFlipped(toBack)
     animate(turn, toBack ? 180 : 0, motionStyle.flip)
+    if (toBack && !autoplayed.current.back && shouldSpeak(autoplay, direction, 'back')) {
+      autoplayed.current.back = true
+      void pronounce()
+    }
   }
 
   function onDragEnd(_event: unknown, info: PanInfo) {
@@ -119,6 +143,9 @@ export function SwipeCard({ study, direction, mode, showIpa, onAnswer, ref }: Pr
             </CardSide>
           </motion.div>
         </div>
+        {(direction === 'forward' || flipped) && (
+          <CardSpeaker text={study.card.front} pulse={speechBlocked} onSpeak={pronounce} />
+        )}
         <SwipeOverlay label="study.know" className="bg-good/85" opacity={knowOpacity} />
         <SwipeOverlay label="study.ratings.1" className="bg-again/85" opacity={againOpacity} />
         <SwipeOverlay label="study.ratings.4" className="bg-easy/85" opacity={easyOpacity} />
@@ -234,5 +261,37 @@ function SwipeOverlay({
     >
       {t(label)}
     </motion.div>
+  )
+}
+
+/**
+ * Speaker in the card corner, shown while the studied word is visible. It pulses when iOS blocked autoplay (no user
+ * gesture yet); a tap plays. Its pointer events do not reach the card, so tapping it neither drags nor flips.
+ */
+function CardSpeaker({ text, pulse, onSpeak }: { text: string; pulse: boolean; onSpeak: () => void }) {
+  const { t } = useTranslation()
+  const button = useRef<HTMLButtonElement>(null)
+
+  // motion listens on the card element itself, so only a native listener can stop the drag from starting.
+  useEffect(() => {
+    const node = button.current
+    const stop = (event: PointerEvent) => event.stopPropagation()
+    node?.addEventListener('pointerdown', stop)
+    return () => node?.removeEventListener('pointerdown', stop)
+  }, [])
+
+  return (
+    <button
+      ref={button}
+      type="button"
+      aria-label={t('speech.speak', { text })}
+      onClick={onSpeak}
+      className={cn(
+        'absolute top-2 right-2 z-10 flex size-11 items-center justify-center rounded-full text-muted-foreground',
+        pulse && 'animate-pulse text-foreground',
+      )}
+    >
+      <Volume2 className="size-6" />
+    </button>
   )
 }

@@ -192,9 +192,19 @@ flowchart TD
     A -->|no| W["speechSynthesis<br/>lang = deck.target_lang<br/>voice = device preference"]
 ```
 
-- Voice list is loaded via `speechSynthesis.getVoices()` plus the `voiceschanged` event; the preferred voice per
-  language is stored per device. If none is chosen, the best available voice for the exact locale is used
-  (Premium > Enhanced > default).
+- Voice list is loaded via `speechSynthesis.getVoices()` plus the `voiceschanged` event (wait at most 3 s when the
+  first list is empty; refreshed when the app becomes visible again); the preferred voice per language is stored per
+  device (`meta.voice_pref`). If none is chosen, the best available voice is used (`lib/speech/voices.ts`): the
+  exact locale before other regions of the same language (`en-GB` before `en-US`; `en_GB` is accepted), then
+  Premium > Enhanced > default, detected from the voice name or URI ("(Premium)", `com.apple.voice.premium.…`,
+  `…enhanced…`), then the system default voice. Rate is device-local (`meta.speech_rate`, 0.5–1.2, default 1.0).
+- `lib/speech/speech.ts` exposes `speak(text, { lang, rate, voiceURI })` (synchronous up to
+  `speechSynthesis.speak`, so tap handlers keep their gesture) and the `Speaker` interface
+  `play(card, lang, 'front' | 'example')`. Phase 1 uses the system-voice speaker; P3-T03 puts a speaker for cached
+  server audio (`card.audio_id`) in front of it and falls back to the system one.
+- Autoplay in study (`shouldSpeak`): `front` speaks the studied word when a forward card is shown;
+  `front_and_back` also speaks it when a reverse card is turned to its answer. The native-language side is never
+  spoken. A `not-allowed` error (no gesture yet) makes the card's speaker icon pulse; a tap plays.
 - The first utterance must follow a user gesture; the study screen starts with a "Start" tap for this reason.
 - `utterance.lang` is always set explicitly (`en-GB`, `en-US`, `pl-PL`).
 - Example sentences can be spoken too (tap on the example).
@@ -443,7 +453,7 @@ CREATE INDEX idx_log_user_reviewed     ON review_log(user_id, reviewed_at);
 }
 ```
 
-- `answer_mode`: `simple` | `detailed`; `autoplay`: `off` | `front` | `front_and_back`.
+- `answer_mode`: `simple` | `detailed`; `autoplay`: `off` | `front` | `front_and_back` (UI: Off / Front / Front and answer).
 - `default_directions` (`forward` | `reverse` | `both`): directions preselected for a new deck.
 - `show_ipa_on_front`: show the IPA with the studied word on the front of a study card.
 - Missing fields fall back to these defaults (`web/src/domain/settings.ts`), so older documents stay valid.
