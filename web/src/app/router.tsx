@@ -9,7 +9,7 @@ import { StudyPage, SummaryPage } from '@/features/study/pages'
 import { FirstSyncPage } from '@/features/sync/pages'
 import { TodayPage } from '@/features/today/pages'
 import { RootLayout } from './RootLayout'
-import { parseAuthSearch, parseStudySearch } from './search'
+import { parseAuthSearch, parseCardNewSearch, parseStudySearch } from './search'
 
 declare module '@tanstack/react-router' {
   interface Register {
@@ -35,6 +35,7 @@ const routes = [
     path: '/cards/new',
     component: CardNewPage,
     staticData: fullScreen,
+    validateSearch: parseCardNewSearch,
   }), // S-08
   createRoute({
     getParentRoute: () => rootRoute,

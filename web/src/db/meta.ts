@@ -17,6 +17,8 @@ export type MetaValues = {
   speech_rate: number
   theme: 'system' | 'light' | 'dark'
   audio_prefetch: boolean
+  /** Deck preselected in Quick add. */
+  last_quick_add_deck: string
 }
 
 export type MetaKey = keyof MetaValues

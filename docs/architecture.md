@@ -86,7 +86,8 @@ db.version(1).stores({
 Device-local preferences (not synced): selected voice per language, speech rate, theme, audio prefetch flag.
 They are stored in `meta` because voices differ between devices. `meta` keys (typed in `web/src/db/meta.ts`):
 `device_id`, `sync_cursor`, `last_sync_at`, `account`, `voice_pref` (voice per language), `speech_rate`, `theme`,
-`audio_prefetch`. Writes to `meta` never create outbox entries.
+`audio_prefetch`, `last_quick_add_deck` (deck preselected in Quick add). Writes to `meta` never create outbox
+entries.
 
 ### 4.3 Write path
 
@@ -111,6 +112,11 @@ replaced by optimized weights (Phase 4).
 creates a New state for each active direction that has none (`ensureStatesForCards` in `web/src/db/cardStates.ts`);
 existing states are never reset. When a direction is switched off, its states are **kept** (hidden from study
 queues, not deleted), so switching it back on restores the progress.
+
+**Normalization for duplicates** (`domain/normalize.ts`, decision D10): `normalizeFront(front)` = Unicode NFC,
+trim, lowercase, collapse internal whitespace to one space. Two cards in the same deck are duplicates when their
+normalized fronts are equal (soft-deleted cards are ignored). Used by the card editor warning, Quick add and CSV
+import. Typing-mode answer normalization (P4-T01) builds on it.
 
 **Day boundary.** A "study day" starts at `day_start_hour` (default 04:00 local time). Daily limits and statistics
 use study days.
@@ -523,7 +529,7 @@ are applied in dependency order: decks → cards → card_states → review_log 
 | CSRF | SameSite=Strict + `Origin` header check on non-GET requests |
 | Authorization | `user_id` filter in every query; parent ownership checks on push |
 | Registration | Invite-only (single-use codes with expiry) |
-| Input limits | Body size 2 MB (push batches), field length limits (front/back ≤ 500 chars, notes ≤ 2000) |
+| Input limits | Body size 2 MB (push batches), field length limits (front/back ≤ 500 chars, notes ≤ 2000; client also: example and its translation ≤ 2000, IPA ≤ 200, each tag ≤ 50 — `domain/cardValidation.ts`) |
 | Secrets | Env file readable only by the service user |
 | Headers | CSP (`default-src 'self'`), `X-Content-Type-Options`, `Referrer-Policy` |
 

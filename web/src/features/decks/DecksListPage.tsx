@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input'
 import { archiveDeck, type DeckWithSummary, deleteDeck, unarchiveDeck, undeleteDeck } from '@/db/decks'
 import { useDeckSummaries } from '@/db/hooks'
 import type { Deck } from '@/domain/types'
+import { QuickAddButton } from '@/features/cards/QuickAddSheet'
 import { usePullToReveal } from '@/hooks/usePullToReveal'
 import { languageTag } from '@/lib/intl'
 import { type DeckFormMode, DeckFormSheet } from './DeckFormSheet'
@@ -153,6 +154,8 @@ export function DecksListPage() {
           )}
         </section>
       )}
+
+      <QuickAddButton />
 
       <DeckFormSheet
         mode={form?.mode ?? 'create'}

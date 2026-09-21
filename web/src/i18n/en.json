@@ -85,7 +85,42 @@
   },
   "cards": {
     "count_one": "{{count}} card",
-    "count_other": "{{count}} cards"
+    "count_other": "{{count}} cards",
+    "editor": {
+      "deck": "Deck",
+      "front": "Word or phrase",
+      "back": "Translation",
+      "example": "Example",
+      "exampleTranslation": "Example translation",
+      "ipa": "IPA (transcription)",
+      "tags": "Tags",
+      "notes": "Notes",
+      "saveAndAddAnother": "Save and add another",
+      "tagsPlaceholder": "Add a tag and press Enter",
+      "removeTag": "Remove tag {{tag}}",
+      "tagSuggestions": "Suggested tags",
+      "ipaSymbols": "IPA symbols",
+      "insertSymbol": "Insert {{symbol}}",
+      "duplicate": "Already in deck:",
+      "notFound": "This card does not exist.",
+      "noDecks": "Create a deck first to add words.",
+      "goToDecks": "Go to decks",
+      "saved": "Card saved"
+    },
+    "quickAdd": {
+      "open": "Add word",
+      "title": "Quick add",
+      "deck": "Deck",
+      "word": "Word or phrase",
+      "translation": "Translation",
+      "add": "Add",
+      "added": "Added",
+      "edit": "Edit",
+      "duplicate": "Already in deck: {{front}} — {{back}}",
+      "addAnyway": "Add anyway",
+      "openExisting": "Open existing",
+      "wordHint": "Press Enter to add the translation"
+    }
   },
   "update": {
     "available": "A new version is available",

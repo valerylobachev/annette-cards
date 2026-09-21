@@ -1,20 +1,21 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { DEFAULT_SETTINGS } from '@/domain/settings'
 import { getCardStates } from './cardStates'
-import { getCard, listCards } from './cards'
+import { getCard, listCards, listTags } from './cards'
 import { getDeck, listDeckSummaries, listDecks } from './decks'
+import { getMeta, type MetaKey } from './meta'
 import { db } from './schema'
 import { toSettings } from './settings'
 
 // Reactive reads for components: they re-render when a transaction commits changes to the queried tables.
-// `undefined` means "still loading" (the first render before IndexedDB answers).
+// `undefined` means "still loading" (the first render before IndexedDB answers); `null` means "not found".
 
 export function useDecks() {
   return useLiveQuery(() => listDecks())
 }
 
 export function useDeck(id: string) {
-  return useLiveQuery(() => getDeck(id), [id])
+  return useLiveQuery(async () => (await getDeck(id)) ?? null, [id])
 }
 
 export function useCards(deck_id: string) {
@@ -22,7 +23,16 @@ export function useCards(deck_id: string) {
 }
 
 export function useCard(id: string) {
-  return useLiveQuery(() => getCard(id), [id])
+  return useLiveQuery(async () => (await getCard(id)) ?? null, [id])
+}
+
+export function useTags() {
+  return useLiveQuery(() => listTags(), [], [])
+}
+
+/** A device-local value; `null` when it was never set. */
+export function useMeta<K extends MetaKey>(key: K) {
+  return useLiveQuery(async () => (await getMeta(key)) ?? null, [key])
 }
 
 export function useCardStates(card_id: string) {

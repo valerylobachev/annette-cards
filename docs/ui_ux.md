@@ -215,6 +215,10 @@ Bottom sheet over the current screen: deck selector (remembers last), single fie
 if online and AI enabled, suggestions appear (translation + example) and one more tap saves; offline → second
 field "Translation" appears. After save: snackbar "Added · Edit", field cleared, keyboard stays open.
 
+In Phase 1 the two-field flow (word → Enter → translation → Enter) is used online and offline; AI suggestions
+arrive in Phase 3. A duplicate (same normalized front in the deck) shows an inline warning with "Add anyway" and
+"Open existing"; the card is not saved until one is chosen.
+
 ### S-10 Import wizard
 
 **Purpose:** import CSV/TSV (UC-10).

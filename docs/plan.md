@@ -83,12 +83,12 @@ Tasks: [P1-T02](../dev/impl/phase-01-local-mvp/task-02-decks-list.md) · [P1-T03
 
 - [x] Decks list (S-05): create sheet, rename, archive, soft delete with Undo snackbar
 - [ ] Deck detail (S-06): list (virtualized), search, sort, state filters, tag chips
-- [ ] Card editor (S-08): fields, validation, duplicate warning, tag autocomplete, IPA helper row
-- [ ] Quick add sheet (S-09) with offline two-field flow
+- [x] Card editor (S-08): fields, validation, duplicate warning, tag autocomplete, IPA helper row
+- [x] Quick add sheet (S-09) with offline two-field flow
 - [ ] Card view (S-07): fields, progress per direction, reset progress, delete
 - [x] Card state creation per active direction; handling of direction changes on deck settings
 - [x] (added) Shared Snackbar, Confirm sheet and Empty state components; `Intl` helpers (language names, relative dates); deck soft delete cascades to its cards
-- [ ] (added) `normalizeFront` domain function for duplicate detection (card editor, import)
+- [x] (added) `normalizeFront` domain function for duplicate detection (card editor, import)
 - [ ] (added) Deck detail multi-select: move to deck, add/remove tag, reset progress, delete
 
 ### 1.3 Import / export

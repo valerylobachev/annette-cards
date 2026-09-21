@@ -4,6 +4,9 @@ export type StudyMode = (typeof studyModes)[number]
 /** `/study?deck=<id>&mode=swipe` (ui_ux.md §3 deep links). */
 export type StudySearch = { deck?: string; mode?: StudyMode }
 
+/** `/cards/new?deck=<id>` (S-08): the deck to add the card to. */
+export type CardNewSearch = { deck?: string }
+
 /** `/signin?invite=<code>` and `/register?invite=<code>` (S-02). */
 export type AuthSearch = { invite?: string }
 
@@ -18,4 +21,8 @@ export function parseStudySearch(search: Record<string, unknown>): StudySearch {
 
 export function parseAuthSearch(search: Record<string, unknown>): AuthSearch {
   return { invite: optionalString(search.invite) }
+}
+
+export function parseCardNewSearch(search: Record<string, unknown>): CardNewSearch {
+  return { deck: optionalString(search.deck) }
 }

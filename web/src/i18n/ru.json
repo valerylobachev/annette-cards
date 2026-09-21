@@ -87,7 +87,42 @@
     "count_one": "{{count}} карточка",
     "count_few": "{{count}} карточки",
     "count_many": "{{count}} карточек",
-    "count_other": "{{count}} карточки"
+    "count_other": "{{count}} карточки",
+    "editor": {
+      "deck": "Колода",
+      "front": "Слово или фраза",
+      "back": "Перевод",
+      "example": "Пример",
+      "exampleTranslation": "Перевод примера",
+      "ipa": "IPA (транскрипция)",
+      "tags": "Теги",
+      "notes": "Заметки",
+      "saveAndAddAnother": "Сохранить и добавить ещё",
+      "tagsPlaceholder": "Введите тег и нажмите Enter",
+      "removeTag": "Удалить тег {{tag}}",
+      "tagSuggestions": "Подходящие теги",
+      "ipaSymbols": "Символы IPA",
+      "insertSymbol": "Вставить {{symbol}}",
+      "duplicate": "Уже есть в колоде:",
+      "notFound": "Такой карточки нет.",
+      "noDecks": "Сначала создайте колоду, чтобы добавлять слова.",
+      "goToDecks": "К колодам",
+      "saved": "Карточка сохранена"
+    },
+    "quickAdd": {
+      "open": "Добавить слово",
+      "title": "Быстрое добавление",
+      "deck": "Колода",
+      "word": "Слово или фраза",
+      "translation": "Перевод",
+      "add": "Добавить",
+      "added": "Добавлено",
+      "edit": "Изменить",
+      "duplicate": "Уже есть в колоде: {{front}} — {{back}}",
+      "addAnyway": "Всё равно добавить",
+      "openExisting": "Открыть",
+      "wordHint": "Нажмите Enter, чтобы ввести перевод"
+    }
   },
   "update": {
     "available": "Доступна новая версия",
