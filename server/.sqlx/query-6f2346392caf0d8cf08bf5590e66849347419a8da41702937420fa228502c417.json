@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT count FROM enrich_usage WHERE user_id = ? AND day = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "count",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "enrich_usage",
+            "name": "count"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "6f2346392caf0d8cf08bf5590e66849347419a8da41702937420fa228502c417"
+}

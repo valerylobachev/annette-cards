@@ -31,6 +31,9 @@ pub enum AppError {
     /// Too many requests from this client; try again later.
     #[error("rate limited")]
     RateLimited,
+    /// The user's daily AI enrichment quota is used up; it resets at 00:00 UTC.
+    #[error("enrich quota exceeded")]
+    EnrichQuotaExceeded,
     #[error("not found")]
     NotFound,
     /// The request conflicts with existing data; the code says how (`email_taken`, …).
@@ -41,6 +44,9 @@ pub enum AppError {
     /// An external service (TTS, Wikimedia, LLM) failed or answered with an error.
     #[error("provider error")]
     ProviderError,
+    /// An external service did not answer in time.
+    #[error("provider timeout")]
+    ProviderTimeout,
     #[error("database error: {0}")]
     Database(#[from] sqlx::Error),
     #[error("internal error: {0}")]
@@ -63,11 +69,12 @@ impl AppError {
             AppError::InvalidCredentials | AppError::Unauthorized => StatusCode::UNAUTHORIZED,
             AppError::Forbidden | AppError::OriginMismatch => StatusCode::FORBIDDEN,
             AppError::PayloadTooLarge => StatusCode::PAYLOAD_TOO_LARGE,
-            AppError::RateLimited => StatusCode::TOO_MANY_REQUESTS,
+            AppError::RateLimited | AppError::EnrichQuotaExceeded => StatusCode::TOO_MANY_REQUESTS,
             AppError::NotFound => StatusCode::NOT_FOUND,
             AppError::Conflict(_) => StatusCode::CONFLICT,
             AppError::ServiceUnavailable => StatusCode::SERVICE_UNAVAILABLE,
             AppError::ProviderError => StatusCode::BAD_GATEWAY,
+            AppError::ProviderTimeout => StatusCode::GATEWAY_TIMEOUT,
             AppError::Database(_) | AppError::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
@@ -81,9 +88,11 @@ impl AppError {
             AppError::OriginMismatch => "origin_mismatch",
             AppError::PayloadTooLarge => "payload_too_large",
             AppError::RateLimited => "rate_limited",
+            AppError::EnrichQuotaExceeded => "enrich_quota_exceeded",
             AppError::NotFound => "not_found",
             AppError::ServiceUnavailable => "service_unavailable",
             AppError::ProviderError => "provider_error",
+            AppError::ProviderTimeout => "provider_timeout",
             AppError::Database(_) | AppError::Internal(_) => "internal_error",
         }
     }

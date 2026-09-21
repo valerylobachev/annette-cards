@@ -5,6 +5,7 @@ mod auth;
 mod clock;
 mod config;
 mod db;
+mod enrich;
 mod error;
 mod health;
 mod json;
@@ -114,6 +115,7 @@ async fn serve() -> anyhow::Result<()> {
     tracing::info!(
         tts = config.tts_enabled(),
         commons = config.commons_enabled,
+        enrich = config.enrich_enabled(),
         "optional features"
     );
     let state = AppState::new(pool, config)?;

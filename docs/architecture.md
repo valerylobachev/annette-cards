@@ -394,6 +394,21 @@ transaction (`BEGIN IMMEDIATE`), so a failed registration leaves the invite usab
 | `provider_error` | 502 | The TTS provider or Wikimedia failed or could not be reached |
 | `rate_limited` | 429 | More than 60 audio requests in an hour |
 
+**Enrichment** (§8):
+
+- `POST /api/enrich` takes `{front, target_lang, native_lang, context?}` (front 1–500 characters after trimming,
+  context ≤ 500, languages BCP-47 tags) and returns `{back, example, example_translation, ipa, notes}`; only `back`
+  is always set, the others may be `null`. Nothing is stored except the usage count.
+
+| Code | Status | When |
+| --- | --- | --- |
+| `validation_failed` | 400 | Empty or too long `front`/`context`, or a language that is not a BCP-47 tag |
+| `enrich_disabled` | 409 | No `ANTHROPIC_API_KEY` on the server |
+| `enrich_quota_exceeded` | 429 | The user's daily quota (`ANNETTE_ENRICH_DAILY_LIMIT`) is used up; it resets at 00:00 UTC |
+| `rate_limited` | 429 | More than 20 enrich requests a minute |
+| `provider_error` | 502 | The model failed, could not be reached or gave no valid suggestion twice |
+| `provider_timeout` | 504 | The model did not answer within 10 s |
+
 **Export and restore** (backup format §6.5):
 
 - `GET /api/export` → the backup JSON with `Content-Disposition: attachment;
@@ -794,10 +809,26 @@ A full backup (UC-24, UC-25) is one JSON document. The client writes it locally 
 
 ## 8. Enrichment (server)
 
-- `POST /api/enrich {front, target_lang, native_lang, context?}` → `{back, example, example_translation, ipa, notes}`.
-- Prompt instructs the model to return strict JSON; the server validates with serde and retries once on invalid
-  output. Suggestions are never saved automatically — the user confirms in the card editor.
-- Quota: `ANNETTE_ENRICH_DAILY_LIMIT` per user (default 200), tracked in `enrich_usage`.
+- `POST /api/enrich {front, target_lang, native_lang, context?}` → `{back, example, example_translation, ipa, notes}`
+  (§5.3). Suggestions are never saved — the learner accepts them in the card editor or quick add.
+- **Prompt** (`enrich/prompt.rs`): a system prompt (bilingual dictionary assistant; answer with only one JSON object
+  with exactly the five keys; `back` in the native language, meanings separated by `; `; a short natural `example`
+  in the studied language and its translation; `ipa` between slashes; short `notes` in the native language) plus
+  rules for the studied language: English — part of speech, phrasal verbs, irregular forms, British or American
+  spelling and pronunciation by `target_lang`, the IPA of the meaning in `context` for homographs; Polish — gender
+  of nouns (`м. р.`/`ж. р.`/`ср. р.` for Russian speakers), aspect pairs of verbs (`robić / zrobić`), diacritics kept.
+  The user message is `Word: {front}` and, when given, `Context: {context}`.
+- **Model call** (`enrich/anthropic.rs`): Anthropic Messages API (`anthropic-version: 2023-06-01`, model
+  `ANNETTE_LLM_MODEL`, 800 max tokens, 10 s timeout); the text blocks of the answer are joined.
+- **Validation and retry** (`enrich/service.rs`): the JSON object in the answer (code fences or text around it are
+  skipped) is read with serde; unknown keys are ignored; text is trimmed, blank fields become `null`, long ones are
+  cut to the card field limits (§9); an answer without `back` is invalid. An invalid answer is retried **once** with
+  the same prompt plus a reminder to answer with only the JSON object; a second invalid answer is 502
+  `provider_error`. A timeout (504 `provider_timeout`) or a provider error (502) is not retried.
+- **Quota:** `ANNETTE_ENRICH_DAILY_LIMIT` successful suggestions per user and UTC day (default 200), counted in
+  `enrich_usage` with an upsert after the suggestion is ready; refused, failed and invalid requests do not count.
+  A request at the limit is 429 `enrich_quota_exceeded` without calling the model. On top of the quota, a burst
+  limit of 20 requests a minute per user (`security::PerUserLimit`, 429 `rate_limited`).
 
 ## 9. Security
 
@@ -828,9 +859,9 @@ recipes load it).
 | `ANNETTE_SESSION_TTL_DAYS` | `90` | Sliding session lifetime |
 | `ANNETTE_AZURE_TTS_KEY` / `_REGION` | — | Azure AI Speech key and region (e.g. `westeurope`); TTS is enabled when both are set (blank = unset). The key is never logged |
 | `ANNETTE_COMMONS_ENABLED` | `true` | Enables the Wikimedia Commons lookup (no key needed) |
-| `ANTHROPIC_API_KEY` | — | Enables enrichment |
-| `ANNETTE_LLM_MODEL` | configurable | Model name for enrichment |
-| `ANNETTE_ENRICH_DAILY_LIMIT` | `200` | Per-user daily quota |
+| `ANTHROPIC_API_KEY` | — | Enables enrichment (read without the `ANNETTE_` prefix, the name Anthropic tools use; blank = unset). Never logged |
+| `ANNETTE_LLM_MODEL` | `claude-haiku-4-5` | Anthropic model for enrichment |
+| `ANNETTE_ENRICH_DAILY_LIMIT` | `200` | Successful suggestions per user and UTC day |
 | `ANNETTE_VAPID_PUBLIC_KEY` / `_PRIVATE_KEY` | — | Enables Web Push |
 | `ANNETTE_LOG_FORMAT` | `pretty` in debug builds, `json` in release | Log output format (`pretty` \| `json`) |
 | `RUST_LOG` | `info` | Log filter |

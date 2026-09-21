@@ -27,6 +27,12 @@ pub struct Config {
     pub azure_tts_region: Option<String>,
     /// Look up native-speaker recordings on Wikimedia Commons (`ANNETTE_COMMONS_ENABLED`, default on; no key).
     pub commons_enabled: bool,
+    /// Anthropic API key (`ANTHROPIC_API_KEY`, without the `ANNETTE_` prefix); enrichment is enabled when it is set.
+    pub anthropic_api_key: Option<Secret>,
+    /// Model used for enrichment (`ANNETTE_LLM_MODEL`).
+    pub llm_model: String,
+    /// Successful enrichments per user and UTC day (`ANNETTE_ENRICH_DAILY_LIMIT`).
+    pub enrich_daily_limit: u32,
 }
 
 /// A secret setting (API key). Its `Debug` output is redacted, so printing the config never leaks it.
@@ -68,6 +74,9 @@ pub const DEV_ORIGINS: [&str; 3] = [
     "https://localhost:5173",
 ];
 
+/// A fast, inexpensive model: a suggestion is a short JSON object (architecture.md §10).
+pub const DEFAULT_LLM_MODEL: &str = "claude-haiku-4-5";
+
 impl Default for Config {
     fn default() -> Self {
         Self {
@@ -86,6 +95,9 @@ impl Default for Config {
             azure_tts_key: None,
             azure_tts_region: None,
             commons_enabled: true,
+            anthropic_api_key: None,
+            llm_model: DEFAULT_LLM_MODEL.to_string(),
+            enrich_daily_limit: 200,
         }
     }
 }
@@ -128,9 +140,22 @@ impl Config {
         self.azure_tts().is_some()
     }
 
+    /// The Anthropic key, when set (and not blank).
+    pub fn anthropic_key(&self) -> Option<&Secret> {
+        self.anthropic_api_key
+            .as_ref()
+            .filter(|key| !key.expose().trim().is_empty())
+    }
+
+    pub fn enrich_enabled(&self) -> bool {
+        self.anthropic_key().is_some()
+    }
+
     fn figment() -> Figment {
         Figment::from(Serialized::defaults(Config::default()))
             .merge(Toml::file("annette.toml"))
+            // The Anthropic SDKs and tools all read this name, so it keeps it instead of an `ANNETTE_` one.
+            .merge(Env::raw().only(&["anthropic_api_key"]))
             .merge(Env::prefixed("ANNETTE_"))
     }
 }
@@ -148,6 +173,9 @@ mod tests {
         assert_eq!(config.database_url, "sqlite://data/annette.db");
         assert_eq!(config.public_url, None);
         assert!(config.commons_enabled);
+        assert!(!config.enrich_enabled());
+        assert_eq!(config.llm_model, "claude-haiku-4-5");
+        assert_eq!(config.enrich_daily_limit, 200);
         assert_eq!(config.session_ttl_days, 90);
         assert_eq!(config.dev_origins, cfg!(debug_assertions));
         let build_default = if cfg!(debug_assertions) {
@@ -190,13 +218,27 @@ mod tests {
     }
 
     #[test]
+    fn enrichment_needs_the_anthropic_key() {
+        assert!(!Config::default().enrich_enabled());
+        let mut config = Config {
+            anthropic_api_key: Some(Secret::new(" ")),
+            ..Config::default()
+        };
+        assert!(!config.enrich_enabled(), "a blank value counts as unset");
+        config.anthropic_api_key = Some(Secret::new("sk-ant-test"));
+        assert!(config.enrich_enabled());
+    }
+
+    #[test]
     fn secrets_are_redacted_in_debug_output() {
         let config = Config {
             azure_tts_key: Some(Secret::new("super-secret")),
+            anthropic_api_key: Some(Secret::new("sk-ant-secret")),
             ..Config::default()
         };
         let printed = format!("{config:?}");
         assert!(!printed.contains("super-secret"));
+        assert!(!printed.contains("sk-ant-secret"));
         assert!(printed.contains("Secret(***)"));
     }
 
@@ -208,6 +250,9 @@ mod tests {
             .merge(("log_format", "json"))
             .merge(("azure_tts_key", "key"))
             .merge(("azure_tts_region", "westeurope"))
+            .merge(("anthropic_api_key", "sk-ant-test"))
+            .merge(("llm_model", "claude-sonnet-5"))
+            .merge(("enrich_daily_limit", 20))
             .extract()
             .unwrap();
         assert_eq!(config.bind.port(), 9090);
@@ -221,5 +266,8 @@ mod tests {
             config.azure_tts(),
             Some((&Secret::new("key"), "westeurope"))
         );
+        assert_eq!(config.anthropic_key(), Some(&Secret::new("sk-ant-test")));
+        assert_eq!(config.llm_model, "claude-sonnet-5");
+        assert_eq!(config.enrich_daily_limit, 20);
     }
 }

@@ -8,11 +8,11 @@ pub const INVALID: &str = "validation_failed";
 
 const MAX_ID_CHARS: usize = 100;
 const MAX_DECK_NAME_CHARS: usize = 100;
-const MAX_LANG_CHARS: usize = 35;
-const MAX_FRONT_BACK_CHARS: usize = 500;
-const MAX_EXAMPLE_CHARS: usize = 2000;
-const MAX_IPA_CHARS: usize = 200;
-const MAX_NOTES_CHARS: usize = 2000;
+pub const MAX_LANG_CHARS: usize = 35;
+pub const MAX_FRONT_BACK_CHARS: usize = 500;
+pub const MAX_EXAMPLE_CHARS: usize = 2000;
+pub const MAX_IPA_CHARS: usize = 200;
+pub const MAX_NOTES_CHARS: usize = 2000;
 const MAX_TAG_CHARS: usize = 50;
 const MAX_SETTINGS_BYTES: usize = 16 * 1024;
 

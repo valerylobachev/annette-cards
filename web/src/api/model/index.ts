@@ -18,6 +18,8 @@ export * from './createInviteRequest.ts';
 export * from './deckDto.ts';
 export * from './direction.ts';
 export * from './directions.ts';
+export * from './enrichRequest.ts';
+export * from './enrichResponse.ts';
 export * from './entityIds.ts';
 export * from './errorBody.ts';
 export * from './features.ts';

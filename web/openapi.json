@@ -675,6 +675,102 @@
         ]
       }
     },
+    "/api/enrich": {
+      "post": {
+        "tags": [
+          "enrich"
+        ],
+        "summary": "Suggests the translation, an example, IPA and notes for a word. Nothing is saved: the learner accepts the\nsuggestions in the card editor.",
+        "operationId": "enrich",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnrichRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Suggestions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnrichResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`validation_failed`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`enrich_disabled`: no LLM key on this server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`enrich_quota_exceeded` (daily quota, resets at 00:00 UTC) or `rate_limited` (more than 20 requests a minute)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "`provider_error`: the model failed or gave no valid answer twice",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "`provider_timeout`: no answer within 10 s",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      }
+    },
     "/api/export": {
       "get": {
         "tags": [
@@ -1430,6 +1526,76 @@
           "reverse",
           "both"
         ]
+      },
+      "EnrichRequest": {
+        "type": "object",
+        "required": [
+          "front",
+          "target_lang",
+          "native_lang"
+        ],
+        "properties": {
+          "context": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional hint for the meaning, e.g. \"past tense\" or a sentence the word came from."
+          },
+          "front": {
+            "type": "string",
+            "description": "The word or phrase, in the studied language."
+          },
+          "native_lang": {
+            "type": "string",
+            "description": "BCP-47 tag of the learner's language (the deck's `native_lang`), e.g. `ru`."
+          },
+          "target_lang": {
+            "type": "string",
+            "description": "BCP-47 tag of the studied language (the deck's `target_lang`), e.g. `en-GB`."
+          }
+        }
+      },
+      "EnrichResponse": {
+        "type": "object",
+        "description": "Suggested card fields. Only `back` is always present; the learner accepts each field or not.",
+        "required": [
+          "back"
+        ],
+        "properties": {
+          "back": {
+            "type": "string",
+            "description": "Translation into the native language; several meanings are separated by `; `."
+          },
+          "example": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A short example sentence in the studied language."
+          },
+          "example_translation": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The example in the native language."
+          },
+          "ipa": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Pronunciation in IPA, between slashes."
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Short grammar notes in the native language (part of speech, forms, gender, aspect)."
+          }
+        }
       },
       "EntityIds": {
         "type": "object",

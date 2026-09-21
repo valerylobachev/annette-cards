@@ -9,7 +9,7 @@ use axum::{
 use crate::{
     app::AppState,
     auth::extractor::CurrentUser,
-    clock::now_ms,
+    clock::{now_ms, utc_date},
     error::{AppError, ErrorBody},
     json::AppJson,
     sync::{
@@ -152,26 +152,4 @@ pub async fn restore(
     Ok(Json(
         backup::restore(&state.pool, &user.user_id, backup, now_ms()).await?,
     ))
-}
-
-/// `YYYY-MM-DD` in UTC. (`time` comes with the `cookie` crate.)
-fn utc_date(ms: i64) -> String {
-    let date = cookie::time::OffsetDateTime::from_unix_timestamp(ms / 1000)
-        .map_or(cookie::time::OffsetDateTime::UNIX_EPOCH, |time| time)
-        .date();
-    format!(
-        "{:04}-{:02}-{:02}",
-        date.year(),
-        u8::from(date.month()),
-        date.day()
-    )
-}
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn utc_date_formats_the_day() {
-        assert_eq!(super::utc_date(1_758_441_600_000), "2025-09-21");
-        assert_eq!(super::utc_date(0), "1970-01-01");
-    }
 }

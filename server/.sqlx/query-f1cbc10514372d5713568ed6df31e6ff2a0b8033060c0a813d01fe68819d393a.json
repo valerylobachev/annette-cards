@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO enrich_usage (user_id, day, count) VALUES (?, ?, 1)\n         ON CONFLICT (user_id, day) DO UPDATE SET count = count + 1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "f1cbc10514372d5713568ed6df31e6ff2a0b8033060c0a813d01fe68819d393a"
+}

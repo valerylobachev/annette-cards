@@ -125,6 +125,9 @@ pub struct PerUserLimit {
 /// `POST /api/cards/{id}/audio`: 60 requests an hour per user (architecture.md §7).
 pub const AUDIO_REQUESTS_PER_HOUR: usize = 60;
 
+/// `POST /api/enrich`: at most 20 requests a minute per user, on top of the daily quota (architecture.md §8).
+pub const ENRICH_REQUESTS_PER_MINUTE: usize = 20;
+
 impl PerUserLimit {
     pub fn new(max: usize, window_ms: i64) -> Self {
         Self {

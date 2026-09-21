@@ -63,7 +63,7 @@ rejected. Versions: use the latest stable release at bootstrap time and pin them
 | Password hashing | `argon2` (Argon2id) | Current best practice |
 | Sessions | Opaque random tokens (`rand`, encoded with `base64` as base64url) stored hashed (`sha2`) in SQLite, `axum-extra` cookies (`cookie` directly only for its `time` re-export, which sets `Max-Age`) | Simple, revocable, no JWT key management |
 | CLI password prompt | `rpassword` | Hidden input for `create-user`; `--password-stdin` covers scripts |
-| HTTP client | `reqwest` (default features off, `rustls`) | Calls to TTS, Wikimedia, LLM APIs. One shared client (10 s timeout, `User-Agent: annette-cards/<version>`). TLS in Rust (rustls with aws-lc-rs, system CA store via the platform verifier), so the musl binary stays static without OpenSSL |
+| HTTP client | `reqwest` (default features off, `rustls`, `query`, `json`) | Calls to TTS, Wikimedia, LLM APIs. One shared client (10 s timeout, `User-Agent: annette-cards/<version>`). TLS in Rust (rustls with aws-lc-rs, system CA store via the platform verifier), so the musl binary stays static without OpenSSL |
 | Async traits | `async-trait` | Provider traits (`TtsProvider`, later `Enricher`) used as `Arc<dyn …>`: native `async fn` in traits cannot be called through `dyn` yet |
 | Static assets | `rust-embed` + `mime_guess` | PWA embedded into the binary; one-file deployment; `mime_guess` sets `Content-Type` from the file extension |
 | IDs | `uuid` (v7) | Same format as the client |
@@ -98,7 +98,7 @@ queries), SurrealDB (immature, heavy).
 | --- | --- | --- |
 | Azure AI Speech (primary TTS) | Generate MP3 with SSML and IPA `<phoneme>` | Neural voices for en-GB/en-US/pl-PL; behind a `TtsProvider` trait so Google Cloud TTS can be added |
 | Wikimedia Commons API | Native speaker recordings (EN, PL) | No key. Wikimedia's MP3 transcode of each OGG is stored, so no transcoder on the server; attribution and license (CC BY / BY-SA) stored with the clip |
-| Anthropic API | Card enrichment (translation, example, IPA, notes) | Model configurable via `ANNETTE_LLM_MODEL`; behind an `Enricher` trait |
+| Anthropic API | Card enrichment (translation, example, IPA, notes) | Messages API over `reqwest`; model configurable via `ANNETTE_LLM_MODEL` (default `claude-haiku-4-5`: fast and inexpensive for a short JSON answer); behind an `Enricher` trait |
 
 All external services are optional. Without keys, the corresponding features are hidden in the UI (the server
 reports enabled features via `GET /api/meta`).

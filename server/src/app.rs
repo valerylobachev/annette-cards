@@ -33,8 +33,9 @@ use crate::{
         tts::TtsProvider,
     },
     auth::{self, SESSION_COOKIE},
-    clock::HOUR_MS,
+    clock::{HOUR_MS, MINUTE_MS},
     config::Config,
+    enrich::{self, Enricher, anthropic::AnthropicEnricher},
     error::ErrorBody,
     health,
     security::{self, PerUserLimit, UuidV7RequestId},
@@ -56,6 +57,10 @@ pub struct AppState {
     pub commons: Option<Arc<dyn RecordingSource>>,
     /// Per-user limit of `POST /api/cards/{id}/audio`.
     pub audio_limit: PerUserLimit,
+    /// The language model for suggestions; `None` without an API key (`features.enrich = false`).
+    pub enricher: Option<Arc<dyn Enricher>>,
+    /// Per-user burst limit of `POST /api/enrich` (the daily quota is in the database).
+    pub enrich_limit: PerUserLimit,
 }
 
 impl AppState {
@@ -78,12 +83,18 @@ impl AppState {
         let commons = config
             .commons_enabled
             .then(|| Arc::new(WikimediaCommons::new(http.clone())) as Arc<dyn RecordingSource>);
+        let enricher = config.anthropic_key().map(|key| {
+            let model = config.llm_model.clone();
+            Arc::new(AnthropicEnricher::new(http.clone(), key.clone(), model)) as Arc<dyn Enricher>
+        });
         Ok(Self {
             pool,
             config,
             tts,
             commons,
             audio_limit: PerUserLimit::new(security::AUDIO_REQUESTS_PER_HOUR, HOUR_MS),
+            enricher,
+            enrich_limit: PerUserLimit::new(security::ENRICH_REQUESTS_PER_MINUTE, MINUTE_MS),
         })
     }
 }
@@ -138,6 +149,7 @@ fn api_routes() -> OpenApiRouter<Arc<AppState>> {
             audio::handlers::remove_audio
         ))
         .routes(routes!(audio::handlers::get_audio))
+        .routes(routes!(enrich::handlers::enrich))
 }
 
 fn sync_routes() -> OpenApiRouter<Arc<AppState>> {
