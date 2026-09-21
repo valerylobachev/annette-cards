@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { Changes, PushRequest } from '@/api/model'
+import type { Changes, PushRequest, PushResponse } from '@/api/model'
 import { createCard, updateCard } from '@/db/cards'
 import { createDeck, updateDeck } from '@/db/decks'
 import { getMeta, setMeta } from '@/db/meta'
@@ -34,7 +34,7 @@ afterEach(() => {
 })
 
 /** Server answer that applies every pushed row. */
-function applyAll({ body }: { body: unknown }) {
+function applyAll({ body }: { body: unknown }): PushResponse {
   const { changes } = body as PushRequest
   return {
     applied: {
