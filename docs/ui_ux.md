@@ -157,7 +157,8 @@ continues in the background" and "Continue".
   difficult words" and the "Decks due" rows (`/study?mode=…`). Choice, and Listening while it is answered by
   choosing, are disabled with the hint "Choice and listening need at least 4 different words in one language" when
   no studied language of the active decks has 4 different words; a disabled stored mode falls back to Swipe.
-- **Streak** row: flame icon, "12 days", 7-day dots.
+- **Streak** row: flame icon, "12 days", 7-day dots. A study day with at least one answer (practice included,
+  undone answers not) continues the streak; today not studied yet does not break it, a missed yesterday does.
 - **Decks due** list (compact): deck name, language flag code (EN/PL), due count; tap → start session for that
   deck only.
 - Floating "+" (Quick add).
@@ -373,13 +374,21 @@ snapshot, the summary shows "This session summary is no longer available".
 
 ### S-13 Statistics
 
-**Purpose:** progress overview (UC-19).
+**Purpose:** progress overview (UC-19). Computed on the device, works offline; the route loads lazily (the chart
+library is precached by the service worker).
 
-- Period switcher: 7 days / 30 days / 1 year; deck filter.
-- Charts: reviews per day (stacked by rating), forecast of due cards for the next 30 days, card states
-  distribution (new/learning/young/mature), retention (% Good+Easy for review cards), time spent per day.
-- KPIs: total cards, mature cards (interval ≥ 21 d), current streak, longest streak.
-- Calendar heatmap of study days (1 year view).
+- Period switcher: 7 days / 30 days / 1 year (study days ending today, default 30 days); deck filter (All decks +
+  non-archived decks). Statistics cover active decks; archived decks are left out until restored.
+- KPI tiles: cards, mature cards (every studied direction of the card has a Review interval ≥ 21 days), current
+  streak, longest streak (streaks count every answer on any deck, like Today).
+- Charts, each with a one-line text summary that VoiceOver reads instead of the chart: reviews per day (stacked by
+  rating Again/Hard/Good/Easy with a legend), due forecast for the next 30 days (overdue counted on today), card
+  states as labelled bars (New, Learning = Learning + Relearning, Young = Review < 21 days, Mature = Review ≥ 21
+  days; each studied direction counts), retention (% Good + Easy of answers to Review cards, practice excluded;
+  line per day and the period value), time spent per day (minutes from `duration_ms`).
+- 1 year view: calendar heatmap of study days (weeks as columns, Monday on top), shades by answers per day:
+  none, 1–10, 11–30, 31–60, more than 60; a cell's tooltip shows the date and count.
+- Empty state (no answers yet): "No reviews yet" with a button to Today.
 
 ### S-14 Settings
 

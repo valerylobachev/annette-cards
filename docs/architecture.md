@@ -162,9 +162,18 @@ whose `state_before.state` is New counts as a new card introduced, every other a
 5. Learning steps: a card answered with a short next interval (< 20 min) is re-inserted into the current queue at
    its due time (about 10 s per card); if the session ends earlier, it remains due.
 
-**Streak** (`domain/streak.ts`, decision D5; Phase 4 adds the longest streak and the heatmap). The current streak
-is the number of consecutive study days with at least one non-undone answer (practice answers count), ending
-today, or yesterday when nothing was answered yet today.
+**Streak** (`domain/streak.ts`, decision D5). `studyDays(logs)` is the set of study days with at least one
+non-undone answer (practice answers count). The current streak is the number of consecutive study days ending
+today, or yesterday when nothing was answered yet today; the longest streak is the longest such run ever. Today
+and Statistics use the same functions. Every moment is read in one time zone, the device's current one
+(`studyDayOf(ms, dayStartHour, timeZone?)`), so moving to a nearby zone does not open a gap; only an answer
+within the zone difference of the day boundary can move to a neighbouring day.
+
+**Statistics** (`domain/stats.ts`, `db/stats.ts`, S-13). Computed on the device from Dexie, per study day. They
+cover the active decks (not deleted, not archived; optionally one deck), like the study queue: states in active
+directions and the answers to their cards (a deleted card's answers stay in the history). Retention = share of
+Good + Easy among answers whose `state_before` is Review, practice answers excluded; young/mature split at a
+Review interval of 21 days; the due forecast puts overdue states on today. Streaks always count every answer.
 
 **Answer → rating mapping.**
 

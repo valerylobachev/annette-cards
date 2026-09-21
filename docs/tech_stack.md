@@ -35,7 +35,7 @@ rejected. Versions: use the latest stable release at bootstrap time and pin them
 | Text-to-speech | Web Speech API (`speechSynthesis`) | Built into Safari, uses iOS system voices, offline |
 | CSV/TSV parsing | PapaParse | Delimiter auto-detection, streaming, robust quoting |
 | i18n | i18next + react-i18next + `i18next-browser-languagedetector` | RU/EN UI, pluralization rules for Russian; the detector picks the stored choice, then `navigator.language` |
-| Charts | Recharts | Simple React charts for statistics |
+| Charts | Recharts | Simple React charts for statistics (S-13, loaded lazily with the Statistics route) |
 | Dates | date-fns | Tree-shakable, handles day boundaries and locales |
 | IDs | `uuid` (v7) | Time-ordered IDs generated offline |
 | String distance | small in-house Damerau–Levenshtein in `domain/` | Typing-mode tolerance; no dependency needed |

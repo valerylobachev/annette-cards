@@ -1,7 +1,7 @@
 import { choiceAvailable } from '@/domain/distractors'
 import { buildPracticeQueue } from '@/domain/practice'
 import { buildSession, type QueueItem, type SessionInput } from '@/domain/session'
-import { currentStreak, last7Days } from '@/domain/streak'
+import { currentStreak, last7Days, studyDays } from '@/domain/streak'
 import { type StudyDay, studyDayBounds, studyDayOf } from '@/domain/studyDay'
 import { type TodaySummary, todaySummary } from '@/domain/today'
 import { getMeta, setMeta } from './meta'
@@ -68,16 +68,13 @@ export type TodayData = TodaySummary & {
 export async function loadToday(now: number): Promise<TodayData> {
   const input = await loadSessionInput(now)
   const { day_start_hour } = await getSettings()
-  const logs = await db.review_log.toArray()
-  const studyDays = new Set(
-    logs.filter((log) => log.deleted_at === null).map((log) => studyDayOf(log.reviewed_at, day_start_hour)),
-  )
+  const days = studyDays(await db.review_log.toArray(), day_start_hour)
   const today = studyDayOf(now, day_start_hour)
   return {
     ...todaySummary(input, now),
-    streak: currentStreak(studyDays, today),
-    last7: last7Days(studyDays, today),
-    hasHistory: studyDays.size > 0,
+    streak: currentStreak(days, today),
+    last7: last7Days(days, today),
+    hasHistory: days.size > 0,
     choiceAvailable: choiceAvailable(input.decks, input.cards),
   }
 }

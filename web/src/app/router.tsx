@@ -1,4 +1,11 @@
-import { createRootRoute, createRoute, createRouter, type RouterHistory, redirect } from '@tanstack/react-router'
+import {
+  createRootRoute,
+  createRoute,
+  createRouter,
+  lazyRouteComponent,
+  type RouterHistory,
+  redirect,
+} from '@tanstack/react-router'
 import { isFirstRun } from '@/db/onboarding'
 import { RegisterPage, SignInPage } from '@/features/auth/pages'
 import { CardEditPage, CardNewPage, CardViewPage } from '@/features/cards/pages'
@@ -6,7 +13,6 @@ import { DeckDetailPage, DecksPage } from '@/features/decks/pages'
 import { ImportPage } from '@/features/import/pages'
 import { OnboardingPage } from '@/features/onboarding/pages'
 import { AccountPage, SettingsPage, VoicesPage } from '@/features/settings/pages'
-import { StatsPage } from '@/features/stats/pages'
 import { StudyPage, SummaryPage } from '@/features/study/pages'
 import { FirstSyncPage } from '@/features/sync/pages'
 import { TodayPage } from '@/features/today/pages'
@@ -74,7 +80,12 @@ const routes = [
     staticData: fullScreen,
     validateSearch: parseSummarySearch,
   }), // S-12
-  createRoute({ getParentRoute: () => rootRoute, path: '/stats', component: StatsPage }), // S-13
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/stats',
+    // Loaded on first visit: the charts library is the largest dependency (the service worker precaches it).
+    component: lazyRouteComponent(() => import('@/features/stats/pages'), 'StatsPage'),
+  }), // S-13
   createRoute({ getParentRoute: () => rootRoute, path: '/settings', component: SettingsPage }), // S-14
   createRoute({ getParentRoute: () => rootRoute, path: '/settings/account', component: AccountPage }), // S-15
   createRoute({ getParentRoute: () => rootRoute, path: '/settings/voices', component: VoicesPage }), // S-16

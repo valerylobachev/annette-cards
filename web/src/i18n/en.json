@@ -749,5 +749,51 @@
     "replaceTitle_one": "Replace the filled field?",
     "replaceTitle_other": "Replace {{count}} filled fields?",
     "replace": "Replace"
+  },
+  "stats": {
+    "empty": "No reviews yet.",
+    "goToToday": "Go to Today",
+    "period": "Period",
+    "periods": {
+      "7": "7 days",
+      "30": "30 days",
+      "365": "1 year"
+    },
+    "deck": "Deck",
+    "allDecks": "All decks",
+    "kpis": "Key numbers",
+    "totalCards": "Cards",
+    "matureCards": "Mature cards",
+    "currentStreak": "Current streak",
+    "longestStreak": "Longest streak",
+    "reviews": "Reviews per day",
+    "answers_one": "{{count}} answer in this period",
+    "answers_other": "{{count}} answers in this period",
+    "forecast": "Due in the next 30 days",
+    "due": "Due",
+    "dueTotal_one": "{{count}} review due",
+    "dueTotal_other": "{{count}} reviews due",
+    "states": "Card states",
+    "statesHint": "Each studied direction counts. Mature: interval of 21 days or more.",
+    "stateNames": {
+      "new": "New",
+      "learning": "Learning",
+      "young": "Young",
+      "mature": "Mature"
+    },
+    "retention": "Retention",
+    "retentionValue": "{{value}} of reviews answered Good or Easy (practice not counted)",
+    "noRetention": "No reviews of learned cards in this period.",
+    "time": "Time spent",
+    "minutes_one": "{{count}} minute in this period",
+    "minutes_other": "{{count}} minutes in this period",
+    "minutesLabel": "Minutes",
+    "heatmap": "Study days this year",
+    "studyDays_one": "{{count}} study day",
+    "studyDays_other": "{{count}} study days",
+    "dayAnswers_one": "{{date}}: {{count}} answer",
+    "dayAnswers_other": "{{date}}: {{count}} answers",
+    "less": "Less",
+    "more": "More"
   }
 }

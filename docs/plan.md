@@ -297,8 +297,8 @@ Tasks: [P4-T01](../dev/impl/phase-04-polish/task-01-typing-mode.md) · [P4-T02](
 ### 4.2 Statistics
 Task: [P4-T03](../dev/impl/phase-04-polish/task-03-statistics.md)
 
-- [ ] Statistics screen (S-13): reviews per day, forecast, states, retention, time, heatmap, KPIs
-- [ ] Streak logic based on study days
+- [x] Statistics screen (S-13): reviews per day, forecast, states, retention, time, heatmap, KPIs
+- [x] Streak logic based on study days
 
 ### 4.3 Reminders
 Task: [P4-T04](../dev/impl/phase-04-polish/task-04-reminders.md)

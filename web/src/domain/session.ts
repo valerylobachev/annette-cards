@@ -104,7 +104,12 @@ export function buildSession(input: SessionInput, now: number): QueueItem[] {
  * Step 0 of the queue: states of live cards in live, non-archived decks (optionally one deck) whose direction is
  * active for the deck.
  */
-export function eligibleStates({ decks, cards, states, deckFilter }: SessionInput) {
+export function eligibleStates({
+  decks,
+  cards,
+  states,
+  deckFilter,
+}: Pick<SessionInput, 'decks' | 'cards' | 'states' | 'deckFilter'>) {
   const liveDecks = new Map(
     decks
       .filter((deck) => deck.deleted_at === null && deck.archived_at === null)
