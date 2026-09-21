@@ -31,6 +31,7 @@ annette-cards/
 ├── README.md
 ├── justfile              # all dev commands
 ├── docs/
+├── dev/                  # meta-prompts; dev/impl/ = step-by-step task prompts per phase
 ├── web/                  # React 19 + Vite + TypeScript PWA (pnpm)
 │   ├── src/
 │   │   ├── app/          # router, providers, layout
@@ -76,6 +77,8 @@ Use `just` from the repo root. Do not invent ad-hoc command sequences if a recip
 ## Workflow
 
 1. Find the current phase and the first unchecked task in `docs/plan.md`. Work on one task at a time.
+   Step-by-step task prompts live in `dev/impl/` (start from `dev/impl/00-overview.md`); each plan subsection
+   links to its task file. `docs/plan.md` stays the source of truth for status.
 2. If a task is ambiguous or conflicts with the docs, ask before implementing.
 3. Implement with tests. Run `just lint` and `just test` before declaring the task done.
 4. Tick the task checkbox in `docs/plan.md`. If behavior, schema or API changed, update the relevant doc in the

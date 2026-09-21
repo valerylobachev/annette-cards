@@ -109,6 +109,7 @@ the SQLite database continuously replicated to S3-compatible storage by Litestre
 - [Tech stack](docs/tech_stack.md)
 - [Architecture](docs/architecture.md)
 - [Development plan](docs/plan.md)
+- [Implementation task prompts](dev/impl/00-overview.md)
 - [Guidance for Claude Code](CLAUDE.md)
 
 ## License
