@@ -28,11 +28,11 @@ Step-by-step task prompts for every subsection live in [`dev/impl/`](../dev/impl
 ### Repository and tooling
 Task: [P0-T01](../dev/impl/phase-00-bootstrap/task-01-repo-tooling.md)
 
-- [ ] Create repo structure (`web/`, `server/`, `deploy/`, `docs/`), `.gitignore`, `.editorconfig`
-- [ ] `justfile` with recipes: `dev`, `dev-web`, `dev-server`, `test`, `e2e`, `lint`, `fmt`, `gen-api`,
+- [x] Create repo structure (`web/`, `server/`, `deploy/`, `docs/`), `.gitignore`, `.editorconfig`
+- [x] `justfile` with recipes: `dev`, `dev-web`, `dev-server`, `test`, `e2e`, `lint`, `fmt`, `gen-api`,
       `db-new`, `db-migrate`, `sqlx-prepare`, `build`, `release`, `deploy`
-- [ ] (added) `just dev-https` recipe; remove `Cargo.lock` from `.gitignore` (binary crate, pinned versions)
-- [ ] GitHub Actions: lint + test for web and server on push; build release binary on tag
+- [x] (added) `just dev-https` recipe; remove `Cargo.lock` from `.gitignore` (binary crate, pinned versions)
+- [x] GitHub Actions: lint + test for web and server on push; build release binary on tag
 
 ### Web skeleton
 Task: [P0-T02](../dev/impl/phase-00-bootstrap/task-02-web-skeleton.md)

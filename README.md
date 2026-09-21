@@ -62,8 +62,9 @@ cargo run -p annette-cards -- create-user --email you@example.com --admin
 just dev                              # server on :8080, Vite on :5173 with /api proxy
 ```
 
-Open `http://localhost:5173`. To test on an iPhone during development, expose the Vite server over HTTPS
-(e.g. `just dev-https` with a local certificate or a tunnel) — service workers require HTTPS.
+Open `http://localhost:5173`. To test on an iPhone during development, run `just dev-https` (Vite over HTTPS on
+the LAN with a self-signed certificate) and open `https://<mac-ip>:5173` in Safari — service workers require
+HTTPS.
 
 ### Common commands
 

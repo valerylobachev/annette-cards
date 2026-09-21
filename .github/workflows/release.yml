@@ -1,0 +1,48 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      SQLX_OFFLINE: "true"
+      TARGET: x86_64-unknown-linux-musl
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: web/package.json
+      - uses: actions/setup-node@v5
+        with:
+          node-version: lts/*
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+      - name: Build web (embedded into the binary)
+        working-directory: web
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-musl
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: server
+      - uses: mlugg/setup-zig@v2
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-zigbuild
+      - name: Build static binary
+        working-directory: server
+        run: |
+          cargo zigbuild --release --target "$TARGET"
+          cp "target/$TARGET/release/annette-cards" ../annette-cards
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: annette-cards

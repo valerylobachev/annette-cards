@@ -30,6 +30,8 @@ annette-cards/
 ├── CLAUDE.md
 ├── README.md
 ├── justfile              # all dev commands
+├── .editorconfig
+├── .github/workflows/    # ci.yml (lint + test), release.yml (musl binary on tag)
 ├── docs/
 ├── dev/                  # meta-prompts; dev/impl/ = step-by-step task prompts per phase
 ├── web/                  # React 19 + Vite + TypeScript PWA (pnpm)
@@ -63,12 +65,14 @@ Use `just` from the repo root. Do not invent ad-hoc command sequences if a recip
 | --- | --- |
 | `just dev` | Run server (bacon) and Vite dev server together; Vite proxies `/api` to `127.0.0.1:8080` |
 | `just dev-web` / `just dev-server` | Run one side only |
+| `just dev-https` | Vite over HTTPS on the LAN for testing on iPhone |
 | `just test` | `cargo test` + `pnpm vitest run` |
 | `just e2e` | Playwright tests (WebKit project is mandatory) |
 | `just lint` | `cargo clippy -- -D warnings`, `cargo fmt --check`, `pnpm biome check`, `pnpm tsc --noEmit` |
 | `just fmt` | Format Rust and TS |
 | `just gen-api` | `server openapi > web/openapi.json` then `pnpm orval` |
 | `just db-new <name>` | New sqlx migration |
+| `just db-migrate` | Create the local DB and apply migrations |
 | `just sqlx-prepare` | Refresh `.sqlx/` offline metadata after changing any `query!` |
 | `just build` | Build web, embed into server, release binary |
 | `just release` | `cargo zigbuild --release --target x86_64-unknown-linux-musl` |
