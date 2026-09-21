@@ -23,11 +23,12 @@ use uuid::Uuid;
 
 use crate::{app::AppState, error::AppError};
 
-/// `Content-Security-Policy`: everything from this origin only, with two exceptions the PWA needs: `data:` images,
-/// and inline styles (`react-remove-scroll`, used by the dialogs, injects a computed `<style>` element to lock page
-/// scrolling). Scripts stay strictly same-origin. Objects, `<base>` changes and framing by other sites are forbidden.
-pub const CONTENT_SECURITY_POLICY: &str = "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; \
-     object-src 'none'; base-uri 'self'; frame-ancestors 'none'";
+/// `Content-Security-Policy`: everything from this origin only, with three exceptions the PWA needs: `data:` images,
+/// inline styles (`react-remove-scroll`, used by the dialogs, injects a computed `<style>` element to lock page
+/// scrolling) and `blob:` media (pronunciation clips are played from the audio cache through blob URLs). Scripts stay
+/// strictly same-origin. Objects, `<base>` changes and framing by other sites are forbidden.
+pub const CONTENT_SECURITY_POLICY: &str = "default-src 'self'; img-src 'self' data:; media-src 'self' blob:; \
+     style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'";
 
 /// The headers set on every response.
 pub fn security_headers() -> [(HeaderName, HeaderValue); 3] {
@@ -255,6 +256,22 @@ mod tests {
         assert_eq!(
             send(&app, get("/api/health", None)).await.status,
             StatusCode::OK
+        );
+    }
+
+    #[test]
+    fn csp_allows_blob_audio_but_keeps_scripts_same_origin() {
+        let directives: Vec<&str> = super::CONTENT_SECURITY_POLICY
+            .split(';')
+            .map(str::trim)
+            .collect();
+        assert!(directives.contains(&"media-src 'self' blob:"));
+        assert!(directives.contains(&"default-src 'self'"));
+        assert!(
+            !directives
+                .iter()
+                .any(|directive| directive.starts_with("script-src")),
+            "scripts fall back to default-src 'self'"
         );
     }
 

@@ -791,7 +791,7 @@ A full backup (UC-24, UC-25) is one JSON document. The client writes it locally 
 | Registration | Invite-only (single-use codes with expiry) |
 | Input limits | Body size 2 MB (push batches, 413 `payload_too_large`), at most 500 rows per push; field length limits, the same on client (`domain/cardValidation.ts`) and server (`sync/validate.rs`): front/back ≤ 500 chars, example and its translation ≤ 2000, IPA ≤ 200, notes ≤ 2000, each tag ≤ 50 (full list in §6.3) |
 | Secrets | Env file readable only by the service user |
-| Headers | `Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'` (inline styles only because `react-remove-scroll`, used by the dialogs, injects a computed `<style>`; scripts stay same-origin), `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin`, on every response |
+| Headers | `Content-Security-Policy: default-src 'self'; img-src 'self' data:; media-src 'self' blob:; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'` (inline styles only because `react-remove-scroll`, used by the dialogs, injects a computed `<style>`; `blob:` media because cached pronunciation clips play from blob URLs; scripts stay same-origin), `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin`, on every response |
 
 ## 10. Configuration
 
