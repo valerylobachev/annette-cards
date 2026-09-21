@@ -123,6 +123,23 @@ binary also runs on a newer schema.
 `just deploy <host> <url>` overrides the settings. Old releases stay in `/opt/annette-cards/releases`; delete ones
 you no longer need.
 
+## Optional features (audio, AI)
+
+Each feature stays off until its settings are in `/etc/annette-cards/env` (`sudoedit /etc/annette-cards/env`, then
+`sudo systemctl restart annette-cards`); `GET /api/meta` shows which are on, and the app hides the others.
+
+| Variables | Feature |
+| --- | --- |
+| `ANNETTE_AZURE_TTS_KEY`, `ANNETTE_AZURE_TTS_REGION` | Generated pronunciation (Azure AI Speech key and region, e.g. `westeurope`) |
+| `ANNETTE_COMMONS_ENABLED` | Native-speaker recordings from Wikimedia Commons (default `true`, no key) |
+| `ANTHROPIC_API_KEY`, `ANNETTE_LLM_MODEL`, `ANNETTE_ENRICH_DAILY_LIMIT` | AI suggestions (key without the `ANNETTE_` prefix; model default `claude-haiku-4-5`; 200 suggestions per user and UTC day) |
+
+```bash
+curl -s https://cards.example.com/api/meta   # {"version":"…","features":{"tts":true,"commons":true,"enrich":true,"push":false}}
+```
+
+Keys are read only by the server and never logged; the file must stay mode 0640 root:annette.
+
 ## Logs and status
 
 ```bash
