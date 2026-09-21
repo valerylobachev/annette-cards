@@ -285,5 +285,96 @@
       "3": "Хорошо",
       "4": "Легко"
     }
+  },
+  "import": {
+    "stepOf": "Шаг {{step}} из {{total}}",
+    "next": "Далее",
+    "progress": {
+      "reading": "Читаем файл…",
+      "checking": "Проверяем строки…",
+      "importing": "Импортируем карточки…"
+    },
+    "source": {
+      "deck": "Колода для импорта",
+      "noDeck": "Колод пока нет",
+      "newDeck": "Новая колода",
+      "file": "Файл",
+      "chooseFile": "Выбрать файл CSV или TSV",
+      "fileHint": "Текст в UTF-8 со столбцами вроде «слово», «перевод», «пример».",
+      "paste": "Или вставьте текст",
+      "pastePlaceholder": "слово,перевод"
+    },
+    "mapping": {
+      "detected": "Разделитель: {{delimiter}} · Кодировка: {{encoding}}",
+      "delimiters": {
+        "comma": "запятая",
+        "semicolon": "точка с запятой",
+        "tab": "табуляция"
+      },
+      "hasHeader": "Первая строка — заголовок",
+      "column": "Столбец {{number}}",
+      "required": "Назначьте один столбец на «Слово» и один на «Перевод»."
+    },
+    "fields": {
+      "front": "Слово",
+      "back": "Перевод",
+      "example": "Пример",
+      "example_translation": "Перевод примера",
+      "ipa": "Транскрипция",
+      "tags": "Теги",
+      "notes": "Заметки",
+      "ignore": "Пропустить"
+    },
+    "validation": {
+      "ready": "Готово",
+      "duplicates": "Дубликаты",
+      "errors": "Ошибки",
+      "duplicateStrategy": "Слова, которые уже есть в колоде",
+      "strategies": {
+        "skip": "Пропустить",
+        "update": "Обновить существующие",
+        "import_anyway": "Всё равно импортировать"
+      },
+      "errorList": "Строки с ошибками",
+      "rowError": "Строка {{row}}: {{reason}}",
+      "moreErrors_one": "и ещё {{count}} строка",
+      "moreErrors_few": "и ещё {{count}} строки",
+      "moreErrors_many": "и ещё {{count}} строк",
+      "moreErrors_other": "и ещё {{count}} строки",
+      "downloadReport": "Скачать отчёт об ошибках",
+      "nothingToImport": "Импортировать нечего. Исправьте строки в файле или выберите другой вариант для дубликатов.",
+      "import_one": "Импортировать {{count}} карточку",
+      "import_few": "Импортировать {{count}} карточки",
+      "import_many": "Импортировать {{count}} карточек",
+      "import_other": "Импортировать {{count}} карточки"
+    },
+    "errors": {
+      "not_utf8": "Файл не в кодировке UTF-8. Сохраните его в UTF-8 и попробуйте снова.",
+      "empty": "В файле нет строк.",
+      "missing_front": "нет слова",
+      "missing_back": "нет перевода",
+      "too_long": "поле «{{field}}» длиннее {{max}} символов",
+      "unreadable": "Не удалось прочитать файл. Попробуйте снова или вставьте текст."
+    },
+    "report": {
+      "row": "строка",
+      "reason": "причина"
+    },
+    "result": {
+      "imported_one": "Импортирована {{count}} карточка в «{{deck}}»",
+      "imported_few": "Импортировано {{count}} карточки в «{{deck}}»",
+      "imported_many": "Импортировано {{count}} карточек в «{{deck}}»",
+      "imported_other": "Импортировано {{count}} карточки в «{{deck}}»",
+      "updated_one": "Обновлена {{count}} карточка",
+      "updated_few": "Обновлено {{count}} карточки",
+      "updated_many": "Обновлено {{count}} карточек",
+      "updated_other": "Обновлено {{count}} карточки",
+      "skipped_one": "Пропущен {{count}} дубликат",
+      "skipped_few": "Пропущено {{count}} дубликата",
+      "skipped_many": "Пропущено {{count}} дубликатов",
+      "skipped_other": "Пропущено {{count}} дубликата",
+      "studyNow": "Учить сейчас",
+      "openDeck": "Открыть колоду"
+    }
   }
 }

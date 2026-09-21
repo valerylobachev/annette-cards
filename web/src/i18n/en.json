@@ -267,5 +267,86 @@
       "3": "Good",
       "4": "Easy"
     }
+  },
+  "import": {
+    "stepOf": "Step {{step}} of {{total}}",
+    "next": "Next",
+    "progress": {
+      "reading": "Reading the file…",
+      "checking": "Checking rows…",
+      "importing": "Importing cards…"
+    },
+    "source": {
+      "deck": "Import into deck",
+      "noDeck": "No decks yet",
+      "newDeck": "New deck",
+      "file": "File",
+      "chooseFile": "Choose a CSV or TSV file",
+      "fileHint": "UTF-8 text with columns such as word, translation, example.",
+      "paste": "Or paste text",
+      "pastePlaceholder": "word,translation"
+    },
+    "mapping": {
+      "detected": "Delimiter: {{delimiter}} · Encoding: {{encoding}}",
+      "delimiters": {
+        "comma": "comma",
+        "semicolon": "semicolon",
+        "tab": "tab"
+      },
+      "hasHeader": "First row is a header",
+      "column": "Column {{number}}",
+      "required": "Map one column to Word and one to Translation."
+    },
+    "fields": {
+      "front": "Word",
+      "back": "Translation",
+      "example": "Example",
+      "example_translation": "Example translation",
+      "ipa": "IPA",
+      "tags": "Tags",
+      "notes": "Notes",
+      "ignore": "Ignore"
+    },
+    "validation": {
+      "ready": "Ready",
+      "duplicates": "Duplicates",
+      "errors": "Errors",
+      "duplicateStrategy": "Words already in the deck",
+      "strategies": {
+        "skip": "Skip",
+        "update": "Update existing",
+        "import_anyway": "Import anyway"
+      },
+      "errorList": "Rows with errors",
+      "rowError": "Row {{row}}: {{reason}}",
+      "moreErrors_one": "and {{count}} more row",
+      "moreErrors_other": "and {{count}} more rows",
+      "downloadReport": "Download error report",
+      "nothingToImport": "There is nothing to import. Fix the rows in the file or choose another duplicate option.",
+      "import_one": "Import {{count}} card",
+      "import_other": "Import {{count}} cards"
+    },
+    "errors": {
+      "not_utf8": "The file is not in UTF-8. Save the file as UTF-8 and try again.",
+      "empty": "The file has no rows.",
+      "missing_front": "no word",
+      "missing_back": "no translation",
+      "too_long": "{{field}} is longer than {{max}} characters",
+      "unreadable": "The file could not be read. Try again or paste the text."
+    },
+    "report": {
+      "row": "row",
+      "reason": "reason"
+    },
+    "result": {
+      "imported_one": "Imported {{count}} card into «{{deck}}»",
+      "imported_other": "Imported {{count}} cards into «{{deck}}»",
+      "updated_one": "{{count}} card updated",
+      "updated_other": "{{count}} cards updated",
+      "skipped_one": "{{count}} duplicate skipped",
+      "skipped_other": "{{count}} duplicates skipped",
+      "studyNow": "Study now",
+      "openDeck": "Open deck"
+    }
   }
 }

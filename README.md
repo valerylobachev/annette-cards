@@ -79,7 +79,8 @@ just deploy     # ship to the VPS
 
 ## Import format
 
-UTF-8 CSV or TSV with a header row; the delimiter is detected automatically. Columns can be mapped during import.
+UTF-8 CSV or TSV, usually with a header row; the delimiter (`,` `;` or tab) is detected automatically. Columns can
+be mapped during import.
 
 | Column | Required | Description |
 | --- | --- | --- |
@@ -95,6 +96,20 @@ UTF-8 CSV or TSV with a header row; the delimiter is detected automatically. Col
 front,back,example,example_translation,ipa,tags,notes
 to take off,взлетать; снимать (одежду),The plane took off at 6 am.,Самолёт взлетел в 6 утра.,/teɪk ɒf/,travel phrasal-verb,took/taken
 ```
+
+Header names are recognized case-insensitively (a first row with at least two of them is treated as a header):
+
+| Field | Recognized headers |
+| --- | --- |
+| `front` | front, word, term, слово, термин |
+| `back` | back, translation, meaning, перевод, значение |
+| `example` | example, sentence, пример |
+| `example_translation` | example_translation, example translation, перевод примера |
+| `ipa` | ipa, transcription, транскрипция |
+| `tags` | tags, tag, теги, тег |
+| `notes` | notes, note, comment, заметки, комментарий |
+
+Without a header row, column 1 is `front`, column 2 is `back` and the other columns are ignored until mapped.
 
 ## Deployment
 

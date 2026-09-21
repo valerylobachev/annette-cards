@@ -94,8 +94,8 @@ Tasks: [P1-T02](../dev/impl/phase-01-local-mvp/task-02-decks-list.md) · [P1-T03
 ### 1.3 Import / export
 Tasks: [P1-T05](../dev/impl/phase-01-local-mvp/task-05-csv-import.md) · [P1-T06](../dev/impl/phase-01-local-mvp/task-06-export-backup.md)
 
-- [ ] CSV/TSV parser in a Web Worker (PapaParse): delimiter/header detection, UTF-8 check
-- [ ] Import wizard (S-10): mapping with auto-detection of header synonyms (EN/RU), validation, duplicates
+- [x] CSV/TSV parser in a Web Worker (PapaParse): delimiter/header detection, UTF-8 check
+- [x] Import wizard (S-10): mapping with auto-detection of header synonyms (EN/RU), validation, duplicates
       strategy, batch insert, result screen
 - [ ] Export: full JSON backup (versioned format) and CSV per deck; share via iOS share sheet
 - [ ] Import of JSON backup: replace or add as new decks (regenerated IDs)

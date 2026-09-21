@@ -237,8 +237,15 @@ arrive in Phase 3. A duplicate (same normalized front in the deck) shows an inli
    by header names (`front`, `word`, `слово`, `back`, `translation`, `перевод`, ...). Toggle "First row is a
    header".
 3. **Validation:** counts: ready / duplicates (skip, update existing, import anyway) / errors (missing front or
-   back, with row numbers). Download error report.
-4. **Result:** "Imported 312 cards into *English B2*", buttons "Study now", "Open deck".
+   back, too long, with row numbers). Download error report. Import is blocked with an explanation when nothing
+   is importable.
+   - Duplicates are found by `normalizeFront` against the deck and against earlier rows of the file.
+   - **Skip** (default) ignores them; **Update existing** overwrites the existing card's fields with the row's
+     non-blank cells and keeps its progress; **Import anyway** adds new cards.
+   - Error report: `import-errors.csv` with columns `row,reason`, one line per error; `row` is 1-based and does
+     not count the header row.
+4. **Result:** "Imported 312 cards into *English B2*" (plus updated/skipped counts), buttons "Study now", "Open
+   deck".
 
 Large files (10 000 rows) are parsed in a Web Worker with a progress bar.
 
