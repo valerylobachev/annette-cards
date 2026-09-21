@@ -18,11 +18,15 @@ import { languageName } from '@/lib/intl'
 import { unlock } from '@/lib/speech/speech'
 import { useSpeech } from '@/lib/speech/useSpeech'
 import { cn } from '@/lib/utils'
+import { TypingExercise } from './modes/TypingExercise'
 import { FrontFace, promptOf, SwipeCard, type SwipeCardHandle } from './SwipeCard'
 import { stackLayer, useStudyMotion } from './studyAnimations'
 import { useStudySession } from './useStudySession'
 
-/** S-11 Study session, Mode A (swipe cards): start gate, top bar, card stack and answer buttons. */
+/**
+ * S-11 Study session: start gate, top bar and the exercise of the chosen mode (`?mode=`): Mode A swipe cards with
+ * answer buttons (the default) or Mode D typing.
+ */
 export function StudyPage() {
   const { t } = useTranslation()
   const search = useSearch({ from: '/study' })
@@ -71,6 +75,7 @@ export function StudyPage() {
 
   const [current, ...behind] = session.upcoming
   const currentCard = current && session.cards?.get(current.card_id)
+  const typing = search.mode === 'typing'
 
   return (
     <div className="mx-auto flex h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-[480px] flex-col overflow-hidden">
@@ -115,40 +120,56 @@ export function StudyPage() {
       {session.phase === 'studying' && session.progress && (
         <>
           <TopBar closeButton={closeButton} progress={session.progress} canUndo={session.canUndo} onUndo={undo} />
-          <div className="relative flex-1 px-4 py-4">
-            <div className="relative size-full">
-              {behind
-                .map((item, index) => ({ item, depth: index + 1 }))
-                .reverse()
-                .map(({ item, depth }) => (
-                  <StackCard key={depth} depth={depth} item={item} study={session.cards?.get(item.card_id)} />
-                ))}
+          {typing ? (
+            <div className="flex min-h-0 flex-1 flex-col px-4 py-4">
               {current && currentCard && (
-                <motion.div
-                  key={`${current.card_id}:${current.direction}:${session.progress.done}`}
-                  initial={enter.initial}
-                  animate={enter.animate}
-                  transition={enter.transition}
-                  className="absolute inset-0 origin-bottom"
-                >
-                  <SwipeCard
-                    ref={card}
-                    study={currentCard}
-                    direction={current.direction}
-                    mode={settings.answer_mode}
-                    showIpa={settings.show_ipa_on_front}
-                    autoplay={settings.autoplay}
-                    onAnswer={(rating) => void session.answer(rating)}
-                  />
-                </motion.div>
+                <TypingExercise
+                  study={currentCard}
+                  direction={current.direction}
+                  itemKey={`${current.card_id}:${current.direction}:${session.progress.done}`}
+                  autoplay={settings.autoplay}
+                  onAnswer={(rating, answeredAt) => void session.answer(rating, { mode: 'typing', answeredAt })}
+                />
               )}
             </div>
-          </div>
-          <AnswerButtons
-            mode={settings.answer_mode}
-            disabled={!currentCard}
-            onAnswer={(rating) => card.current?.commit(rating)}
-          />
+          ) : (
+            <>
+              <div className="relative flex-1 px-4 py-4">
+                <div className="relative size-full">
+                  {behind
+                    .map((item, index) => ({ item, depth: index + 1 }))
+                    .reverse()
+                    .map(({ item, depth }) => (
+                      <StackCard key={depth} depth={depth} item={item} study={session.cards?.get(item.card_id)} />
+                    ))}
+                  {current && currentCard && (
+                    <motion.div
+                      key={`${current.card_id}:${current.direction}:${session.progress.done}`}
+                      initial={enter.initial}
+                      animate={enter.animate}
+                      transition={enter.transition}
+                      className="absolute inset-0 origin-bottom"
+                    >
+                      <SwipeCard
+                        ref={card}
+                        study={currentCard}
+                        direction={current.direction}
+                        mode={settings.answer_mode}
+                        showIpa={settings.show_ipa_on_front}
+                        autoplay={settings.autoplay}
+                        onAnswer={(rating) => void session.answer(rating)}
+                      />
+                    </motion.div>
+                  )}
+                </div>
+              </div>
+              <AnswerButtons
+                mode={settings.answer_mode}
+                disabled={!currentCard}
+                onAnswer={(rating) => card.current?.commit(rating)}
+              />
+            </>
+          )}
         </>
       )}
       <p aria-live="polite" className="sr-only">

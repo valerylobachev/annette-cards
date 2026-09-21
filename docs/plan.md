@@ -290,7 +290,7 @@ Tasks: [P4-T01](../dev/impl/phase-04-polish/task-01-typing-mode.md) · [P4-T02](
 
 - [ ] Multiple choice with smart distractors
 - [ ] Listening mode (auto-play, slower replay, choose/type)
-- [ ] Typing mode: normalization, Damerau–Levenshtein tolerance, diacritics-insensitive near miss, diff highlight
+- [x] Typing mode: normalization, Damerau–Levenshtein tolerance, diacritics-insensitive near miss, diff highlight
 - [ ] Mode selector on Today; mode stored in review log
 - [ ] (added) `listening_answer` setting (choose / type)
 

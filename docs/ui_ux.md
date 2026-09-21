@@ -326,14 +326,20 @@ Large speaker button (auto-plays), "Play slower" button (rate 0.7). Answer by ch
 
 #### Mode D — Typing
 
-Prompt (translation in forward-recall setup), input field with auto-focus, language-appropriate keyboard hint
-(`lang` attribute), "Check" button and Enter. Result:
+Prompt card, input field with auto-focus (font ≥ 16 px, no autocapitalize/autocorrect/spellcheck), `lang` of the
+answer language as the keyboard hint, "Check" button and Enter. Expected answer per direction: *reverse* shows the
+translation and expects the studied word; *forward* shows the studied word and accepts any `;`-separated meaning
+of the translation. The input stays mounted between cards, so the iPhone keyboard stays open. Result
+(announced via `aria-live`):
 
-- Correct → green, next.
-- Near miss → amber, diff highlighting (missing/extra letters, missing diacritics shown as `ż`), rating Hard,
-  "Continue".
-- Wrong → red, correct answer shown and spoken, "Continue".
-- "I don't know" link = Again.
+- Correct → green, next card after 600 ms (Enter does not need to be pressed again).
+- Near miss → amber "Almost", diff highlighting (missing letters underlined, extra letters struck through,
+  missing diacritics shown as the correct letter `ż`), rating Hard, "Continue" (or Enter).
+- Wrong → red, correct answer shown, the studied word spoken (the correct answer in reverse, the prompt in
+  forward), "Continue".
+- "I don't know" link = Again, shown like a wrong answer.
+
+Until P4-T02 adds the mode chips on Today, typing is opened with `/study?mode=typing` (and `&deck=<id>`).
 
 **Session end:** automatically when the queue is empty → S-12.
 

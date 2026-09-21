@@ -13,8 +13,11 @@ import {
   sessionProgress,
   skipCurrent,
 } from '@/domain/studySession'
-import type { Rating } from '@/domain/types'
+import type { Rating, ReviewMode } from '@/domain/types'
 import { now } from '@/lib/clock'
+
+/** How an answer was given: the exercise (`mode` in the review log) and when (Check in typing mode). */
+export type AnswerOptions = { mode?: ReviewMode; answeredAt?: number }
 
 export type StudyPhase = 'loading' | 'missing_deck' | 'empty' | 'gate' | 'studying'
 
@@ -92,7 +95,7 @@ export function useStudySession(params: StudySessionParams, { onFinish, onUndoFa
   }, [snapshot])
 
   const answer = useCallback(
-    async (rating: Rating) => {
+    async (rating: Rating, { mode = 'swipe', answeredAt = now() }: AnswerOptions = {}) => {
       if (!snapshot || !current || busy.current) return
       busy.current = true
       try {
@@ -100,8 +103,8 @@ export function useStudySession(params: StudySessionParams, { onFinish, onUndoFa
           card_id: current.card_id,
           direction: current.direction,
           rating,
-          mode: 'swipe',
-          duration_ms: Math.min(MAX_ANSWER_DURATION_MS, Math.max(0, now() - shownAt.current)),
+          mode,
+          duration_ms: Math.min(MAX_ANSWER_DURATION_MS, Math.max(0, answeredAt - shownAt.current)),
           practice,
         })
         const answered = { log_id: result.log_id, nextDue: result.nextState.due, reinsert: result.reinsert }

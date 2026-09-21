@@ -1,3 +1,4 @@
+import type { TypedVerdict } from './answer'
 import type { AnswerMode, Rating } from './types'
 
 export type SwipeDirection = 'left' | 'right' | 'up'
@@ -45,4 +46,10 @@ export function swipeRating(direction: SwipeDirection, mode: AnswerMode): Rating
 /** The answer buttons under the card: ✗ / ✓ in simple mode, Again · Hard · Good · Easy in detailed mode. */
 export function answerRatings(mode: AnswerMode): Rating[] {
   return mode === 'detailed' ? [1, 2, 3, 4] : [1, 3]
+}
+
+/** Typing → FSRS rating (architecture.md §4.4): exact Good, near miss Hard, wrong or "I don't know" Again. */
+export function typedRating(verdict: TypedVerdict): Rating {
+  if (verdict === 'exact') return 3
+  return verdict === 'near' ? 2 : 1
 }

@@ -433,7 +433,17 @@
     "practiceEmpty": "No difficult words to practice.",
     "missingDeck": "This deck does not exist.",
     "backToToday": "Back to Today",
-    "goToDecks": "Go to decks"
+    "goToDecks": "Go to decks",
+    "typing": {
+      "check": "Check",
+      "dontKnow": "I don't know",
+      "continue": "Continue",
+      "correct": "Correct!",
+      "almost": "Almost",
+      "correctAnswer": "Correct answer",
+      "placeholder": "Type the answer",
+      "answerLabel": "Your answer"
+    }
   },
   "today": {
     "greeting": "Hi there!",

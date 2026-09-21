@@ -178,10 +178,18 @@ today, or yesterday when nothing was answered yet today.
 | Typing | Near miss (see below) | Hard |
 | Typing | Otherwise | Again |
 
-**Typing normalization and tolerance** (`domain/answer.ts`): Unicode NFC, trim, lowercase, collapse spaces, strip
-surrounding punctuation, ignore leading articles/particles optionally (`to`, `the`, `a`). Near miss = Damerau–
-Levenshtein distance ≤ 1 for answers up to 6 characters, ≤ 2 for longer; or equal after stripping diacritics
-(important for Polish: `zolw` vs `żółw`). Differences are highlighted.
+**Typing normalization and tolerance** (`domain/answer.ts`): `normalizeFront` (Unicode NFC, trim, lowercase,
+collapse spaces), then the punctuation `. , ! ? ; : " ' « » ( )` stripped from both ends, and for answers typed in
+English one leading `to`, `the` or `a` dropped (`"To take off!"` = `take off`). Near miss = Damerau–Levenshtein
+distance (optimal string alignment: an adjacent transposition is one edit) ≤ 1 for answers up to 6 characters,
+≤ 2 for longer (length of the normalized expected answer); or equal after stripping diacritics (NFD without
+combining marks, plus `ł→l`, `ø→o`, `đ→d`; important for Polish: `zolw` vs `żółw`). A near miss shows a letter
+diff: missing and extra letters, and the correct letter where only its diacritic was missing.
+
+Expected answers per direction: *reverse* (prompt = translation) expects the card front, typed in the deck's
+`target_lang`; *forward* (prompt = studied word) accepts any `;`-separated meaning of the card back, typed in
+`native_lang`. The answer is logged with `mode = 'typing'` when Continue is tapped (or after the exact-answer
+auto-advance), with `duration_ms` measured up to Check.
 
 **Answer transaction** (`db/study.ts`). Compute `fsrs.next(state, now, rating)`; in one Dexie transaction update
 `card_states`, append `review_log` (with previous state snapshot for undo), add outbox entries. `duration_ms` is the

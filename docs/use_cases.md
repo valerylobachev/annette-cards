@@ -312,12 +312,13 @@ the mode is unavailable with a hint.
 **Actor:** Learner · **Screens:** S-11
 
 **Main flow:**
-1. Prompt shows the translation; Learner types the studied word and presses Enter.
+1. Prompt shows the translation (reverse direction); Learner types the studied word and presses Enter. In the
+   forward direction the prompt is the studied word and any `;`-separated meaning of the translation is accepted.
 2. System normalizes and compares: exact → Good; near miss (small typo or missing diacritics) → Hard with diff;
    otherwise → Again with the correct answer shown and spoken.
 3. Learner taps Continue (auto-advance on Good).
 
-**Alternatives:** "I don't know" → Again.
+**Alternatives:** "I don't know" → Again; the correct answer is shown and spoken.
 
 ## UC-16 Practice difficult words
 

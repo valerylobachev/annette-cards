@@ -467,7 +467,17 @@
     "practiceEmpty": "Трудных слов для практики нет.",
     "missingDeck": "Такой колоды нет.",
     "backToToday": "На главную",
-    "goToDecks": "К колодам"
+    "goToDecks": "К колодам",
+    "typing": {
+      "check": "Проверить",
+      "dontKnow": "Не знаю",
+      "continue": "Дальше",
+      "correct": "Верно!",
+      "almost": "Почти",
+      "correctAnswer": "Правильный ответ",
+      "placeholder": "Введите ответ",
+      "answerLabel": "Ваш ответ"
+    }
   },
   "today": {
     "greeting": "Привет!",
