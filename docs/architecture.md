@@ -501,6 +501,34 @@ are applied in dependency order: decks → cards → card_states → review_log 
     *Cancel*.
 - **Sign-out** warns when the outbox is not empty, then clears IndexedDB and Cache Storage.
 
+### 6.5 Backup format
+
+A full backup (UC-24, UC-25) is one JSON document. The client writes it locally (Phase 1); `GET /api/export` and
+`POST /api/import/json` (P2-T04) use the same format.
+
+```json
+{
+  "format": "annette-cards-backup",
+  "version": 1,
+  "exported_at": 1758441600000,
+  "app_version": "0.1.0",
+  "decks": [], "cards": [], "card_states": [], "review_log": [],
+  "settings": { "ui_language": "ru", "...": "§5.5" }
+}
+```
+
+- Rows use the sync payload shape (§6.3) without `user_id`/`server_seq`. Only non-deleted rows are exported, and
+  only states and logs whose card is exported.
+- `version` changes only for incompatible changes. A reader rejects a newer version with `unsupported_version`
+  and reports `app_version` as the app version needed. A file without the `format` marker, or with a card, state
+  or log that points outside the file, is `invalid_format`.
+- **Replace local data**: one transaction soft-deletes every local deck, card, state and log entry, then writes
+  the backup rows and settings. **Add as new decks**: decks, cards and logs get new UUIDv7 ids (states follow
+  their card), written in transactions of about 500 rows; settings stay unchanged.
+- Restored rows are stamped with this device (`updated_at = now`) and outboxed, so they sync like new edits.
+  Cards without a state for an active direction get a New state.
+- Deck CSV export uses the import format (README "Import format"), tags joined by spaces, with a UTF-8 BOM.
+
 ## 7. Audio pipeline (server)
 
 1. `POST /api/cards/{id}/audio {source: "tts", voice?}`: build SSML from `card.front`; if `card.ipa` is set, wrap

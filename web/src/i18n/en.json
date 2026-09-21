@@ -12,7 +12,6 @@
     "archive": "Archive",
     "unarchive": "Unarchive",
     "settings": "Settings",
-    "export": "Export",
     "search": "Search",
     "more": "More actions"
   },
@@ -348,5 +347,31 @@
       "studyNow": "Study now",
       "openDeck": "Open deck"
     }
+  },
+  "backup": {
+    "section": "Data",
+    "export": "Export full backup",
+    "import": "Import backup",
+    "hint": "The backup is a JSON file with all decks, cards, progress and settings. Keep it in Files or iCloud Drive.",
+    "restoreTitle": "Restore backup",
+    "counts": "{{decks}}, {{cards}}, {{reviews}}",
+    "decks_one": "{{formatted}} deck",
+    "decks_other": "{{formatted}} decks",
+    "cards_one": "{{formatted}} card",
+    "cards_other": "{{formatted}} cards",
+    "reviews_one": "{{formatted}} review",
+    "reviews_other": "{{formatted}} reviews",
+    "addAsNew": "Add as new decks",
+    "replace": "Replace local data",
+    "replaceConfirm": "Replace all local data?",
+    "replaceHint": "Your current decks, cards and progress are removed and replaced by the backup.",
+    "restored": "Backup restored",
+    "errors": {
+      "invalidFormat": "This file is not an Annette Cards backup.",
+      "unsupportedVersion": "This backup needs app version {{version}} or newer."
+    }
+  },
+  "export": {
+    "deckCsv": "Export CSV"
   }
 }

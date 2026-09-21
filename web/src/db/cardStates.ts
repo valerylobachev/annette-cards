@@ -24,7 +24,7 @@ export async function getCardStates(card_id: string): Promise<CardState[]> {
 
 /**
  * Creates the missing New states for the deck's active directions (architecture.md §4.4), inside the caller's
- * transaction. Existing states are never reset; states of a direction the deck no longer uses are kept (hidden
+ * transaction; a soft-deleted state counts as missing. Live states are never reset; states of a direction the deck no longer uses are kept (hidden
  * from study queues, not deleted).
  */
 export async function ensureStatesForCards(ctx: WriteContext, cards: Card[], deck: Deck): Promise<void> {
@@ -32,7 +32,8 @@ export async function ensureStatesForCards(ctx: WriteContext, cards: Card[], dec
   const keys = cards.flatMap((card) => directions.map((direction): [string, Direction] => [card.id, direction]))
   const existing = await ctx.db.card_states.bulkGet(keys)
   for (const [i, [card_id, direction]] of keys.entries()) {
-    if (!existing[i]) await writeCardState(ctx, newCardState(card_id, direction, ctx.now))
+    const state = existing[i]
+    if (!state || state.deleted_at !== null) await writeCardState(ctx, newCardState(card_id, direction, ctx.now))
   }
 }
 

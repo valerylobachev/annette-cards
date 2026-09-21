@@ -19,6 +19,7 @@ import { archiveDeck, type DeckWithSummary, deleteDeck, unarchiveDeck, undeleteD
 import { useDeckSummaries } from '@/db/hooks'
 import type { Deck } from '@/domain/types'
 import { QuickAddButton } from '@/features/cards/QuickAddSheet'
+import { shareDeckCsv } from '@/features/export/exportFiles'
 import { usePullToReveal } from '@/hooks/usePullToReveal'
 import { languageTag } from '@/lib/intl'
 import { type DeckFormMode, DeckFormSheet } from './DeckFormSheet'
@@ -249,8 +250,7 @@ function DeckRow({ row, actions }: { row: DeckWithSummary; actions: DeckActions 
           <DropdownMenuContent align="end" onCloseAutoFocus={(event) => event.preventDefault()}>
             <DropdownMenuItem onSelect={() => actions.edit('rename', deck)}>{t('common.rename')}</DropdownMenuItem>
             <DropdownMenuItem onSelect={() => actions.edit('edit', deck)}>{t('common.settings')}</DropdownMenuItem>
-            {/* Deck CSV export arrives with P1-T06. */}
-            <DropdownMenuItem disabled>{t('common.export')}</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => shareDeckCsv(deck)}>{t('export.deckCsv')}</DropdownMenuItem>
             <DropdownMenuItem onSelect={() => (isArchived ? actions.unarchive(deck) : actions.archive(deck))}>
               {isArchived ? t('common.unarchive') : t('common.archive')}
             </DropdownMenuItem>

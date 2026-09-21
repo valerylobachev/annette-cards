@@ -12,7 +12,6 @@
     "archive": "В архив",
     "unarchive": "Из архива",
     "settings": "Настройки",
-    "export": "Экспорт",
     "search": "Поиск",
     "more": "Действия"
   },
@@ -376,5 +375,37 @@
       "studyNow": "Учить сейчас",
       "openDeck": "Открыть колоду"
     }
+  },
+  "backup": {
+    "section": "Данные",
+    "export": "Экспорт полной копии",
+    "import": "Импорт копии",
+    "hint": "Резервная копия — файл JSON со всеми колодами, карточками, прогрессом и настройками. Храните его в «Файлах» или iCloud Drive.",
+    "restoreTitle": "Восстановление из копии",
+    "counts": "{{decks}}, {{cards}}, {{reviews}}",
+    "decks_one": "{{formatted}} колода",
+    "decks_few": "{{formatted}} колоды",
+    "decks_many": "{{formatted}} колод",
+    "decks_other": "{{formatted}} колоды",
+    "cards_one": "{{formatted}} карточка",
+    "cards_few": "{{formatted}} карточки",
+    "cards_many": "{{formatted}} карточек",
+    "cards_other": "{{formatted}} карточки",
+    "reviews_one": "{{formatted}} повторение",
+    "reviews_few": "{{formatted}} повторения",
+    "reviews_many": "{{formatted}} повторений",
+    "reviews_other": "{{formatted}} повторения",
+    "addAsNew": "Добавить как новые колоды",
+    "replace": "Заменить данные на устройстве",
+    "replaceConfirm": "Заменить все данные на устройстве?",
+    "replaceHint": "Текущие колоды, карточки и прогресс будут удалены и заменены данными из копии.",
+    "restored": "Копия восстановлена",
+    "errors": {
+      "invalidFormat": "Этот файл не является резервной копией Annette Cards.",
+      "unsupportedVersion": "Для этой копии нужна версия приложения {{version}} или новее."
+    }
+  },
+  "export": {
+    "deckCsv": "Экспорт CSV"
   }
 }

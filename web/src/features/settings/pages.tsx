@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { PlaceholderPage } from '@/components/PlaceholderPage'
 import { Button } from '@/components/ui/button'
 import { uiLanguages } from '@/i18n'
+import { DataSection } from './DataSection'
 
 export function SettingsPage() {
   const { t, i18n } = useTranslation()
@@ -25,6 +26,7 @@ export function SettingsPage() {
           ))}
         </div>
       </section>
+      <DataSection />
     </PlaceholderPage>
   )
 }

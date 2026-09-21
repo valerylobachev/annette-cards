@@ -39,7 +39,7 @@ This document describes how people use Annette Cards. Screen references (S-xx) p
 | UC-22 | Choose a voice | Learner | 1 |
 | UC-23 | Receive study reminders | Learner, System | 4 |
 | UC-24 | Export a backup | Learner | 1 |
-| UC-25 | Restore a backup | Learner | 2 |
+| UC-25 | Restore a backup | Learner | 1 (local), 2 (server) |
 | UC-26 | Install the app on iPhone | Learner | 1 |
 | UC-27 | Switch the UI language | Learner | 1 |
 | UC-28 | Invite a user | Admin | 2 |
@@ -430,6 +430,9 @@ Settings; after returning, the list refreshes.
 4. Data is written locally and synced.
 
 **Alternatives:** Incompatible version → error with the required app version.
+
+**Note:** local restore (reading the file on the device) is available from Phase 1 (decision D9); the server
+endpoint `POST /api/import/json` arrives in Phase 2. Format: architecture.md §6.5.
 
 ## UC-26 Install the app on iPhone
 

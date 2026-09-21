@@ -97,8 +97,8 @@ Tasks: [P1-T05](../dev/impl/phase-01-local-mvp/task-05-csv-import.md) · [P1-T06
 - [x] CSV/TSV parser in a Web Worker (PapaParse): delimiter/header detection, UTF-8 check
 - [x] Import wizard (S-10): mapping with auto-detection of header synonyms (EN/RU), validation, duplicates
       strategy, batch insert, result screen
-- [ ] Export: full JSON backup (versioned format) and CSV per deck; share via iOS share sheet
-- [ ] Import of JSON backup: replace or add as new decks (regenerated IDs)
+- [x] Export: full JSON backup (versioned format) and CSV per deck; share via iOS share sheet
+- [x] Import of JSON backup: replace or add as new decks (regenerated IDs)
 
 ### 1.4 Study engine (domain, pure TS)
 Tasks: [P1-T07](../dev/impl/phase-01-local-mvp/task-07-scheduler-session-builder.md) · [P1-T08](../dev/impl/phase-01-local-mvp/task-08-answers-undo-practice.md)

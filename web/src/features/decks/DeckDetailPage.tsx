@@ -30,6 +30,7 @@ import {
   tagsOf,
 } from '@/domain/cardFilters'
 import type { Deck } from '@/domain/types'
+import { shareDeckCsv } from '@/features/export/exportFiles'
 import { usePullToReveal } from '@/hooks/usePullToReveal'
 import { languageTag, relativeTime } from '@/lib/intl'
 import { cn } from '@/lib/utils'
@@ -162,8 +163,7 @@ function DeckDetail({ deck, items }: { deck: Deck; items: CardWithStates[] }) {
               <DropdownMenuItem onSelect={() => navigate({ to: '/import', search: { deck: deck.id } })}>
                 {t('deck.import')}
               </DropdownMenuItem>
-              {/* Deck CSV export arrives with P1-T06. */}
-              <DropdownMenuItem disabled>{t('deck.export')}</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => shareDeckCsv(deck)}>{t('deck.export')}</DropdownMenuItem>
               <DropdownMenuItem onSelect={() => (isArchived ? unarchiveDeck(deck.id) : archiveDeck(deck.id))}>
                 {isArchived ? t('common.unarchive') : t('common.archive')}
               </DropdownMenuItem>
