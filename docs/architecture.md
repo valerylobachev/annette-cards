@@ -86,8 +86,8 @@ db.version(1).stores({
 Device-local preferences (not synced): selected voice per language, speech rate, theme, audio prefetch flag.
 They are stored in `meta` because voices differ between devices. `meta` keys (typed in `web/src/db/meta.ts`):
 `device_id`, `sync_cursor`, `last_sync_at`, `account`, `voice_pref` (voice per language), `speech_rate`, `theme`,
-`audio_prefetch`, `last_quick_add_deck` (deck preselected in Quick add). Writes to `meta` never create outbox
-entries.
+`audio_prefetch`, `last_quick_add_deck` (deck preselected in Quick add), `extra_new` (`{ study_day, count }`,
+extra new cards allowed today). Writes to `meta` never create outbox entries.
 
 ### 4.3 Write path
 
@@ -119,18 +119,28 @@ normalized fronts are equal (soft-deleted cards are ignored). Used by the card e
 import. Typing-mode answer normalization (P4-T01) builds on it.
 
 **Day boundary.** A "study day" starts at `day_start_hour` (default 04:00 local time). Daily limits and statistics
-use study days.
+use study days. `domain/studyDay.ts` works on local calendar fields, so a DST change makes that study day 23 or 25
+hours long instead of moving the boundary.
+
+**Daily counters** (`domain/counters.ts`) come from the non-deleted review logs of the current study day: an answer
+whose `state_before.state` is New counts as a new card introduced, every other answer as a review done.
 
 **Session queue** (`domain/session.ts`):
 
+0. Eligible: non-deleted card in a non-deleted, non-archived deck, direction active for the deck (optionally one
+   deck only; the limits still count answers from all decks).
 1. Collect due states: `due <= now` and state ∈ {Review, Relearning, Learning}, oldest `due` first, up to
    `max_reviews_per_day − reviews_done_today`.
-2. Collect new states (state = New) up to `new_per_day − new_introduced_today`, ordered by card `created_at`.
+2. Collect new states (state = New), ordered by card `created_at` (then id), within two limits: per deck
+   `(deck.new_per_day ?? settings.new_per_day) + extra_new − new_introduced_today_in_deck`, and globally
+   `settings.new_per_day + extra_new − new_introduced_today`. `extra_new` is the "Learn extra new words"
+   allowance (+10 per tap, `meta.extra_new`, reset when the study day changes).
 3. Interleave: one new card after every 4 reviews (configurable later).
-4. **Bury siblings:** forward and reverse of the same card are not both shown in one study day; the second is
-   postponed to the next day.
+4. **Bury siblings:** forward and reverse of the same card are not both shown in one study day: a direction is
+   skipped when the other one was answered today or is already queued. Learning/Relearning states are never
+   buried, so learning steps continue.
 5. Learning steps: a card answered with a short next interval (< 20 min) is re-inserted into the current queue at
-   its due time; if the session ends earlier, it remains due.
+   its due time (about 10 s per card); if the session ends earlier, it remains due.
 
 **Answer → rating mapping.**
 

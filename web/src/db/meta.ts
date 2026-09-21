@@ -19,6 +19,8 @@ export type MetaValues = {
   audio_prefetch: boolean
   /** Deck preselected in Quick add. */
   last_quick_add_deck: string
+  /** "Learn extra new words": extra new cards allowed on one study day (`YYYY-MM-DD`). */
+  extra_new: { study_day: string; count: number }
 }
 
 export type MetaKey = keyof MetaValues

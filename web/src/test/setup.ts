@@ -1,3 +1,6 @@
+// Fixed time zone with daylight saving time, so study-day tests behave the same on every machine and in CI.
+process.env.TZ = 'Europe/Riga'
+
 // IndexedDB for Dexie in jsdom; must load before any module opens the database.
 import 'fake-indexeddb/auto'
 import '@testing-library/jest-dom/vitest'

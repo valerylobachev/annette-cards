@@ -103,9 +103,11 @@ Tasks: [P1-T05](../dev/impl/phase-01-local-mvp/task-05-csv-import.md) · [P1-T06
 ### 1.4 Study engine (domain, pure TS)
 Tasks: [P1-T07](../dev/impl/phase-01-local-mvp/task-07-scheduler-session-builder.md) · [P1-T08](../dev/impl/phase-01-local-mvp/task-08-answers-undo-practice.md)
 
-- [ ] `ts-fsrs` wrapper with settings (retention, short-term steps, fuzz)
-- [ ] Study-day calculation with `day_start_hour`; daily counters (new introduced, reviews done)
-- [ ] Session builder: due first, new interleaved 1:4, limits, sibling burying, learning re-insertion
+- [x] `ts-fsrs` wrapper with settings (retention, short-term steps, fuzz)
+- [x] Study-day calculation with `day_start_hour`; daily counters (new introduced, reviews done)
+- [x] Session builder: due first, new interleaved 1:4, limits, sibling burying, learning re-insertion
+- [x] (added) Extra-new allowance: "Learn extra new words" raises today's new limit by 10 (device-local
+      `meta.extra_new`)
 - [ ] Answer transaction: next state + review log (with `state_before`) + outbox, atomically
 - [ ] Undo last answer
 - [ ] Practice mode for difficult words (no FSRS change for non-due cards)

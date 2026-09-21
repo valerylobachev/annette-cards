@@ -29,7 +29,7 @@ describe('decks list', () => {
     await user.click(await screen.findByRole('button', { name: 'New deck' }))
     const sheet = await screen.findByRole('dialog', { name: 'New deck' })
     await user.click(within(sheet).getByRole('button', { name: 'Create' }))
-    expect(within(sheet).getByText('Required')).toBeInTheDocument()
+    expect(await within(sheet).findByText('Required')).toBeInTheDocument()
   })
 
   it('archive moves the deck to the Archived section', async () => {

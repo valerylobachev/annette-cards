@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { DEFAULT_SETTINGS } from '@/domain/settings'
 import type { Direction } from '@/domain/types'
+import { now } from '@/lib/clock'
 import { getCardStates } from './cardStates'
 import { getCard, listCards, listDeckCardsWithStates, listTags } from './cards'
 import { getDeck, listDeckSummaries, listDecks } from './decks'
@@ -8,6 +9,7 @@ import { getMeta, type MetaKey } from './meta'
 import { recentReviews } from './reviewLog'
 import { db } from './schema'
 import { toSettings } from './settings'
+import { loadSession } from './studyQueries'
 
 // Reactive reads for components: they re-render when a transaction commits changes to the queried tables.
 // `undefined` means "still loading" (the first render before IndexedDB answers); `null` means "not found".
@@ -57,4 +59,12 @@ export function useDeckCards(deck_id: string) {
 
 export function useRecentReviews(card_id: string, direction: Direction) {
   return useLiveQuery(() => recentReviews(card_id, direction), [card_id, direction], [])
+}
+
+/**
+ * The study queue as of the last database change (Today counts). `now` is read when the query runs, so a queue
+ * that became due while nothing changed is picked up on the next change or remount.
+ */
+export function useSessionPreview(deckFilter?: string) {
+  return useLiveQuery(() => loadSession(now(), deckFilter), [deckFilter])
 }
