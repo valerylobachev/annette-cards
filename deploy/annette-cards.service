@@ -1,0 +1,46 @@
+# systemd unit for the server. Install as /etc/systemd/system/annette-cards.service (deploy/README.md).
+[Unit]
+Description=Annette Cards server (API, sync and the PWA)
+Documentation=https://github.com/valerylobachev/annette-cards/blob/main/deploy/README.md
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=annette
+Group=annette
+# `just deploy` switches this symlink to a new release.
+ExecStart=/opt/annette-cards/current/annette-cards serve
+# Secrets and settings, mode 0640 root:annette (deploy/env.example).
+EnvironmentFile=/etc/annette-cards/env
+WorkingDirectory=/var/lib/annette-cards
+Restart=on-failure
+RestartSec=2
+# SIGTERM lets in-flight requests finish (graceful shutdown in main.rs).
+TimeoutStopSec=30
+UMask=0027
+
+# Hardening: read-only system, writable only the data directory.
+ProtectSystem=strict
+ReadWritePaths=/var/lib/annette-cards
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+RestrictRealtime=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+CapabilityBoundingSet=
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target

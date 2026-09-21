@@ -32,8 +32,13 @@ pub async fn connect(database_url: &str) -> anyhow::Result<SqlitePool> {
 }
 
 /// Applies the migrations embedded from `server/migrations` at compile time.
+///
+/// Migrations the binary does not know are allowed: after `just rollback` an older binary starts on a database that
+/// a newer one already migrated (migrations only add tables and columns, so the old code still works).
 pub async fn migrate(pool: &SqlitePool) -> anyhow::Result<()> {
-    sqlx::migrate!()
+    let mut migrator = sqlx::migrate!();
+    migrator.set_ignore_missing(true);
+    migrator
         .run(pool)
         .await
         .context("database migration failed")?;
@@ -57,6 +62,19 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(foreign_keys, 1);
+    }
+
+    #[sqlx::test]
+    async fn an_older_binary_starts_on_a_newer_schema(pool: SqlitePool) {
+        // A migration applied by a newer release, unknown to this binary (as after `just rollback`).
+        sqlx::query(
+            "INSERT INTO _sqlx_migrations (version, description, success, checksum, execution_time)
+             VALUES (99990101000000, 'from a newer release', 1, x'00', 0)",
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+        migrate(&pool).await.unwrap();
     }
 
     #[tokio::test]

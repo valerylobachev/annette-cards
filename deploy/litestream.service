@@ -1,0 +1,36 @@
+# Continuous SQLite replication to the S3-compatible bucket. Install as
+# /etc/systemd/system/litestream.service (instead of the package's unit, which runs as root with /etc/litestream.yml):
+# it runs as the server's user, so the files Litestream creates next to the database stay readable by the server.
+[Unit]
+Description=Litestream replication of the Annette Cards database
+Documentation=https://litestream.io
+Wants=network-online.target
+After=network-online.target annette-cards.service
+
+[Service]
+Type=simple
+User=annette
+Group=annette
+ExecStart=/usr/bin/litestream replicate -config /etc/annette-cards/litestream.yml
+# LITESTREAM_* variables (bucket, endpoint, keys), mode 0640 root:annette.
+EnvironmentFile=/etc/annette-cards/litestream.env
+Restart=always
+RestartSec=5
+UMask=0027
+
+ProtectSystem=strict
+ReadWritePaths=/var/lib/annette-cards
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+CapabilityBoundingSet=
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target

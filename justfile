@@ -8,6 +8,13 @@ set dotenv-path := "server/.env"
 # lint and test use the committed server/.sqlx/ metadata, like CI.
 database_url := env("ANNETTE_DATABASE_URL", "sqlite://data/annette.db")
 
+# Deployment (deploy/README.md): the VPS as an ssh destination (e.g. `deploy@cards.example.com`) and the public URL.
+# Set them in server/.env or the environment.
+deploy_host := env("ANNETTE_DEPLOY_HOST", "")
+deploy_url := env("ANNETTE_DEPLOY_URL", "")
+release_target := "x86_64-unknown-linux-musl"
+release_binary := "server/target/" + release_target + "/release/annette-cards"
+
 # List all recipes
 default:
     @just --list --unsorted
@@ -78,11 +85,74 @@ build:
     cd web && pnpm build
     cd server && cargo build --release
 
-# Static Linux binary (x86_64 musl) for the VPS; needs zig and cargo-zigbuild
+# Static Linux binary (x86_64 musl) for the VPS, with the PWA embedded; needs zig and cargo-zigbuild
 release:
     cd web && pnpm build
-    cd server && cargo zigbuild --release --target x86_64-unknown-linux-musl
+    cd server && cargo zigbuild --release --target {{ release_target }}
+    @echo "Built {{ release_binary }} ($(just _release-version))"
 
-# Ship the release binary to the VPS and restart the service
-deploy:
-    @echo "just deploy is implemented in P2-T08" && exit 1
+# Build, upload to the VPS as a new release, switch `current` to it, restart the service and check /api/health
+deploy host=deploy_host url=deploy_url: release
+    #!/usr/bin/env bash
+    # The remote commands are built on this machine on purpose (the release path is chosen here).
+    # shellcheck disable=SC2029
+    set -euo pipefail
+    host="{{ host }}"; url="{{ url }}"
+    if [ -z "$host" ] || [ -z "$url" ]; then
+      echo "Set ANNETTE_DEPLOY_HOST and ANNETTE_DEPLOY_URL (server/.env), or run: just deploy <ssh host> <https url>" >&2
+      exit 1
+    fi
+    version="$(just _release-version)"
+    release="/opt/annette-cards/releases/$version"
+    echo "Deploying $version to $host"
+    ssh "$host" "mkdir -p '$release'"
+    scp -q "{{ release_binary }}" "$host:$release/annette-cards.tmp"
+    # The new binary becomes visible at once: mv and the symlink switch (mv -T) are atomic renames.
+    ssh "$host" "set -e; chmod 755 '$release/annette-cards.tmp'; mv '$release/annette-cards.tmp' '$release/annette-cards'; \
+      cd /opt/annette-cards && ln -sfn 'releases/$version' current.new && mv -T current.new current; \
+      sudo systemctl restart annette-cards"
+    just _wait-healthy "$url"
+    echo "Deployed $version"
+
+# Switch the VPS back to an earlier release (see `just releases`) and restart
+rollback version host=deploy_host url=deploy_url:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    host="{{ host }}"; url="{{ url }}"
+    if [ -z "$host" ] || [ -z "$url" ]; then
+      echo "Set ANNETTE_DEPLOY_HOST and ANNETTE_DEPLOY_URL (server/.env)" >&2
+      exit 1
+    fi
+    ssh "$host" "set -e; cd /opt/annette-cards; test -x 'releases/{{ version }}/annette-cards' || \
+      { echo 'No release {{ version }}; available:' >&2; ls releases >&2; exit 1; }; \
+      ln -sfn 'releases/{{ version }}' current.new && mv -T current.new current; \
+      sudo systemctl restart annette-cards"
+    just _wait-healthy "$url"
+    echo "Rolled back to {{ version }}"
+
+# List the releases on the VPS, newest last, and the current one
+releases host=deploy_host:
+    @ssh "{{ host }}" "ls -1tr /opt/annette-cards/releases && echo current: \$(readlink /opt/annette-cards/current)"
+
+# `<package version>-<git sha>`, with `-dirty` when there are uncommitted changes
+_release-version:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    version="$(sed -n 's/^version = "\(.*\)"/\1/p' server/Cargo.toml | head -n1)"
+    sha="$(git rev-parse --short HEAD)"
+    dirty="$(git diff --quiet HEAD -- server web || echo -dirty)"
+    echo "$version-$sha$dirty"
+
+# Poll <url>/api/health for up to 30 s; fail loudly if the server does not come up
+_wait-healthy url:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    for _ in $(seq 1 30); do
+      if curl -fsS --max-time 2 "{{ url }}/api/health" > /dev/null 2>&1; then
+        echo "Healthy: {{ url }}/api/health"
+        exit 0
+      fi
+      sleep 1
+    done
+    echo "ERROR: {{ url }}/api/health did not answer OK within 30 s. Check: journalctl -u annette-cards -n 50" >&2
+    exit 1

@@ -780,6 +780,18 @@ recipes load it).
 | `ANNETTE_LOG_FORMAT` | `pretty` in debug builds, `json` in release | Log output format (`pretty` \| `json`) |
 | `RUST_LOG` | `info` | Log filter |
 
+Production values: `deploy/env.example` (installed as `/etc/annette-cards/env`, mode 0640 root:annette).
+
+Deployment-only variables (not read by the server):
+
+| Variable | Where | Description |
+| --- | --- | --- |
+| `ANNETTE_DEPLOY_HOST` | `server/.env` on the Mac | ssh destination of `just deploy` / `rollback`, e.g. `deploy@cards.example.com` |
+| `ANNETTE_DEPLOY_URL` | `server/.env` on the Mac | Public URL whose `/api/health` `just deploy` waits for |
+| `ANNETTE_DOMAIN` | caddy service environment | Site address in `deploy/Caddyfile` |
+| `LITESTREAM_BUCKET`, `LITESTREAM_ENDPOINT`, `LITESTREAM_REGION` | `/etc/annette-cards/litestream.env` | Replica location, expanded in `litestream.yml` |
+| `LITESTREAM_ACCESS_KEY_ID`, `LITESTREAM_SECRET_ACCESS_KEY` | `/etc/annette-cards/litestream.env` | Bucket credentials, read by Litestream |
+
 ## 11. Background tasks
 
 | Task | Interval | Action |
@@ -801,14 +813,23 @@ flowchart LR
     LIT --> S3["S3-compatible bucket"]
 ```
 
-- Binary at `/opt/annette-cards/releases/<version>/annette-cards`, symlink `current`; `just deploy` uploads,
-  switches the symlink atomically and restarts the service. Rollback = switch the symlink back.
-- systemd unit runs as user `annette` with `ProtectSystem=strict`, `ReadWritePaths=/var/lib/annette-cards`,
-  `NoNewPrivileges=true`, `EnvironmentFile=/etc/annette-cards/env`.
-- Caddy: `cards.example.com { reverse_proxy 127.0.0.1:8080; encode zstd gzip }`.
-- Litestream replicates the database continuously; restore procedure documented in `deploy/README.md`.
+All files are in `deploy/`; step-by-step provisioning, deploy, backup and restore are in `deploy/README.md`.
+
+- Binary at `/opt/annette-cards/releases/<version>/annette-cards` (`<Cargo version>-<git sha>[-dirty]`), symlink
+  `current`; `just deploy` builds, uploads, switches the symlink atomically (`ln -sfn` + `mv -T`), restarts the
+  service (the deploy user may run only `sudo systemctl restart annette-cards`) and waits up to 30 s for
+  `/api/health`. `just rollback <version>` switches back.
+- systemd unit (`annette-cards.service`) runs as user `annette` with `EnvironmentFile=/etc/annette-cards/env`,
+  `ProtectSystem=strict`, `ReadWritePaths=/var/lib/annette-cards`, `NoNewPrivileges=true` and further sandboxing
+  (private /tmp and devices, protected kernel and home, no capabilities, native syscalls only;
+  `systemd-analyze security` exposure 3.2).
+- Caddy: `{$ANNETTE_DOMAIN} { encode zstd gzip; header Strict-Transport-Security "max-age=31536000";
+  reverse_proxy 127.0.0.1:8080 }`; Caddy replaces client-sent `X-Forwarded-For`.
+- Litestream 0.3.13 runs as `annette` (`litestream.service`): WAL shipped every second, daily snapshots, 72 h
+  retention, daily validation.
 - Migrations run on startup inside a transaction; a failed migration aborts startup (old binary keeps running
-  until restart).
+  until restart). Migrations unknown to the binary are ignored, so a rolled-back binary starts on a newer schema
+  (migrations only add tables and columns).
 
 ## 13. Observability
 

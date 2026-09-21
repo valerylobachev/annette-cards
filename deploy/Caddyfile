@@ -1,0 +1,14 @@
+# Caddy site for Annette Cards (architecture.md §12). Install as /etc/caddy/Caddyfile.
+# ANNETTE_DOMAIN is the public host name, e.g. cards.example.com: set it for the caddy service
+# (`sudo systemctl edit caddy` → [Service] Environment=ANNETTE_DOMAIN=cards.example.com), or replace the
+# placeholder below with the name. Caddy obtains and renews the TLS certificate itself.
+
+{$ANNETTE_DOMAIN} {
+	encode zstd gzip
+
+	header Strict-Transport-Security "max-age=31536000"
+
+	# Caddy replaces any client-sent X-Forwarded-For with the real client address; the server's login rate limit
+	# keys on it.
+	reverse_proxy 127.0.0.1:8080
+}

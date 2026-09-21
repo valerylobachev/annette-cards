@@ -1,0 +1,12 @@
+#!/bin/sh
+# Runs the server's CLI (create-user, invite, …) on the VPS as the service user, with the service's settings.
+# Install: sudo install -m 755 annette-cards-admin /usr/local/bin/annette-cards-admin
+# Example: annette-cards-admin create-user --email you@example.com --admin
+set -eu
+exec sudo -u annette sh -c '
+  set -a
+  . /etc/annette-cards/env
+  set +a
+  cd /var/lib/annette-cards
+  exec /opt/annette-cards/current/annette-cards "$@"
+' annette-cards-admin "$@"

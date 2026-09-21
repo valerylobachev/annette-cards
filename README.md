@@ -123,8 +123,9 @@ Without a header row, column 1 is `front`, column 2 is `back` and the other colu
 ## Deployment
 
 One binary contains the API and the PWA. On the VPS it runs under systemd behind Caddy (automatic HTTPS), with
-the SQLite database continuously replicated to S3-compatible storage by Litestream. See
-[`docs/architecture.md`](docs/architecture.md#deployment).
+the SQLite database continuously replicated to S3-compatible storage by Litestream. `just deploy` builds the static
+binary, uploads it and switches to it; `just rollback <version>` goes back. Provisioning, deploy, logs, backups and
+restore: [`deploy/README.md`](deploy/README.md); design: [`docs/architecture.md`](docs/architecture.md#12-deployment).
 
 ## Documentation
 

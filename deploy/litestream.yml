@@ -1,0 +1,17 @@
+# Litestream configuration, written for Litestream 0.3.x (parses with 0.3.13 and 0.5.17). Install as /etc/annette-cards/litestream.yml.
+# ${…} values come from /etc/annette-cards/litestream.env (deploy/litestream.env.example); the access key pair is
+# read from LITESTREAM_ACCESS_KEY_ID and LITESTREAM_SECRET_ACCESS_KEY.
+dbs:
+  - path: /var/lib/annette-cards/annette.db
+    replicas:
+      - type: s3
+        bucket: ${LITESTREAM_BUCKET}
+        path: annette
+        endpoint: ${LITESTREAM_ENDPOINT}
+        region: ${LITESTREAM_REGION}
+        # Ship WAL changes every second; a full snapshot daily, kept (with its WAL) for three days.
+        sync-interval: 1s
+        snapshot-interval: 24h
+        retention: 72h
+        # Check that the replica can be restored, once a day.
+        validation-interval: 24h

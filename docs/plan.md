@@ -222,8 +222,8 @@ Tasks: [P2-T05](../dev/impl/phase-02-backend-sync/task-05-auth-screens.md) · [P
 ### 2.4 Deployment
 Tasks: [P2-T08](../dev/impl/phase-02-backend-sync/task-08-deploy-artifacts.md) · [P2-T09](../dev/impl/phase-02-backend-sync/task-09-vps-provisioning.md)
 
-- [ ] `deploy/`: Caddyfile, systemd unit with hardening, env template, `litestream.yml`, `deploy/README.md`
-- [ ] `just release` (cargo-zigbuild, musl) and `just deploy` (upload, symlink switch, restart)
+- [x] `deploy/`: Caddyfile, systemd unit with hardening, env template, `litestream.yml`, `deploy/README.md`
+- [x] `just release` (cargo-zigbuild, musl) and `just deploy` (upload, symlink switch, restart)
 - [ ] Provision VPS: user, directories, Caddy, Litestream to S3-compatible bucket
 - [ ] Restore drill: restore the DB from the bucket into a temp file and verify
 - [ ] Uptime check on `/api/health`

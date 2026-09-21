@@ -109,7 +109,8 @@ reports enabled features via `GET /api/meta`).
 | Host | Small VPS (1–2 vCPU, 2 GB RAM, Ubuntu LTS) |
 | Reverse proxy / TLS | Caddy (automatic Let's Encrypt certificates, HTTP/2/3, compression) |
 | Process manager | systemd unit with hardening options |
-| Build | `cargo-zigbuild` for `x86_64-unknown-linux-musl` from macOS (Apple Silicon) |
+| Build | `cargo-zigbuild` + `zig` for `x86_64-unknown-linux-musl` from macOS (Apple Silicon): a static binary, no glibc or OpenSSL on the VPS |
+| Backups | Litestream 0.3.13 (package `.deb`), running as the service user |
 | CI | GitHub Actions: lint, test, build; release artifact on tag |
 | Deploy | `just deploy`: scp binary, atomic symlink switch, `systemctl restart` |
 | Containers | Optional (distroless image); not required |

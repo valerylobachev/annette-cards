@@ -61,7 +61,7 @@ annette-cards/
 │       ├── health.rs     # GET /api/health, GET /api/meta
 │       ├── auth/  sync/  audio/  enrich/  push/  admin/  fsrs/
 │       └── static_files.rs   # embedded PWA (rust-embed)
-└── deploy/               # Caddyfile, systemd unit, litestream.yml
+└── deploy/               # Caddyfile, systemd units, env templates, litestream.yml, README (provision, deploy, restore)
 ```
 
 ## Commands
@@ -88,8 +88,9 @@ and `sqlx-prepare`; `lint`, `test` and CI compile against the committed `.sqlx/`
 | `just db-migrate` | Create the local DB and apply migrations |
 | `just sqlx-prepare` | Refresh `.sqlx/` offline metadata after changing any `query!` |
 | `just build` | Build web, embed into server, release binary |
-| `just release` | `cargo zigbuild --release --target x86_64-unknown-linux-musl` |
-| `just deploy` | Copy binary to VPS and restart the systemd service |
+| `just release` | Web build + static `x86_64-unknown-linux-musl` binary via `cargo zigbuild` (needs `zig`, `cargo-zigbuild`) |
+| `just deploy [host] [url]` | `release`, upload to `/opt/annette-cards/releases/<version>`, atomic `current` symlink switch, restart, wait for `/api/health` (`ANNETTE_DEPLOY_HOST`, `ANNETTE_DEPLOY_URL`) |
+| `just rollback <version>` / `just releases` | Switch the VPS back to an earlier release / list releases (`deploy/README.md`) |
 
 ## Workflow
 
