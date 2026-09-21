@@ -26,7 +26,13 @@ struct ApiDoc;
 
 /// All `/api` routes together with their OpenAPI description.
 fn api_routes() -> OpenApiRouter<Arc<AppState>> {
-    OpenApiRouter::with_openapi(ApiDoc::openapi())
+    let mut doc = ApiDoc::openapi();
+    // Set here, not in the derive: values the macro reads from Cargo.toml can stay stale in incremental builds.
+    doc.info.version = env!("CARGO_PKG_VERSION").to_string();
+    doc.info.description = Some(env!("CARGO_PKG_DESCRIPTION").to_string());
+    doc.info.license = None;
+
+    OpenApiRouter::with_openapi(doc)
         .routes(routes!(health::health))
         .routes(routes!(health::meta))
 }
@@ -84,6 +90,18 @@ mod tests {
         let status = response.status();
         let bytes = response.into_body().collect().await.unwrap().to_bytes();
         (status, serde_json::from_slice(&bytes).unwrap())
+    }
+
+    #[test]
+    fn openapi_info_comes_from_the_package() {
+        let info = openapi().info;
+        assert_eq!(info.title, "Annette Cards API");
+        assert_eq!(info.version, env!("CARGO_PKG_VERSION"));
+        assert_eq!(
+            info.description.as_deref(),
+            Some(env!("CARGO_PKG_DESCRIPTION"))
+        );
+        assert!(info.license.is_none());
     }
 
     #[sqlx::test]

@@ -2,10 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Annette Cards API",
-    "description": "",
-    "license": {
-      "name": ""
-    },
+    "description": "Annette Cards server: API, sync and the embedded PWA",
     "version": "0.1.0"
   },
   "paths": {
