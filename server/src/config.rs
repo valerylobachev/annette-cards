@@ -25,6 +25,8 @@ pub struct Config {
     pub azure_tts_key: Option<Secret>,
     /// Azure region of the Speech resource, e.g. `westeurope` (`ANNETTE_AZURE_TTS_REGION`).
     pub azure_tts_region: Option<String>,
+    /// Look up native-speaker recordings on Wikimedia Commons (`ANNETTE_COMMONS_ENABLED`, default on; no key).
+    pub commons_enabled: bool,
 }
 
 /// A secret setting (API key). Its `Debug` output is redacted, so printing the config never leaks it.
@@ -83,6 +85,7 @@ impl Default for Config {
             },
             azure_tts_key: None,
             azure_tts_region: None,
+            commons_enabled: true,
         }
     }
 }
@@ -144,6 +147,7 @@ mod tests {
         assert_eq!(config.bind.to_string(), "127.0.0.1:8080");
         assert_eq!(config.database_url, "sqlite://data/annette.db");
         assert_eq!(config.public_url, None);
+        assert!(config.commons_enabled);
         assert_eq!(config.session_ttl_days, 90);
         assert_eq!(config.dev_origins, cfg!(debug_assertions));
         let build_default = if cfg!(debug_assertions) {

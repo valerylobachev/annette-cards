@@ -367,11 +367,11 @@ transaction (`BEGIN IMMEDIATE`), so a failed registration leaves the invite usab
 
 | Code | Status | When |
 | --- | --- | --- |
-| `not_found` | 404 | The card (or clip) does not exist, is deleted or belongs to another user |
+| `not_found` | 404 | The card (or clip) does not exist, is deleted or belongs to another user; or Commons has no recording of the word |
 | `tts_disabled` | 409 | `source: "tts"` on a server without TTS settings |
 | `unsupported_language` | 400 | No voice for the deck's language and no `voice` given |
-| `not_implemented` | 400 | `source: "commons"` before P3-T02 |
-| `provider_error` | 502 | The TTS provider failed or could not be reached |
+| `commons_disabled` | 409 | `source: "commons"` with `ANNETTE_COMMONS_ENABLED=false` |
+| `provider_error` | 502 | The TTS provider or Wikimedia failed or could not be reached |
 | `rate_limited` | 429 | More than 60 audio requests in an hour |
 
 **Export and restore** (backup format §6.5):
@@ -752,9 +752,17 @@ A full backup (UC-24, UC-25) is one JSON document. The client writes it locally 
    if `card.ipa` is set (surrounding `/…/` or `[…]` stripped), wrap the text in `<phoneme alphabet="ipa" ph="…">`;
    call Azure (`audio-24khz-48kbitrate-mono-mp3`, 10 s timeout). Only then, in one transaction: store the MP3 in
    `audio_assets` (`source = 'azure'`) and set `card.audio_id`. A provider failure writes nothing.
-2. `source: "commons"`: query Wiktionary/Commons for pronunciation files matching the word and language; download,
-   ensure a Safari-playable format (see open questions), store with attribution; same card update. Until P3-T02:
-   400 `not_implemented`.
+2. `source: "commons"` (English and Polish): candidate file names from the deck language, best first: `en-GB` →
+   `En-uk-{word}.ogg`, `En-gb-{word}.ogg`, then `En-us-{word}.ogg`; other `en*` → `En-us`, `En-uk`, `En-gb`; `pl*` →
+   `Pl-{word}.ogg`; each with the word as written and in lower case. One Commons API request
+   (`action=query&prop=imageinfo|videoinfo&viprop=derivatives&formatversion=2`) asks for all of them; the first
+   existing file with an MP3 transcode (`…ogg.mp3` on `upload.wikimedia.org`, at most 2 MB) is downloaded and stored
+   as `audio/mpeg` with `source = 'commons'` and the attribution `"{Artist} · {LicenseShortName} · {file page URL}"`
+   (HTML stripped); same card update as TTS. No file, another language or text that cannot be a file name → 404
+   `not_found`. Requests carry `User-Agent: annette-cards/<version> (<repository URL>)` (Wikimedia policy).
+   **Format decision (2026-09-21, P3-T02):** option A, Wikimedia's own MP3 transcode. Commons returns an MP3
+   derivative for the tested files (`En-us-read.ogg`, `Pl-żółw.ogg`; 64 kbps, 44.1 kHz); MP3 plays on every iOS
+   version, so the server stores no OGG and needs no transcoder. Files without an MP3 transcode are skipped.
 3. **Server edits of synced rows.** Attaching or removing audio is an edit of the card, stamped like a device edit:
    `updated_by = "server"`, `updated_at = max(now, card.updated_at + 1)` (so it wins LWW even over a device whose
    clock runs ahead) and a new `server_seq`, so every device pulls it. A device that edited the same card offline
@@ -799,7 +807,7 @@ recipes load it).
 | `ANNETTE_DEV_ORIGINS` | `true` in debug builds, `false` in release | Also accept API writes from the Vite dev server (`http://localhost:5173`, `http://127.0.0.1:5173`, `https://localhost:5173`) |
 | `ANNETTE_SESSION_TTL_DAYS` | `90` | Sliding session lifetime |
 | `ANNETTE_AZURE_TTS_KEY` / `_REGION` | — | Azure AI Speech key and region (e.g. `westeurope`); TTS is enabled when both are set (blank = unset). The key is never logged |
-| `ANNETTE_COMMONS_ENABLED` | `true` | Enables Wikimedia lookup |
+| `ANNETTE_COMMONS_ENABLED` | `true` | Enables the Wikimedia Commons lookup (no key needed) |
 | `ANTHROPIC_API_KEY` | — | Enables enrichment |
 | `ANNETTE_LLM_MODEL` | configurable | Model name for enrichment |
 | `ANNETTE_ENRICH_DAILY_LIMIT` | `200` | Per-user daily quota |
@@ -881,8 +889,12 @@ All files are in `deploy/`; step-by-step provisioning, deploy, backup and restor
 
 ## 15. Open questions
 
-- Are Wikimedia pronunciation files (usually OGG) playable in iOS Safari for all target versions? If not, add
-  server-side transcoding to MP3/AAC (ffmpeg as a runtime dependency, or a pure-Rust decoder + encoder).
+- ~~Are Wikimedia pronunciation files (usually OGG) playable in iOS Safari for all target versions?~~ **Resolved
+  2026-09-21 (P3-T02):** not needed — Commons serves an MP3 transcode of each file, which the server stores (§7).
+  Evidence: the Commons API lists `audio/mpeg` derivatives for `En-us-read.ogg` and `Pl-żółw.ogg`; in the Playwright
+  WebKit build (WebKit 26.6, macOS) both the MP3s and the original OGG load and play. MP3 is the format every iOS
+  version supports, so no OGG support on older iOS is required. Still to confirm on the owner's iPhone (installed
+  PWA) during the Phase 3 acceptance.
 - Should decks be shareable between users (e.g. the owner prepares a deck for a family member)? Current model:
   copy via JSON export/import.
 - Is 1 GB SQLite size (mostly audio) a realistic limit for the expected vocabulary volume, or should audio move

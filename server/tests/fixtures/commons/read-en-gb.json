@@ -1,0 +1,64 @@
+{
+  "batchcomplete": true,
+  "query": {
+    "pages": [
+      {
+        "ns": 6,
+        "title": "File:En-gb-read.ogg",
+        "missing": true,
+        "imagerepository": ""
+      },
+      {
+        "ns": 6,
+        "title": "File:En-uk-read.ogg",
+        "missing": true,
+        "imagerepository": ""
+      },
+      {
+        "pageid": 112398709,
+        "ns": 6,
+        "title": "File:En-us-read.ogg",
+        "imagerepository": "local",
+        "imageinfo": [
+          {
+            "url": "https://upload.wikimedia.org/wikipedia/commons/5/50/En-us-read.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+            "descriptionurl": "https://commons.wikimedia.org/wiki/File:En-us-read.ogg",
+            "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=112398709",
+            "extmetadata": {
+              "Artist": {
+                "value": "<a href=\"//commons.wikimedia.org/wiki/User:Dvortygirl\" title=\"User:Dvortygirl\">Dvortygirl</a>",
+                "source": "commons-desc-page"
+              },
+              "LicenseShortName": {
+                "value": "Public domain",
+                "source": "commons-desc-page",
+                "hidden": ""
+              }
+            }
+          }
+        ],
+        "videoinfo": [
+          {
+            "derivatives": [
+              {
+                "src": "https://upload.wikimedia.org/wikipedia/commons/5/50/En-us-read.ogg?utm_source=commons.wikimedia.org&utm_campaign=api&utm_content=original",
+                "type": "audio/ogg; codecs=\"vorbis\"",
+                "width": 0,
+                "height": 0,
+                "bandwidth": 102914
+              },
+              {
+                "src": "https://upload.wikimedia.org/wikipedia/commons/transcoded/5/50/En-us-read.ogg/En-us-read.ogg.mp3",
+                "type": "audio/mpeg",
+                "transcodekey": "mp3",
+                "width": 0,
+                "height": 0,
+                "bandwidth": 136464
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

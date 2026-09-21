@@ -2,6 +2,7 @@
 //! TTS provider and attached to cards so that sync delivers them to every device.
 
 pub mod azure;
+pub mod commons;
 pub mod dto;
 pub mod handlers;
 pub mod service;

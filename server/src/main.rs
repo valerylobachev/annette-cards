@@ -111,7 +111,11 @@ async fn serve() -> anyhow::Result<()> {
     tracing::info!(address = %config.bind, version = env!("CARGO_PKG_VERSION"), "listening");
 
     auth::spawn_session_cleanup(pool.clone());
-    tracing::info!(tts = config.tts_enabled(), "optional features");
+    tracing::info!(
+        tts = config.tts_enabled(),
+        commons = config.commons_enabled,
+        "optional features"
+    );
     let state = AppState::new(pool, config)?;
     let app = app::router(Arc::new(state));
     // The peer address is the rate limiter's fallback key when no X-Forwarded-For header is present.

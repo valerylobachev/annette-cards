@@ -1,0 +1,26 @@
+{
+  "batchcomplete": true,
+  "query": {
+    "normalized": [
+      {
+        "fromencoded": false,
+        "from": "File:en-us-take_off.ogg",
+        "to": "File:En-us-take off.ogg"
+      }
+    ],
+    "pages": [
+      {
+        "ns": 6,
+        "title": "File:En-us-nonexistent-xyz.ogg",
+        "missing": true,
+        "imagerepository": ""
+      },
+      {
+        "ns": 6,
+        "title": "File:En-us-take off.ogg",
+        "missing": true,
+        "imagerepository": ""
+      }
+    ]
+  }
+}

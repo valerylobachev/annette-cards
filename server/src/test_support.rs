@@ -35,10 +35,12 @@ pub fn test_state(pool: SqlitePool) -> AppState {
     AppState::new(pool, test_config()).unwrap()
 }
 
+/// External providers are off: tests that need one inject a fake, so no test reaches the network.
 pub fn test_config() -> Config {
     Config {
         public_url: Some(ORIGIN.to_string()),
         dev_origins: false,
+        commons_enabled: false,
         ..Config::default()
     }
 }

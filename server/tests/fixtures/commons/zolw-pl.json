@@ -1,0 +1,52 @@
+{
+  "batchcomplete": true,
+  "query": {
+    "pages": [
+      {
+        "pageid": 2532651,
+        "ns": 6,
+        "title": "File:Pl-żółw.ogg",
+        "imagerepository": "local",
+        "imageinfo": [
+          {
+            "url": "https://upload.wikimedia.org/wikipedia/commons/9/91/Pl-%C5%BC%C3%B3%C5%82w.ogg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+            "descriptionurl": "https://commons.wikimedia.org/wiki/File:Pl-%C5%BC%C3%B3%C5%82w.ogg",
+            "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=2532651",
+            "extmetadata": {
+              "Artist": {
+                "value": "<a href=\"//commons.wikimedia.org/wiki/User:Derbeth\" title=\"User:Derbeth\">Derbeth</a>",
+                "source": "commons-desc-page"
+              },
+              "LicenseShortName": {
+                "value": "CC BY 2.5",
+                "source": "commons-desc-page",
+                "hidden": ""
+              }
+            }
+          }
+        ],
+        "videoinfo": [
+          {
+            "derivatives": [
+              {
+                "src": "https://upload.wikimedia.org/wikipedia/commons/9/91/Pl-%C5%BC%C3%B3%C5%82w.ogg?utm_source=commons.wikimedia.org&utm_campaign=api&utm_content=original",
+                "type": "audio/ogg; codecs=\"vorbis\"",
+                "width": 0,
+                "height": 0,
+                "bandwidth": 142012
+              },
+              {
+                "src": "https://upload.wikimedia.org/wikipedia/commons/transcoded/9/91/Pl-%C5%BC%C3%B3%C5%82w.ogg/Pl-%C5%BC%C3%B3%C5%82w.ogg.mp3",
+                "type": "audio/mpeg",
+                "transcodekey": "mp3",
+                "width": 0,
+                "height": 0,
+                "bandwidth": 138568
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -10,6 +10,7 @@ use sqlx::SqlitePool;
 use crate::{
     app,
     audio::{
+        commons::{CommonsError, Recording, RecordingSource},
         handlers::{AUDIO_CACHE_CONTROL, X_AUDIO_ATTRIBUTION, X_AUDIO_SOURCE},
         service::SERVER_DEVICE,
         store::{self, NewAsset},
@@ -44,6 +45,50 @@ impl TtsProvider for FakeTts {
             voice,
         })
     }
+}
+
+/// Answers every lookup with the same result and records the `(word, lang)` pairs.
+#[derive(Default)]
+struct FakeRecordings {
+    answer: Option<Recording>,
+    fail: bool,
+    lookups: Mutex<Vec<(String, String)>>,
+}
+
+#[async_trait]
+impl RecordingSource for FakeRecordings {
+    async fn find(&self, word: &str, lang: &str) -> Result<Option<Recording>, CommonsError> {
+        self.lookups
+            .lock()
+            .unwrap()
+            .push((word.to_string(), lang.to_string()));
+        if self.fail {
+            return Err(CommonsError("timeout".to_string()));
+        }
+        Ok(self.answer.clone())
+    }
+}
+
+const ATTRIBUTION: &str =
+    "Derbeth · CC BY 2.5 · https://commons.wikimedia.org/wiki/File:Pl-%C5%BC%C3%B3%C5%82w.ogg";
+
+fn recording() -> Recording {
+    Recording {
+        bytes: FAKE_MP3.to_vec(),
+        mime: "audio/mpeg".to_string(),
+        attribution: ATTRIBUTION.to_string(),
+        file_page: "https://commons.wikimedia.org/wiki/File:Pl-%C5%BC%C3%B3%C5%82w.ogg".to_string(),
+    }
+}
+
+fn app_with_recordings(pool: SqlitePool, recordings: Arc<FakeRecordings>) -> Router {
+    let mut state = test_state(pool);
+    state.commons = Some(recordings as Arc<dyn RecordingSource>);
+    app::router(Arc::new(state))
+}
+
+fn commons_body() -> serde_json::Value {
+    json!({ "source": "commons" })
 }
 
 fn app_with(pool: SqlitePool, tts: Option<Arc<FakeTts>>) -> Router {
@@ -262,8 +307,8 @@ async fn request_body_is_validated(pool: SqlitePool) {
         post_json(&uri, &json!({ "source": "commons" }), Some(&cookie)),
     )
     .await;
-    assert_eq!(commons.status, StatusCode::BAD_REQUEST);
-    assert_eq!(commons.code(), "not_implemented");
+    assert_eq!(commons.status, StatusCode::CONFLICT);
+    assert_eq!(commons.code(), "commons_disabled");
 
     let explicit = json!({ "source": "tts", "voice": "en-GB-RyanNeural" });
     let response = send(&app, post_json(&uri, &explicit, Some(&cookie))).await;
@@ -422,4 +467,142 @@ async fn the_61st_request_in_an_hour_is_rate_limited(pool: SqlitePool) {
     assert_eq!(other.status, StatusCode::NOT_FOUND);
     let removed = send(&app, delete(&uri, Some(&cookie))).await;
     assert_eq!(removed.status, StatusCode::NO_CONTENT);
+}
+
+#[sqlx::test]
+async fn a_recording_is_attached_with_its_attribution(pool: SqlitePool) {
+    let anna = create_user(&pool, "anna@example.com", false).await;
+    let card_id = insert_card_in(&pool, &anna.id, "pl-PL", "żółw", None).await;
+    let before = card_audio(&pool, &card_id).await;
+    let fake = Arc::new(FakeRecordings {
+        answer: Some(recording()),
+        ..FakeRecordings::default()
+    });
+    let app = app_with_recordings(pool.clone(), fake.clone());
+    let cookie = login(&app, "anna@example.com", PASSWORD).await;
+
+    let uri = format!("/api/cards/{card_id}/audio");
+    let response = send(&app, post_json(&uri, &commons_body(), Some(&cookie))).await;
+    assert_eq!(response.status, StatusCode::OK, "{}", response.body);
+    assert_eq!(response.body["attribution"], ATTRIBUTION);
+    let audio_id = response.body["audio_id"].as_str().unwrap();
+    assert_eq!(
+        fake.lookups.lock().unwrap().as_slice(),
+        [("żółw".to_string(), "pl-PL".to_string())]
+    );
+
+    let after = card_audio(&pool, &card_id).await;
+    assert_eq!(after.audio_id.as_deref(), Some(audio_id));
+    assert_eq!(after.updated_by, SERVER_DEVICE);
+    assert!(after.server_seq > before.server_seq);
+
+    let clip = send(&app, get(&format!("/api/audio/{audio_id}"), Some(&cookie))).await;
+    assert_eq!(clip.headers[X_AUDIO_SOURCE], "commons");
+    let encoded = clip.headers[X_AUDIO_ATTRIBUTION].to_str().unwrap();
+    assert!(
+        encoded.starts_with("Derbeth%20%C2%B7%20CC%20BY%202.5"),
+        "{encoded}"
+    );
+}
+
+#[sqlx::test]
+async fn no_recording_is_not_found_and_changes_nothing(pool: SqlitePool) {
+    let anna = create_user(&pool, "anna@example.com", false).await;
+    let card_id = insert_card(&pool, &anna.id, "read", None).await;
+    let app = app_with_recordings(pool.clone(), Arc::new(FakeRecordings::default()));
+    let cookie = login(&app, "anna@example.com", PASSWORD).await;
+
+    let uri = format!("/api/cards/{card_id}/audio");
+    let response = send(&app, post_json(&uri, &commons_body(), Some(&cookie))).await;
+    assert_eq!(response.status, StatusCode::NOT_FOUND);
+    assert_eq!(response.code(), "not_found");
+    assert_eq!(asset_count(&pool).await, 0);
+    assert_eq!(
+        card_audio(&pool, &card_id).await.updated_at,
+        CARD_UPDATED_AT
+    );
+}
+
+#[sqlx::test]
+async fn a_failed_lookup_is_a_provider_error(pool: SqlitePool) {
+    let anna = create_user(&pool, "anna@example.com", false).await;
+    let card_id = insert_card(&pool, &anna.id, "read", None).await;
+    let fake = Arc::new(FakeRecordings {
+        fail: true,
+        ..FakeRecordings::default()
+    });
+    let app = app_with_recordings(pool.clone(), fake);
+    let cookie = login(&app, "anna@example.com", PASSWORD).await;
+
+    let uri = format!("/api/cards/{card_id}/audio");
+    let response = send(&app, post_json(&uri, &commons_body(), Some(&cookie))).await;
+    assert_eq!(response.status, StatusCode::BAD_GATEWAY);
+    assert_eq!(response.code(), "provider_error");
+    assert_eq!(asset_count(&pool).await, 0);
+}
+
+#[sqlx::test]
+async fn recordings_of_another_users_card_are_not_looked_up(pool: SqlitePool) {
+    let anna = create_user(&pool, "anna@example.com", false).await;
+    create_user(&pool, "boris@example.com", false).await;
+    let card_id = insert_card(&pool, &anna.id, "read", None).await;
+    let fake = Arc::new(FakeRecordings {
+        answer: Some(recording()),
+        ..FakeRecordings::default()
+    });
+    let app = app_with_recordings(pool.clone(), fake.clone());
+    let boris = login(&app, "boris@example.com", PASSWORD).await;
+
+    let uri = format!("/api/cards/{card_id}/audio");
+    let response = send(&app, post_json(&uri, &commons_body(), Some(&boris))).await;
+    assert_eq!(response.status, StatusCode::NOT_FOUND);
+    assert!(fake.lookups.lock().unwrap().is_empty());
+    assert_eq!(asset_count(&pool).await, 0);
+}
+
+#[sqlx::test]
+async fn commons_can_be_turned_off(pool: SqlitePool) {
+    let anna = create_user(&pool, "anna@example.com", false).await;
+    let card_id = insert_card(&pool, &anna.id, "read", None).await;
+    // test_config turns Commons off, like ANNETTE_COMMONS_ENABLED=false.
+    let app = app_with(pool.clone(), None);
+    let cookie = login(&app, "anna@example.com", PASSWORD).await;
+
+    let uri = format!("/api/cards/{card_id}/audio");
+    let response = send(&app, post_json(&uri, &commons_body(), Some(&cookie))).await;
+    assert_eq!(response.status, StatusCode::CONFLICT);
+    assert_eq!(response.code(), "commons_disabled");
+    let meta = send(&app, get("/api/meta", None)).await;
+    assert_eq!(meta.body["features"]["commons"], false);
+
+    let enabled = app_with_recordings(pool, Arc::new(FakeRecordings::default()));
+    let meta = send(&enabled, get("/api/meta", None)).await;
+    assert_eq!(meta.body["features"]["commons"], true);
+}
+
+#[sqlx::test]
+async fn tts_and_recordings_share_the_rate_limit(pool: SqlitePool) {
+    let anna = create_user(&pool, "anna@example.com", false).await;
+    let card_id = insert_card(&pool, &anna.id, "read", None).await;
+    let mut state = test_state(pool.clone());
+    state.tts = Some(Arc::new(FakeTts::default()) as Arc<dyn TtsProvider>);
+    state.commons = Some(Arc::new(FakeRecordings {
+        answer: Some(recording()),
+        ..FakeRecordings::default()
+    }) as Arc<dyn RecordingSource>);
+    let app = app::router(Arc::new(state));
+    let cookie = login(&app, "anna@example.com", PASSWORD).await;
+    let uri = format!("/api/cards/{card_id}/audio");
+
+    for attempt in 1..=AUDIO_REQUESTS_PER_HOUR {
+        let body = if attempt % 2 == 0 {
+            tts_body()
+        } else {
+            commons_body()
+        };
+        let response = send(&app, post_json(&uri, &body, Some(&cookie))).await;
+        assert_eq!(response.status, StatusCode::OK, "attempt {attempt}");
+    }
+    let limited = send(&app, post_json(&uri, &commons_body(), Some(&cookie))).await;
+    assert_eq!(limited.code(), "rate_limited");
 }

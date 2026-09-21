@@ -560,7 +560,7 @@
             }
           },
           "400": {
-            "description": "`validation_failed`, `unsupported_language` (no voice for the deck's language) or `not_implemented` (`commons`, until it is available)",
+            "description": "`validation_failed` or `unsupported_language` (no voice for the deck's language)",
             "content": {
               "application/json": {
                 "schema": {
@@ -580,7 +580,7 @@
             }
           },
           "404": {
-            "description": "`not_found`: no such card (or it is deleted)",
+            "description": "`not_found`: no such card (or it is deleted), or no recording of the word",
             "content": {
               "application/json": {
                 "schema": {
@@ -590,7 +590,7 @@
             }
           },
           "409": {
-            "description": "`tts_disabled`: the server has no TTS provider",
+            "description": "`tts_disabled` / `commons_disabled`: the feature is off on this server",
             "content": {
               "application/json": {
                 "schema": {
@@ -610,7 +610,7 @@
             }
           },
           "502": {
-            "description": "`provider_error`: the TTS provider failed",
+            "description": "`provider_error`: the TTS provider or Wikimedia failed",
             "content": {
               "application/json": {
                 "schema": {

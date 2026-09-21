@@ -97,7 +97,7 @@ queries), SurrealDB (immature, heavy).
 | Service | Use | Notes |
 | --- | --- | --- |
 | Azure AI Speech (primary TTS) | Generate MP3 with SSML and IPA `<phoneme>` | Neural voices for en-GB/en-US/pl-PL; behind a `TtsProvider` trait so Google Cloud TTS can be added |
-| Wikimedia Commons / Wiktionary API | Native speaker recordings | Store attribution and license (CC BY-SA); may require transcoding (see architecture open questions) |
+| Wikimedia Commons API | Native speaker recordings (EN, PL) | No key. Wikimedia's MP3 transcode of each OGG is stored, so no transcoder on the server; attribution and license (CC BY / BY-SA) stored with the clip |
 | Anthropic API | Card enrichment (translation, example, IPA, notes) | Model configurable via `ANNETTE_LLM_MODEL`; behind an `Enricher` trait |
 
 All external services are optional. Without keys, the corresponding features are hidden in the UI (the server

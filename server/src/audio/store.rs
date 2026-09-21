@@ -7,6 +7,7 @@ use crate::error::AppError;
 
 /// Where a clip came from; stored in `audio_assets.source` and sent as `X-Audio-Source`.
 pub const SOURCE_AZURE: &str = "azure";
+pub const SOURCE_COMMONS: &str = "commons";
 
 /// A clip to store for one of the user's cards.
 pub struct NewAsset<'a> {

@@ -67,9 +67,10 @@ pub async fn health(State(state): State<Arc<AppState>>) -> Result<Json<HealthRes
 pub async fn meta(State(state): State<Arc<AppState>>) -> Json<MetaResponse> {
     Json(MetaResponse {
         version: env!("CARGO_PKG_VERSION").to_string(),
-        // Each feature task (Commons, enrichment, push) turns its flag on from the config.
+        // Each feature task (enrichment, push) turns its flag on from the config.
         features: Features {
             tts: state.tts.is_some(),
+            commons: state.commons.is_some(),
             ..Features::default()
         },
     })

@@ -7,8 +7,9 @@ use sqlx::{SqliteConnection, SqlitePool};
 
 use crate::{
     audio::{
+        commons::RecordingSource,
         dto::AttachAudioResponse,
-        store::{self, NewAsset, SOURCE_AZURE},
+        store::{self, NewAsset, SOURCE_AZURE, SOURCE_COMMONS},
         tts::{TtsError, TtsProvider, TtsRequest},
     },
     error::AppError,
@@ -55,7 +56,6 @@ pub async fn attach_tts(
             }
         })?;
 
-    let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
     let asset = NewAsset {
         user_id,
         card_id,
@@ -65,16 +65,58 @@ pub async fn attach_tts(
         attribution: None,
         bytes: &audio.bytes,
     };
+    store_and_attach(pool, asset, now).await
+}
+
+/// Finds a native-speaker recording of the card's front and attaches it with its attribution. No recording is
+/// 404 `not_found`. Like TTS, the lookup runs before the transaction.
+pub async fn attach_recording(
+    pool: &SqlitePool,
+    recordings: &dyn RecordingSource,
+    user_id: &str,
+    card_id: &str,
+    now: i64,
+) -> Result<AttachAudioResponse, AppError> {
+    let card = load_card(pool, user_id, card_id).await?;
+    let recording = recordings
+        .find(&card.front, &card.target_lang)
+        .await
+        .map_err(|error| {
+            tracing::warn!(%error, "recording lookup failed");
+            AppError::ProviderError
+        })?
+        .ok_or(AppError::NotFound)?;
+    tracing::info!(file = %recording.file_page, "recording found");
+    let asset = NewAsset {
+        user_id,
+        card_id,
+        source: SOURCE_COMMONS,
+        mime: &recording.mime,
+        voice: None,
+        attribution: Some(&recording.attribution),
+        bytes: &recording.bytes,
+    };
+    store_and_attach(pool, asset, now).await
+}
+
+/// Stores the clip and points the card to it, in one transaction.
+async fn store_and_attach(
+    pool: &SqlitePool,
+    asset: NewAsset<'_>,
+    now: i64,
+) -> Result<AttachAudioResponse, AppError> {
+    let (user_id, card_id) = (asset.user_id, asset.card_id);
+    let attribution = asset.attribution.map(str::to_string);
+    let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
     let audio_id = store::insert_asset(&mut tx, asset, now).await?;
     if !set_card_audio(&mut tx, user_id, card_id, Some(&audio_id), now).await? {
         // The card was deleted while the provider was working.
         return Err(AppError::NotFound);
     }
     tx.commit().await?;
-
     Ok(AttachAudioResponse {
         audio_id,
-        attribution: None,
+        attribution,
     })
 }
 

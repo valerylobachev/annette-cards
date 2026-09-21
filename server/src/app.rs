@@ -26,7 +26,12 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 
 use crate::{
     admin,
-    audio::{self, azure::AzureTts, tts::TtsProvider},
+    audio::{
+        self,
+        azure::AzureTts,
+        commons::{RecordingSource, WikimediaCommons},
+        tts::TtsProvider,
+    },
     auth::{self, SESSION_COOKIE},
     clock::HOUR_MS,
     config::Config,
@@ -47,6 +52,8 @@ pub struct AppState {
     pub config: Config,
     /// The text-to-speech provider; `None` when TTS is not configured (`features.tts = false`).
     pub tts: Option<Arc<dyn TtsProvider>>,
+    /// Wikimedia Commons recordings; `None` when turned off (`features.commons = false`).
+    pub commons: Option<Arc<dyn RecordingSource>>,
     /// Per-user limit of `POST /api/cards/{id}/audio`.
     pub audio_limit: PerUserLimit,
 }
@@ -56,15 +63,26 @@ impl AppState {
     pub fn new(pool: SqlitePool, config: Config) -> anyhow::Result<Self> {
         let http = reqwest::Client::builder()
             .timeout(PROVIDER_TIMEOUT)
-            .user_agent(concat!("annette-cards/", env!("CARGO_PKG_VERSION")))
+            // Wikimedia asks every client to name itself and a contact (https://meta.wikimedia.org/wiki/User-Agent_policy).
+            .user_agent(concat!(
+                "annette-cards/",
+                env!("CARGO_PKG_VERSION"),
+                " (",
+                env!("CARGO_PKG_REPOSITORY"),
+                ")"
+            ))
             .build()?;
         let tts = config.azure_tts().map(|(key, region)| {
             Arc::new(AzureTts::new(http.clone(), key.clone(), region)) as Arc<dyn TtsProvider>
         });
+        let commons = config
+            .commons_enabled
+            .then(|| Arc::new(WikimediaCommons::new(http.clone())) as Arc<dyn RecordingSource>);
         Ok(Self {
             pool,
             config,
             tts,
+            commons,
             audio_limit: PerUserLimit::new(security::AUDIO_REQUESTS_PER_HOUR, HOUR_MS),
         })
     }
@@ -272,13 +290,13 @@ mod tests {
     }
 
     #[sqlx::test]
-    async fn meta_reports_version_and_disabled_features(pool: SqlitePool) {
+    async fn meta_reports_version_and_default_features(pool: SqlitePool) {
         let (status, body) = get_json(test_app(pool), "/api/meta").await;
         assert_eq!(status, StatusCode::OK);
         assert_eq!(body["version"], env!("CARGO_PKG_VERSION"));
         assert_eq!(
             body["features"],
-            serde_json::json!({ "tts": false, "commons": false, "enrich": false, "push": false })
+            serde_json::json!({ "tts": false, "commons": true, "enrich": false, "push": false })
         );
     }
 

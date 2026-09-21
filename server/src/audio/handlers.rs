@@ -38,13 +38,15 @@ const MAX_VOICE_CHARS: usize = 100;
     request_body = AttachAudioRequest,
     responses(
         (status = 200, description = "Audio attached", body = AttachAudioResponse),
-        (status = 400, description = "`validation_failed`, `unsupported_language` (no voice for the deck's \
-            language) or `not_implemented` (`commons`, until it is available)", body = ErrorBody),
+        (status = 400, description = "`validation_failed` or `unsupported_language` (no voice for the deck's \
+            language)", body = ErrorBody),
         (status = 401, description = "`unauthorized`", body = ErrorBody),
-        (status = 404, description = "`not_found`: no such card (or it is deleted)", body = ErrorBody),
-        (status = 409, description = "`tts_disabled`: the server has no TTS provider", body = ErrorBody),
+        (status = 404, description = "`not_found`: no such card (or it is deleted), or no recording of the word",
+            body = ErrorBody),
+        (status = 409, description = "`tts_disabled` / `commons_disabled`: the feature is off on this server",
+            body = ErrorBody),
         (status = 429, description = "`rate_limited`: more than 60 requests an hour", body = ErrorBody),
-        (status = 502, description = "`provider_error`: the TTS provider failed", body = ErrorBody),
+        (status = 502, description = "`provider_error`: the TTS provider or Wikimedia failed", body = ErrorBody),
     )
 )]
 pub async fn attach_audio(
@@ -66,7 +68,16 @@ pub async fn attach_audio(
                 service::attach_tts(&state.pool, tts, &user.user_id, &card_id, voice, now).await?;
             Ok(Json(response))
         }
-        AudioSource::Commons => Err(AppError::BadRequest("not_implemented")),
+        AudioSource::Commons => {
+            let recordings = state
+                .commons
+                .as_deref()
+                .ok_or(AppError::Conflict("commons_disabled"))?;
+            let response =
+                service::attach_recording(&state.pool, recordings, &user.user_id, &card_id, now)
+                    .await?;
+            Ok(Json(response))
+        }
     }
 }
 
