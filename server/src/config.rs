@@ -6,6 +6,8 @@ use figment::{
 };
 use serde::{Deserialize, Serialize};
 
+use crate::clock::DAY_MS;
+
 /// Server configuration (architecture.md §10).
 ///
 /// Sources, later ones win: built-in defaults → optional `annette.toml` → `ANNETTE_*` environment variables.
@@ -13,7 +15,7 @@ use serde::{Deserialize, Serialize};
 pub struct Config {
     pub bind: SocketAddr,
     pub database_url: String,
-    /// Public origin, used for the Origin check (P2-T02).
+    /// Public origin: invite links, and the Origin check (P2-T02).
     pub public_url: Option<String>,
     pub session_ttl_days: u32,
 }
@@ -33,6 +35,11 @@ impl Config {
     /// Startup-only code, so it returns `anyhow::Result` (figment's error type is large and only ever printed).
     pub fn load() -> anyhow::Result<Self> {
         Ok(Self::figment().extract()?)
+    }
+
+    /// Sliding session lifetime in milliseconds.
+    pub fn session_ttl_ms(&self) -> i64 {
+        i64::from(self.session_ttl_days) * DAY_MS
     }
 
     fn figment() -> Figment {

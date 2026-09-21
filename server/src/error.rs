@@ -10,8 +10,20 @@ use utoipa::ToSchema;
 /// the client translates codes into user-visible text (`errors.<code>`).
 #[derive(Debug, thiserror::Error)]
 pub enum AppError {
+    /// The request is invalid; the code says why (`password_too_short`, `validation_failed`, …).
+    #[error("bad request: {0}")]
+    BadRequest(&'static str),
+    /// Wrong email or password at login.
+    #[error("invalid credentials")]
+    InvalidCredentials,
+    /// No valid session cookie.
+    #[error("unauthorized")]
+    Unauthorized,
     #[error("not found")]
     NotFound,
+    /// The request conflicts with existing data; the code says how (`email_taken`, …).
+    #[error("conflict: {0}")]
+    Conflict(&'static str),
     #[error("service unavailable")]
     ServiceUnavailable,
     #[error("database error: {0}")]
@@ -32,7 +44,10 @@ pub struct ErrorBody {
 impl AppError {
     fn status(&self) -> StatusCode {
         match self {
+            AppError::BadRequest(_) => StatusCode::BAD_REQUEST,
+            AppError::InvalidCredentials | AppError::Unauthorized => StatusCode::UNAUTHORIZED,
             AppError::NotFound => StatusCode::NOT_FOUND,
+            AppError::Conflict(_) => StatusCode::CONFLICT,
             AppError::ServiceUnavailable => StatusCode::SERVICE_UNAVAILABLE,
             AppError::Database(_) | AppError::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
@@ -40,6 +55,9 @@ impl AppError {
 
     fn code(&self) -> &'static str {
         match self {
+            AppError::BadRequest(code) | AppError::Conflict(code) => code,
+            AppError::InvalidCredentials => "invalid_credentials",
+            AppError::Unauthorized => "unauthorized",
             AppError::NotFound => "not_found",
             AppError::ServiceUnavailable => "service_unavailable",
             AppError::Database(_) | AppError::Internal(_) => "internal_error",
@@ -82,6 +100,16 @@ mod tests {
             body,
             serde_json::json!({ "code": "not_found", "details": null })
         );
+    }
+
+    #[tokio::test]
+    async fn coded_errors_carry_their_code() {
+        let (status, body) = response_parts(AppError::BadRequest("password_too_short")).await;
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+        assert_eq!(body["code"], "password_too_short");
+        let (status, body) = response_parts(AppError::Unauthorized).await;
+        assert_eq!(status, StatusCode::UNAUTHORIZED);
+        assert_eq!(body["code"], "unauthorized");
     }
 
     #[tokio::test]

@@ -5,24 +5,43 @@ use sqlx::SqlitePool;
 use tower_http::{
     compression::CompressionLayer, cors::CorsLayer, timeout::TimeoutLayer, trace::TraceLayer,
 };
-use utoipa::OpenApi;
+use utoipa::{
+    Modify, OpenApi,
+    openapi::security::{ApiKey, ApiKeyValue, SecurityScheme},
+};
 use utoipa_axum::{router::OpenApiRouter, routes};
 
-use crate::{config::Config, error::ErrorBody, health, static_files};
+use crate::{
+    auth::{self, SESSION_COOKIE},
+    config::Config,
+    error::ErrorBody,
+    health, static_files,
+};
 
 /// Shared by all requests through `Arc` (cheap to clone, read-only).
 pub struct AppState {
     pub pool: SqlitePool,
-    #[expect(
-        dead_code,
-        reason = "first read by auth (P2-T01) and the origin check (P2-T02)"
-    )]
     pub config: Config,
 }
 
 #[derive(OpenApi)]
-#[openapi(info(title = "Annette Cards API"), components(schemas(ErrorBody)))]
+#[openapi(
+    info(title = "Annette Cards API"),
+    components(schemas(ErrorBody)),
+    modifiers(&SessionCookieScheme)
+)]
 struct ApiDoc;
+
+/// Declares the `session` security scheme (the `ac_session` cookie) referenced by `security(("session" = []))`.
+struct SessionCookieScheme;
+
+impl Modify for SessionCookieScheme {
+    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
+        let components = openapi.components.get_or_insert_with(Default::default);
+        let cookie = ApiKey::Cookie(ApiKeyValue::new(SESSION_COOKIE));
+        components.add_security_scheme("session", SecurityScheme::ApiKey(cookie));
+    }
+}
 
 /// All `/api` routes together with their OpenAPI description.
 fn api_routes() -> OpenApiRouter<Arc<AppState>> {
@@ -35,6 +54,11 @@ fn api_routes() -> OpenApiRouter<Arc<AppState>> {
     OpenApiRouter::with_openapi(doc)
         .routes(routes!(health::health))
         .routes(routes!(health::meta))
+        .routes(routes!(auth::handlers::login))
+        .routes(routes!(auth::handlers::logout))
+        .routes(routes!(auth::handlers::logout_others))
+        .routes(routes!(auth::handlers::me))
+        .routes(routes!(auth::handlers::change_password))
 }
 
 /// The OpenAPI spec, printed by the `openapi` subcommand and served at `/api/openapi.json`.

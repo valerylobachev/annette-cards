@@ -71,7 +71,7 @@ db-migrate:
 
 # Refresh server/.sqlx/ offline query metadata (run after changing any query!)
 sqlx-prepare: db-migrate
-    cd server && DATABASE_URL={{ database_url }} cargo sqlx prepare
+    cd server && DATABASE_URL={{ database_url }} cargo sqlx prepare -- --all-targets
 
 # Production build: web first (it is embedded into the binary), then the release server binary
 build:

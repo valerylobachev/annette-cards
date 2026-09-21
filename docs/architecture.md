@@ -250,13 +250,14 @@ flowchart TD
 | `app.rs` | `AppState` (pool, config, providers), router assembly, middleware |
 | `error.rs` | `AppError` → HTTP status + `{ "code": "...", "details": ... }` |
 | `db.rs` | Pool creation, pragmas, migrations |
-| `auth/` | Login, logout, sessions, invites, `CurrentUser` extractor, password change |
+| `clock.rs` | `now_ms()` and the ms constants used for timestamps |
+| `auth/` | Login, logout, sessions, `CurrentUser` extractor, password change (SQL for `users` and `sessions` in `users.rs`, `session.rs`) |
 | `sync/` | Push/pull services, LWW merge, ownership validation, `server_seq` allocation |
 | `audio/` | `TtsProvider` trait (Azure impl), Commons lookup, `audio_assets` storage and serving |
 | `enrich/` | `Enricher` trait (Anthropic impl), prompt, JSON validation, daily quota |
 | `push/` | Web Push subscriptions, VAPID, reminder task |
 | `fsrs/` | Weight optimization from review logs (Phase 4) |
-| `admin/` | Invite management (CLI + admin-only endpoints) |
+| `admin/` | Invite management (CLI + admin-only endpoints); the invite code generator |
 | `static_files.rs` | Serve embedded PWA with SPA fallback and cache headers |
 
 ### 5.2 Request pipeline
@@ -293,6 +294,25 @@ All endpoints are under `/api`, JSON, timestamps in ms since epoch. Auth = sessi
 | GET | `/api/openapi.json` | no | OpenAPI spec |
 
 Error response: `{ "code": "invalid_credentials", "details": null }` with the appropriate HTTP status.
+
+**Auth DTOs.** `POST /api/auth/login` takes `{email, password, device_label?}` and returns `MeResponse`
+`{id, email, display_name, is_admin, created_at}` with the `ac_session` cookie (`HttpOnly; Secure; SameSite=Strict;
+Path=/; Max-Age` = session TTL). `GET /api/auth/me` returns `MeResponse` and re-sends the cookie with a fresh
+`Max-Age`, so the browser keeps the sliding session as long as the server does. `POST /api/auth/password` takes
+`{current_password, new_password}`. Logout, logout-others and password change return 204; logout also clears the
+cookie (`Max-Age=0`). Endpoints marked "yes" accept only a valid, unexpired session; the server extends a session's
+expiry to now + TTL at most once an hour (on the first request an hour after the last extension).
+
+**Auth error codes.**
+
+| Code | Status | When |
+| --- | --- | --- |
+| `invalid_credentials` | 401 | Login with an unknown email or a wrong password (same code and similar timing for both) |
+| `invalid_credentials` | 400 | Password change with a wrong current password |
+| `password_too_short` | 400 | New password shorter than 10 characters |
+| `validation_failed` | 400 | Malformed email or display name |
+| `unauthorized` | 401 | Missing, unknown or expired session cookie |
+| `forbidden` | 403 | Signed in but not an admin (admin endpoints, P2-T02) |
 
 ### 5.4 Server data model (SQLite)
 
@@ -634,7 +654,7 @@ recipes load it).
 
 | Task | Interval | Action |
 | --- | --- | --- |
-| Session cleanup | hourly | Delete expired sessions |
+| Session cleanup | hourly, first run at startup | Delete expired sessions |
 | Reminders | every minute | For users whose reminder time (in their tz) is now and who have due cards, send Web Push |
 | Purge | daily | Physically delete rows soft-deleted > 90 days ago and orphaned audio |
 

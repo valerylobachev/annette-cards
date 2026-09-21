@@ -6,8 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './changePasswordRequest.ts';
 export * from './errorBody.ts';
 export * from './features.ts';
 export * from './healthResponse.ts';
 export * from './healthStatus.ts';
+export * from './loginRequest.ts';
+export * from './meResponse.ts';
 export * from './metaResponse.ts';

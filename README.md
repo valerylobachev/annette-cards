@@ -58,9 +58,14 @@ justfile   Development commands
 ```bash
 cp server/.env.example server/.env    # set ANNETTE_* variables
 just db-migrate                       # create the local SQLite database
-cargo run --manifest-path server/Cargo.toml -- create-user --email you@example.com --admin  # from Phase 2
+(cd server && cargo run -- create-user --email you@example.com --admin)  # asks for the password twice
 just dev                              # server on :8080, Vite on :5173 with /api proxy
 ```
+
+Invite someone with `(cd server && cargo run -- invite --note Anna --days 7)`: it prints a single-use code and, when
+`ANNETTE_PUBLIC_URL` is set, the registration link. `create-user --password-stdin` reads the password from stdin
+for scripts. On the VPS, run the same subcommands on the `annette-cards` binary. Run them from `server/` so the
+relative database path in `server/.env` resolves to the same file as the server's.
 
 Open `http://localhost:5173`. To test on an iPhone during development, run `just dev-https` (Vite over HTTPS on
 the LAN with a self-signed certificate) and open `https://<mac-ip>:5173` in Safari — service workers require

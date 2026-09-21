@@ -183,10 +183,10 @@ the VPS with backups.
 ### 2.1 Auth (server)
 Tasks: [P2-T01](../dev/impl/phase-02-backend-sync/task-01-auth-core.md) · [P2-T02](../dev/impl/phase-02-backend-sync/task-02-invites-security.md)
 
-- [ ] Migrations: `users`, `invites`, `sessions`
-- [ ] CLI `create-user` (with `--admin`) and `invite` subcommands
-- [ ] Argon2id hashing; login, logout, logout-others, me, change password
-- [ ] Session cookie, `CurrentUser` extractor, sliding expiry, hourly cleanup task
+- [x] Migrations: `users`, `invites`, `sessions`
+- [x] CLI `create-user` (with `--admin`) and `invite` subcommands
+- [x] Argon2id hashing; login, logout, logout-others, me, change password
+- [x] Session cookie, `CurrentUser` extractor, sliding expiry, hourly cleanup task
 - [ ] Register with invite (validation, single use, expiry)
 - [ ] Admin invite endpoints (list/create/revoke), admin-only guard
 - [ ] Origin check middleware, login rate limiting (`tower_governor`), security headers

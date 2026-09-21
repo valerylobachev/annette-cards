@@ -61,7 +61,8 @@ rejected. Versions: use the latest stable release at bootstrap time and pin them
 | Configuration | `figment` (env + optional TOML) | Typed config with `ANNETTE_` prefix |
 | CLI | `clap` (derive) | `serve`, `create-user`, `invite`, `openapi`, `purge` subcommands |
 | Password hashing | `argon2` (Argon2id) | Current best practice |
-| Sessions | Opaque random tokens (`rand`) stored hashed (`sha2`) in SQLite, `axum-extra` cookies | Simple, revocable, no JWT key management |
+| Sessions | Opaque random tokens (`rand`, encoded with `base64` as base64url) stored hashed (`sha2`) in SQLite, `axum-extra` cookies (`cookie` directly only for its `time` re-export, which sets `Max-Age`) | Simple, revocable, no JWT key management |
+| CLI password prompt | `rpassword` | Hidden input for `create-user`; `--password-stdin` covers scripts |
 | HTTP client | `reqwest` (rustls) | Calls to TTS, Wikimedia, LLM APIs |
 | Static assets | `rust-embed` + `mime_guess` | PWA embedded into the binary; one-file deployment; `mime_guess` sets `Content-Type` from the file extension |
 | IDs | `uuid` (v7) | Same format as the client |
