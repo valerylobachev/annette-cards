@@ -4,8 +4,9 @@
 set dotenv-load := true
 set dotenv-path := "server/.env"
 
-# sqlx-cli and the sqlx macros read DATABASE_URL; keep it in sync with the server's own setting.
-export DATABASE_URL := env("ANNETTE_DATABASE_URL", "sqlite://data/annette.db")
+# sqlx-cli and the sqlx macros read DATABASE_URL. It is passed only to the recipes below that need a live database;
+# lint and test use the committed server/.sqlx/ metadata, like CI.
+database_url := env("ANNETTE_DATABASE_URL", "sqlite://data/annette.db")
 
 # List all recipes
 default:
@@ -16,7 +17,7 @@ dev:
     #!/usr/bin/env bash
     set -euo pipefail
     trap 'kill 0' INT TERM EXIT
-    (cd server && bacon --headless) &
+    (cd server && DATABASE_URL={{ database_url }} bacon --headless) &
     (cd web && pnpm dev) &
     wait
 
@@ -26,7 +27,7 @@ dev-web:
 
 # Run only the server on :8080 with bacon (rebuild and restart on save)
 dev-server:
-    cd server && bacon serve
+    cd server && DATABASE_URL={{ database_url }} bacon serve
 
 # iPhone: join the same Wi-Fi, open https://<mac-ip>:5173 in Safari and accept the self-signed certificate.
 # Vite over HTTPS on the LAN for testing on an iPhone
@@ -66,11 +67,11 @@ db-new name:
 # Create the local SQLite database and apply migrations
 db-migrate:
     mkdir -p server/data
-    cd server && sqlx database create && sqlx migrate run
+    cd server && sqlx database create -D {{ database_url }} && sqlx migrate run -D {{ database_url }}
 
 # Refresh server/.sqlx/ offline query metadata (run after changing any query!)
-sqlx-prepare:
-    cd server && cargo sqlx prepare
+sqlx-prepare: db-migrate
+    cd server && DATABASE_URL={{ database_url }} cargo sqlx prepare
 
 # Production build: web first (it is embedded into the binary), then the release server binary
 build:

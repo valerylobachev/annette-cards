@@ -58,7 +58,7 @@ justfile   Development commands
 ```bash
 cp server/.env.example server/.env    # set ANNETTE_* variables
 just db-migrate                       # create the local SQLite database
-cargo run -p annette-cards -- create-user --email you@example.com --admin
+cargo run --manifest-path server/Cargo.toml -- create-user --email you@example.com --admin  # from Phase 2
 just dev                              # server on :8080, Vite on :5173 with /api proxy
 ```
 

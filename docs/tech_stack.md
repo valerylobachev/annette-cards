@@ -62,12 +62,12 @@ rejected. Versions: use the latest stable release at bootstrap time and pin them
 | Password hashing | `argon2` (Argon2id) | Current best practice |
 | Sessions | Opaque random tokens (`rand`) stored hashed (`sha2`) in SQLite, `axum-extra` cookies | Simple, revocable, no JWT key management |
 | HTTP client | `reqwest` (rustls) | Calls to TTS, Wikimedia, LLM APIs |
-| Static assets | `rust-embed` | PWA embedded into the binary; one-file deployment |
+| Static assets | `rust-embed` + `mime_guess` | PWA embedded into the binary; one-file deployment; `mime_guess` sets `Content-Type` from the file extension |
 | IDs | `uuid` (v7) | Same format as the client |
 | Web Push | `web-push` | VAPID-signed notifications (Phase 4) |
 | Scheduling | `tokio` interval tasks | Reminder dispatch, purge jobs; no cron dependency |
 | FSRS optimizer | `fsrs` (fsrs-rs) | Official optimizer to fit per-user weights (Phase 4) |
-| Tests | built-in + `#[sqlx::test]`, `tower::ServiceExt` | No extra frameworks needed |
+| Tests | built-in + `#[sqlx::test]`, `tower::ServiceExt` (dev: `tower` with `util`, `http-body-util` to read bodies) | No extra frameworks needed |
 
 ### Why sessions instead of JWT
 
@@ -118,7 +118,7 @@ reports enabled features via `GET /api/meta`).
 | --- | --- |
 | `just` | Command runner (see `justfile`) |
 | `bacon` | Rust rebuild/check on save |
-| `sqlx-cli` | Migrations, `cargo sqlx prepare` |
+| `sqlx-cli` | Migrations, `cargo sqlx prepare` (same minor version as the `sqlx` crate, currently 0.9) |
 | `cargo-zigbuild` | Cross-compilation |
 | Biome | TS lint + format |
 | Playwright | E2E tests |

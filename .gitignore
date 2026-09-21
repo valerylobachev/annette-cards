@@ -200,4 +200,7 @@ server/.env
 # Local HTTPS certificates for `just dev-https`
 certs/*.pem
 
+# Test fixture for embedded static files (the Node template above ignores every `dist`)
+!server/tests/fixtures/dist/
+
 # Committed on purpose, never ignore: server/.sqlx/, web/src/api/, Cargo.lock, pnpm-lock.yaml

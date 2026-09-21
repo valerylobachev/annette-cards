@@ -48,14 +48,14 @@ Task: [P0-T02](../dev/impl/phase-00-bootstrap/task-02-web-skeleton.md)
 ### Server skeleton (Rust learning start)
 Task: [P0-T03](../dev/impl/phase-00-bootstrap/task-03-server-skeleton.md)
 
-- [ ] Cargo project (edition 2024), crates from `tech_stack.md`
-- [ ] `clap` CLI with `serve` and `openapi` subcommands
-- [ ] `figment` config, `tracing` setup, `AppState`, `AppError` with `IntoResponse`
-- [ ] SQLite pool with pragmas (WAL, foreign keys, busy timeout), migrations on startup, empty initial migration
-- [ ] `GET /api/health` and `GET /api/meta`; router test with `oneshot`
-- [ ] `utoipa` OpenAPI; `just gen-api` produces `web/openapi.json` and the orval client
-- [ ] `rust-embed` serving of `web/dist` with SPA fallback and cache headers
-- [ ] (added) `server/.env.example`; tower-http trace, compression and 30 s timeout layers; `GET /api/openapi.json`
+- [x] Cargo project (edition 2024), crates from `tech_stack.md`
+- [x] `clap` CLI with `serve` and `openapi` subcommands
+- [x] `figment` config, `tracing` setup, `AppState`, `AppError` with `IntoResponse`
+- [x] SQLite pool with pragmas (WAL, foreign keys, busy timeout), migrations on startup, empty initial migration
+- [x] `GET /api/health` and `GET /api/meta`; router test with `oneshot`
+- [x] `utoipa` OpenAPI; `just gen-api` produces `web/openapi.json` and the orval client
+- [x] `rust-embed` serving of `web/dist` with SPA fallback and cache headers
+- [x] (added) `server/.env.example`; tower-http trace, compression and 30 s timeout layers; `GET /api/openapi.json`
 
 Acceptance task: [P0-T04](../dev/impl/phase-00-bootstrap/task-04-phase-acceptance.md)
 

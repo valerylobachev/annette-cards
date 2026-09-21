@@ -1,0 +1,1 @@
+-- Nothing to revert: the initial migration is empty.

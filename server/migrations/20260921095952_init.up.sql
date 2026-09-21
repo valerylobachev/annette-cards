@@ -1,0 +1,1 @@
+-- Initial migration: intentionally empty. Tables arrive with the features that need them (P2-T01, P2-T03).

@@ -514,6 +514,10 @@ are applied in dependency order: decks → cards → card_states → review_log 
 
 ## 10. Configuration
 
+Sources, later ones win: built-in defaults → optional `annette.toml` in the working directory → environment
+variables. `server/.env.example` lists every variable; copy it to `server/.env` for local development (`just`
+recipes load it).
+
 | Variable | Default | Description |
 | --- | --- | --- |
 | `ANNETTE_BIND` | `127.0.0.1:8080` | Listen address |

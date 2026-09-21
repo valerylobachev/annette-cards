@@ -50,10 +50,14 @@ annette-cards/
 ├── server/               # Rust (axum + sqlx + SQLite)
 │   ├── migrations/
 │   ├── .sqlx/            # sqlx offline query metadata (committed)
+│   ├── .env.example      # copy to server/.env (ignored)
+│   ├── bacon.toml        # `serve` job for just dev / dev-server
+│   ├── tests/fixtures/   # embedded-files fixture for static_files tests
 │   └── src/
 │       ├── main.rs       # clap CLI: serve | create-user | invite | openapi
-│       ├── app.rs        # router assembly
+│       ├── app.rs        # AppState, router assembly, OpenAPI, middleware
 │       ├── config.rs  error.rs  db.rs
+│       ├── health.rs     # GET /api/health, GET /api/meta
 │       ├── auth/  sync/  audio/  enrich/  push/  admin/  fsrs/
 │       └── static_files.rs   # embedded PWA (rust-embed)
 └── deploy/               # Caddyfile, systemd unit, litestream.yml
@@ -61,7 +65,13 @@ annette-cards/
 
 ## Commands
 
-Use `just` from the repo root. Do not invent ad-hoc command sequences if a recipe exists.
+Use `just` from the repo root. Do not invent ad-hoc command sequences if a recipe exists. Recipes load
+`server/.env` (copy it from `server/.env.example`). `DATABASE_URL` is set only for `dev`, `dev-server`, `db-migrate`
+and `sqlx-prepare`; `lint`, `test` and CI compile against the committed `.sqlx/` metadata.
+
+`web/dist` does not need to exist for `cargo check`/`clippy`/`test`: the `rust-embed` folder uses
+`allow_missing = true` and debug builds read it from disk at runtime. Release builds embed it, so `just build` and
+`just release` build the web first.
 
 | Command | Purpose |
 | --- | --- |
