@@ -33,6 +33,10 @@ pub struct Config {
     pub llm_model: String,
     /// Successful enrichments per user and UTC day (`ANNETTE_ENRICH_DAILY_LIMIT`).
     pub enrich_daily_limit: u32,
+    /// VAPID public key, base64url (`ANNETTE_VAPID_PUBLIC_KEY`); reminders are enabled when both keys are set.
+    pub vapid_public_key: Option<String>,
+    /// VAPID private key, base64url (`ANNETTE_VAPID_PRIVATE_KEY`).
+    pub vapid_private_key: Option<Secret>,
 }
 
 /// A secret setting (API key). Its `Debug` output is redacted, so printing the config never leaks it.
@@ -98,6 +102,8 @@ impl Default for Config {
             anthropic_api_key: None,
             llm_model: DEFAULT_LLM_MODEL.to_string(),
             enrich_daily_limit: 200,
+            vapid_public_key: None,
+            vapid_private_key: None,
         }
     }
 }
@@ -149,6 +155,24 @@ impl Config {
 
     pub fn enrich_enabled(&self) -> bool {
         self.anthropic_key().is_some()
+    }
+
+    /// The VAPID public and private keys, when both are set (and not blank).
+    pub fn vapid(&self) -> Option<(&str, &Secret)> {
+        let public = self
+            .vapid_public_key
+            .as_deref()
+            .map(str::trim)
+            .filter(|key| !key.is_empty())?;
+        let private = self
+            .vapid_private_key
+            .as_ref()
+            .filter(|key| !key.expose().trim().is_empty())?;
+        Some((public, private))
+    }
+
+    pub fn push_enabled(&self) -> bool {
+        self.vapid().is_some()
     }
 
     fn figment() -> Figment {
@@ -230,15 +254,29 @@ mod tests {
     }
 
     #[test]
+    fn push_needs_both_vapid_keys() {
+        let mut config = Config::default();
+        assert!(!config.push_enabled());
+        config.vapid_public_key = Some("public".to_string());
+        assert!(!config.push_enabled());
+        config.vapid_private_key = Some(Secret::new(" "));
+        assert!(!config.push_enabled(), "a blank value counts as unset");
+        config.vapid_private_key = Some(Secret::new("private"));
+        assert_eq!(config.vapid(), Some(("public", &Secret::new("private"))));
+    }
+
+    #[test]
     fn secrets_are_redacted_in_debug_output() {
         let config = Config {
             azure_tts_key: Some(Secret::new("super-secret")),
             anthropic_api_key: Some(Secret::new("sk-ant-secret")),
+            vapid_private_key: Some(Secret::new("vapid-secret")),
             ..Config::default()
         };
         let printed = format!("{config:?}");
         assert!(!printed.contains("super-secret"));
         assert!(!printed.contains("sk-ant-secret"));
+        assert!(!printed.contains("vapid-secret"));
         assert!(printed.contains("Secret(***)"));
     }
 

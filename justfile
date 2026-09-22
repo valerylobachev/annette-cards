@@ -55,7 +55,7 @@ lint:
     cd server && cargo clippy --all-targets -- -D warnings
     cd server && cargo fmt --check
     cd web && pnpm biome check
-    cd web && pnpm tsc --noEmit
+    cd web && pnpm tsc --noEmit && pnpm tsc --noEmit -p tsconfig.sw.json
 
 # Format Rust and TypeScript
 fmt:

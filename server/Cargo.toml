@@ -13,6 +13,8 @@ async-trait = "0.1"
 axum = "0.8.9"
 axum-extra = { version = "0.12.6", features = ["cookie"] }
 base64 = "0.23.1"
+chrono = { version = "0.4.45", default-features = false, features = ["std"] }
+chrono-tz = "0.10.4"
 clap = { version = "4.6.7", features = ["derive"] }
 cookie = "0.18"
 figment = { version = "0.10.19", features = ["env", "toml"] }
@@ -34,6 +36,7 @@ tracing-subscriber = { version = "0.3.23", features = ["env-filter", "json"] }
 utoipa = { version = "5.5.0", features = ["axum_extras"] }
 utoipa-axum = "0.2.0"
 uuid = { version = "1.26.1", features = ["v7"] }
+web-push-native = { version = "0.5.0", default-features = false, features = ["vapid"] }
 
 [dev-dependencies]
 http-body-util = "0.1.5"

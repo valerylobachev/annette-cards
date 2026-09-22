@@ -416,7 +416,9 @@ Settings; after returning, the list refreshes.
    "18 words to review".
 4. Tapping the notification opens Today.
 
-**Alternatives:** Permission denied → setting reverts with an explanation.
+**Alternatives:** Permission denied → setting reverts with an explanation. Not installed, signed out or offline →
+the switch is disabled with the reason. The Learner studied since the start of the study day, or no card is due
+for review → no push that day.
 
 ## UC-24 Export a backup
 

@@ -38,6 +38,7 @@ use crate::{
     enrich::{self, Enricher, anthropic::AnthropicEnricher},
     error::ErrorBody,
     health,
+    push::{self, PushSender, sender::WebPushSender},
     security::{self, PerUserLimit, UuidV7RequestId},
     static_files, sync,
 };
@@ -61,6 +62,8 @@ pub struct AppState {
     pub enricher: Option<Arc<dyn Enricher>>,
     /// Per-user burst limit of `POST /api/enrich` (the daily quota is in the database).
     pub enrich_limit: PerUserLimit,
+    /// The Web Push sender; `None` without VAPID keys (`features.push = false`).
+    pub push: Option<Arc<dyn PushSender>>,
 }
 
 impl AppState {
@@ -87,9 +90,22 @@ impl AppState {
             let model = config.llm_model.clone();
             Arc::new(AnthropicEnricher::new(http.clone(), key.clone(), model)) as Arc<dyn Enricher>
         });
+        let push = match config.vapid() {
+            Some((public, private)) => {
+                let sender = WebPushSender::new(
+                    http.clone(),
+                    public,
+                    private.expose(),
+                    vapid_contact(&config),
+                )?;
+                Some(Arc::new(sender) as Arc<dyn PushSender>)
+            }
+            None => None,
+        };
         Ok(Self {
             pool,
             config,
+            push,
             tts,
             commons,
             audio_limit: PerUserLimit::new(security::AUDIO_REQUESTS_PER_HOUR, HOUR_MS),
@@ -97,6 +113,14 @@ impl AppState {
             enrich_limit: PerUserLimit::new(security::ENRICH_REQUESTS_PER_MINUTE, MINUTE_MS),
         })
     }
+}
+
+/// The VAPID `sub` claim: the site's URL, so a push service can tell whose messages these are.
+fn vapid_contact(config: &Config) -> String {
+    config
+        .public_url
+        .clone()
+        .unwrap_or_else(|| env!("CARGO_PKG_REPOSITORY").to_string())
 }
 
 #[derive(OpenApi)]
@@ -150,6 +174,10 @@ fn api_routes() -> OpenApiRouter<Arc<AppState>> {
         ))
         .routes(routes!(audio::handlers::get_audio))
         .routes(routes!(enrich::handlers::enrich))
+        .routes(routes!(
+            push::handlers::subscribe,
+            push::handlers::unsubscribe
+        ))
 }
 
 fn sync_routes() -> OpenApiRouter<Arc<AppState>> {

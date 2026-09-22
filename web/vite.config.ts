@@ -42,24 +42,13 @@ export default defineConfig({
           { src: 'maskable-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
-      workbox: {
+      // A custom worker (src/sw.ts) for the reminder's push and notification handlers; it keeps the precache and
+      // the audio cache that generateSW made before (architecture.md §4.7).
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
+      injectManifest: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
-        navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api\//],
-        runtimeCaching: [
-          // Clips never change (a new clip gets a new id); the app also writes this cache (src/lib/audio/audioCache.ts).
-          // A path check, not a RegExp: Workbox tests a RegExp against the whole URL, origin included.
-          {
-            urlPattern: ({ url }) => url.pathname.startsWith('/api/audio/'),
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'audio-v1',
-              expiration: { maxEntries: 5000 },
-              cacheableResponse: { statuses: [200] },
-            },
-          },
-          { urlPattern: ({ url }) => url.pathname.startsWith('/api/'), handler: 'NetworkOnly' },
-        ],
       },
     }),
   ],

@@ -45,6 +45,8 @@ export default defineConfig({
         ANNETTE_COMMONS_ENABLED: 'false',
         ANNETTE_AZURE_TTS_KEY: '',
         ANTHROPIC_API_KEY: '',
+        ANNETTE_VAPID_PUBLIC_KEY: '',
+        ANNETTE_VAPID_PRIVATE_KEY: '',
         RUST_LOG: 'warn',
       },
       url: `http://127.0.0.1:${apiPort}/api/health`,

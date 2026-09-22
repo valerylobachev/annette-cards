@@ -1,0 +1,21 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT EXISTS (\n             SELECT 1 FROM review_log WHERE user_id = ? AND deleted_at IS NULL AND reviewed_at >= ?\n           ) AS \"studied!: bool\"",
+  "describe": {
+    "columns": [
+      {
+        "name": "studied!: bool",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "d22cced6ab9dc91b9c759684632376b745fd9cc37a632dd1ebf43bc7f5107d6e"
+}

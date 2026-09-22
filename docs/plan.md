@@ -303,9 +303,9 @@ Task: [P4-T03](../dev/impl/phase-04-polish/task-03-statistics.md)
 ### 4.3 Reminders
 Task: [P4-T04](../dev/impl/phase-04-polish/task-04-reminders.md)
 
-- [ ] VAPID config, `push_subscriptions`, subscribe/unsubscribe endpoints
-- [ ] Reminder task (per-user time and timezone, only when due cards exist and not studied today)
-- [ ] Client: permission flow (installed PWA only), notification click opens Today
+- [x] VAPID config, `push_subscriptions`, subscribe/unsubscribe endpoints
+- [x] Reminder task (per-user time and timezone, only when due cards exist and not studied today)
+- [x] Client: permission flow (installed PWA only), notification click opens Today
 
 ### 4.4 FSRS optimization
 Task: [P4-T05](../dev/impl/phase-04-polish/task-05-fsrs-optimization.md)

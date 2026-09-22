@@ -20,6 +20,7 @@ import { useOnline } from '@/lib/useOnline'
 import { AudioSettingsSection } from './AudioSettingsSection'
 import { RecordingAttributions } from './AudioStorage'
 import { DataSection } from './DataSection'
+import { ReminderSection } from './ReminderSection'
 import { NumberSelect, Segmented, SettingsGroup, SettingsRow, useSettingsDraft } from './SettingsList'
 
 const range = (min: number, max: number, step = 1) =>
@@ -42,6 +43,7 @@ export function SettingsPage() {
       <AccountRow />
       <StudyGroup />
       <AudioSettingsSection />
+      <ReminderSection />
       <AppearanceGroup />
       <DataSection />
       <AboutGroup />

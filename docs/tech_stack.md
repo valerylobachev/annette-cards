@@ -31,7 +31,7 @@ rejected. Versions: use the latest stable release at bootstrap time and pin them
 | Spaced repetition | `ts-fsrs` | Reference FSRS implementation, runs offline on the client |
 | Server state | TanStack Query | Caching and retries for auth, audio, enrich calls |
 | API client | orval | Generates typed client + TanStack Query hooks from OpenAPI |
-| PWA | `vite-plugin-pwa` (Workbox) | Manifest, precache, runtime caching, update prompt |
+| PWA | `vite-plugin-pwa` (Workbox, `injectManifest`) | Manifest, precache, runtime caching, update prompt. The service worker is our own `src/sw.ts` (Phase 4, reminders) built from the Workbox modules (`workbox-precaching`, `-routing`, `-strategies`, `-expiration`, `-cacheable-response`), because `generateSW` cannot add `push` and `notificationclick` handlers; it is type-checked with the WebWorker library (`tsconfig.sw.json`) |
 | Text-to-speech | Web Speech API (`speechSynthesis`) | Built into Safari, uses iOS system voices, offline |
 | CSV/TSV parsing | PapaParse | Delimiter auto-detection, streaming, robust quoting |
 | i18n | i18next + react-i18next + `i18next-browser-languagedetector` | RU/EN UI, pluralization rules for Russian; the detector picks the stored choice, then `navigator.language` |
@@ -67,7 +67,8 @@ rejected. Versions: use the latest stable release at bootstrap time and pin them
 | Async traits | `async-trait` | Provider traits (`TtsProvider`, later `Enricher`) used as `Arc<dyn …>`: native `async fn` in traits cannot be called through `dyn` yet |
 | Static assets | `rust-embed` + `mime_guess` | PWA embedded into the binary; one-file deployment; `mime_guess` sets `Content-Type` from the file extension |
 | IDs | `uuid` (v7) | Same format as the client |
-| Web Push | `web-push` | VAPID-signed notifications (Phase 4) |
+| Web Push | `web-push-native` (feature `vapid`) | VAPID-signed (RFC 8292), `aes128gcm`-encrypted (RFC 8291) messages, sent with the shared `reqwest` client. Pure Rust (RustCrypto `p256`, `aes-gcm`, `hkdf`; `jwt-simple` pure-rust): the `web-push` crate needs OpenSSL through `ece`, which would break the static musl build |
+| Time zones | `chrono`, `chrono-tz` | The reminder time in the user's IANA time zone, with DST (Phase 4) |
 | Scheduling | `tokio` interval tasks | Reminder dispatch, purge jobs; no cron dependency |
 | FSRS optimizer | `fsrs` (fsrs-rs) | Official optimizer to fit per-user weights (Phase 4) |
 | Tests | built-in + `#[sqlx::test]`, `tower::ServiceExt` (dev: `tower` with `util`, `http-body-util` to read bodies) | No extra frameworks needed |

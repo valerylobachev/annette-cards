@@ -1,6 +1,9 @@
 import { Dexie, type EntityTable, type Table } from 'dexie'
 import type { Card, CardState, Deck, Direction, ReviewLog, Settings, SyncedEntity, SyncStamp } from '@/domain/types'
+import { DB_NAME } from './dbName'
 import type { MetaKey } from './meta'
+
+export { DB_NAME }
 
 /** One pending change for the sync engine; at most one row per entity (architecture.md §4.3). */
 export type OutboxEntry = { seq?: number; entity: SyncedEntity; entity_id: string }
@@ -9,8 +12,6 @@ export type OutboxEntry = { seq?: number; entity: SyncedEntity; entity_id: strin
 export type SettingsRow = Partial<Settings> & SyncStamp & { id: 'user' }
 
 export type MetaRow = { key: MetaKey; value: unknown }
-
-export const DB_NAME = 'annette'
 
 export class AnnetteDb extends Dexie {
   decks!: EntityTable<Deck, 'id'>

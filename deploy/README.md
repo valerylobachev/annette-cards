@@ -133,12 +133,29 @@ Each feature stays off until its settings are in `/etc/annette-cards/env` (`sudo
 | `ANNETTE_AZURE_TTS_KEY`, `ANNETTE_AZURE_TTS_REGION` | Generated pronunciation (Azure AI Speech key and region, e.g. `westeurope`) |
 | `ANNETTE_COMMONS_ENABLED` | Native-speaker recordings from Wikimedia Commons (default `true`, no key) |
 | `ANTHROPIC_API_KEY`, `ANNETTE_LLM_MODEL`, `ANNETTE_ENRICH_DAILY_LIMIT` | AI suggestions (key without the `ANNETTE_` prefix; model default `claude-haiku-4-5`; 200 suggestions per user and UTC day) |
+| `ANNETTE_VAPID_PUBLIC_KEY`, `ANNETTE_VAPID_PRIVATE_KEY` | Daily study reminders (Web Push); see below |
 
 ```bash
 curl -s https://cards.example.com/api/meta   # {"version":"…","features":{"tts":true,"commons":true,"enrich":true,"push":false}}
 ```
 
 Keys are read only by the server and never logged; the file must stay mode 0640 root:annette.
+
+### VAPID keys for reminders
+
+Generate the key pair once (any machine with OpenSSL) and put both lines into `/etc/annette-cards/env`; keep the
+private key nowhere else. The server refuses to start when the public key does not belong to the private key.
+
+```bash
+openssl ecparam -name prime256v1 -genkey -noout -out vapid.pem
+echo "ANNETTE_VAPID_PRIVATE_KEY=$(openssl ec -in vapid.pem -outform DER 2>/dev/null | tail -c +8 | head -c 32 | base64 | tr -d '=' | tr '/+' '_-')"
+echo "ANNETTE_VAPID_PUBLIC_KEY=$(openssl ec -in vapid.pem -pubout -outform DER 2>/dev/null | tail -c 65 | base64 | tr -d '=' | tr '/+' '_-')"
+rm vapid.pem
+```
+
+Changing the keys later invalidates every subscription: each device turns reminders on again (Settings →
+Reminders). `ANNETTE_PUBLIC_URL` is sent to the push services as the contact (`sub` claim). Reminders reach an
+iPhone only when the app is installed to the Home Screen (iOS 16.4+).
 
 ## Logs and status
 

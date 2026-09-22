@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT s.user_id AS \"user_id!\", s.data\n           FROM user_settings s\n           WHERE json_extract(s.data, '$.reminder.enabled') = 1\n             AND EXISTS (SELECT 1 FROM push_subscriptions p WHERE p.user_id = s.user_id)",
+  "describe": {
+    "columns": [
+      {
+        "name": "user_id!",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "user_settings",
+            "name": "user_id"
+          }
+        }
+      },
+      {
+        "name": "data",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "user_settings",
+            "name": "data"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      true,
+      false
+    ]
+  },
+  "hash": "515926a6a66e516188ad51a5180f94b14d1707560096ed35f20eb7303eaa378f"
+}

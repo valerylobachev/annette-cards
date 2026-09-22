@@ -35,6 +35,8 @@ pub struct MetaResponse {
     /// Server version (Cargo package version).
     pub version: String,
     pub features: Features,
+    /// VAPID public key (base64url) for `pushManager.subscribe`; `null` when push is disabled.
+    pub vapid_public_key: Option<String>,
 }
 
 /// Liveness check including a database ping.
@@ -67,12 +69,16 @@ pub async fn health(State(state): State<Arc<AppState>>) -> Result<Json<HealthRes
 pub async fn meta(State(state): State<Arc<AppState>>) -> Json<MetaResponse> {
     Json(MetaResponse {
         version: env!("CARGO_PKG_VERSION").to_string(),
-        // Push turns its flag on from the config in its own task.
         features: Features {
             tts: state.tts.is_some(),
             commons: state.commons.is_some(),
             enrich: state.enricher.is_some(),
-            ..Features::default()
+            push: state.push.is_some(),
         },
+        vapid_public_key: state
+            .push
+            .as_ref()
+            .and_then(|_| state.config.vapid())
+            .map(|(public, _)| public.to_string()),
     })
 }

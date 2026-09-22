@@ -9,6 +9,7 @@ mod enrich;
 mod error;
 mod health;
 mod json;
+mod push;
 mod security;
 mod static_files;
 mod sync;
@@ -116,9 +117,13 @@ async fn serve() -> anyhow::Result<()> {
         tts = config.tts_enabled(),
         commons = config.commons_enabled,
         enrich = config.enrich_enabled(),
+        push = config.push_enabled(),
         "optional features"
     );
     let state = AppState::new(pool, config)?;
+    if let Some(sender) = &state.push {
+        push::reminders::spawn_reminders(state.pool.clone(), sender.clone());
+    }
     let app = app::router(Arc::new(state));
     // The peer address is the rate limiter's fallback key when no X-Forwarded-For header is present.
     let app = app.into_make_service_with_connect_info::<SocketAddr>();

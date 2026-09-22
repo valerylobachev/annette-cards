@@ -1,0 +1,62 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id AS \"id!\", endpoint, p256dh, auth FROM push_subscriptions WHERE user_id = ? ORDER BY created_at",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "push_subscriptions",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "endpoint",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "push_subscriptions",
+            "name": "endpoint"
+          }
+        }
+      },
+      {
+        "name": "p256dh",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "push_subscriptions",
+            "name": "p256dh"
+          }
+        }
+      },
+      {
+        "name": "auth",
+        "ordinal": 3,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "push_subscriptions",
+            "name": "auth"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "35d28ac92360109f47a75ed7d8d75e6d06f20a652b185b59e25d98ce34129dcd"
+}

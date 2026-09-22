@@ -81,7 +81,7 @@ and `sqlx-prepare`; `lint`, `test` and CI compile against the committed `.sqlx/`
 | `just dev-https` | Vite over HTTPS on the LAN for testing on iPhone |
 | `just test` | `cargo test` + `pnpm vitest run` |
 | `just e2e` | Playwright tests (WebKit project is mandatory) |
-| `just lint` | `cargo clippy --all-targets -- -D warnings`, `cargo fmt --check`, `pnpm biome check`, `pnpm tsc --noEmit` |
+| `just lint` | `cargo clippy --all-targets -- -D warnings`, `cargo fmt --check`, `pnpm biome check`, `pnpm tsc --noEmit` (app, then the service worker with `-p tsconfig.sw.json`) |
 | `just fmt` | Format Rust and TS |
 | `just gen-api` | `server openapi > web/openapi.json` then `pnpm orval` |
 | `just db-new <name>` | New sqlx migration |

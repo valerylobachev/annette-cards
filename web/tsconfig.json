@@ -20,5 +20,7 @@
 
     "paths": { "@/*": ["./src/*"] }
   },
-  "include": ["src", "tests", "vite.config.ts", "playwright.config.ts", "orval.config.ts"]
+  "include": ["src", "tests", "vite.config.ts", "playwright.config.ts", "orval.config.ts"],
+  // The service worker has the WebWorker globals instead of the DOM: tsconfig.sw.json.
+  "exclude": ["src/sw.ts"]
 }

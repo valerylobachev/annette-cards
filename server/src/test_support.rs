@@ -134,6 +134,16 @@ pub fn delete(uri: &str, cookie: Option<&str>) -> Request<Body> {
     builder.body(Body::empty()).unwrap()
 }
 
+pub fn delete_json(uri: &str, body: &Value, cookie: Option<&str>) -> Request<Body> {
+    let mut builder = Request::delete(uri)
+        .header(header::CONTENT_TYPE, "application/json")
+        .header(header::ORIGIN, ORIGIN);
+    if let Some(cookie) = cookie {
+        builder = builder.header(header::COOKIE, cookie);
+    }
+    builder.body(Body::from(body.to_string())).unwrap()
+}
+
 /// Signs in and returns the `ac_session=<token>` cookie.
 pub async fn login(app: &Router, email: &str, password: &str) -> String {
     let body = serde_json::json!({ "email": email, "password": password });

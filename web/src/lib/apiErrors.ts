@@ -26,6 +26,7 @@ export const API_ERROR_CODES = [
   'provider_timeout',
   'enrich_disabled',
   'enrich_quota_exceeded',
+  'push_disabled',
   'internal_error',
   'service_unavailable',
   'network',

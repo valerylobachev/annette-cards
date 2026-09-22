@@ -293,9 +293,11 @@ flowchart TD
 | --- | --- |
 | Manifest | `display: standalone`, theme colors for light/dark, maskable icons |
 | iOS meta | `apple-touch-icon`, `apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style` |
+| Service worker | Our own `src/sw.ts`, built by vite-plugin-pwa with `injectManifest` (P4-T04: `generateSW` cannot add push handlers); type-checked with the WebWorker library (`tsconfig.sw.json`) |
 | Precache | App shell via Workbox: `index.html`, JS (incl. the CSV import worker; routes are not lazy-loaded), CSS, `theme.js`, icons, manifest; `navigateFallback: /index.html` so every route opens offline. Verified by `web/tests/e2e/offline.spec.ts` against the production build |
 | Runtime caching | `/api/audio/*` CacheFirst (`audio-v1`, max 5000 entries, only 200 answers; matched by path, since Workbox tests a RegExp against the whole URL); other `/api/*` NetworkOnly. The app writes the same cache when it downloads a clip; "Clear cached audio" (Settings → Data) deletes it, sign-out too |
-| Updates | `registerType: 'prompt'` → in-app banner "New version available — Reload" |
+| Updates | `registerType: 'prompt'` → in-app banner "New version available — Reload" (the banner posts `SKIP_WAITING` to the waiting worker) |
+| Reminders | `push`: a `{ "type": "reminder", "due": n }` payload becomes a notification in the UI language (`ui_language` of the settings row read with plain IndexedDB, else the device language), text from `notifications.reminder` of the bundled `en.json`/`ru.json` with `Intl.PluralRules`; tag `reminder`, so a new one replaces an unread one. Other payloads are ignored. `notificationclick`: focuses an open window and sends it `open-today` (the app navigates to Today), otherwise opens `/` |
 | Storage | `navigator.storage.persist()` on first run; show a warning if denied and the user is not signed in |
 | Install hint | If not `standalone` on iOS, show a one-time "Add to Home Screen" guide |
 
@@ -364,6 +366,15 @@ All endpoints are under `/api`, JSON, timestamps in ms since epoch. Auth = sessi
 | POST | `/api/fsrs/optimize` | yes | Fit FSRS weights from review log (Phase 4) |
 | GET/POST/DELETE | `/api/admin/invites` | admin | List, create, revoke invites |
 | GET | `/api/openapi.json` | no | OpenAPI spec |
+
+**Push subscriptions** (P4-T04). `POST /api/push/subscribe` takes the browser's `PushSubscription.toJSON()`
+without `expirationTime`: `{ "endpoint": "https://web.push.apple.com/…", "keys": { "p256dh": "…", "auth": "…" } }`
+→ 204. The endpoint must be `https` on a known push service (`push.apple.com`, `fcm.googleapis.com`,
+`push.services.mozilla.com`, `notify.windows.com`, or a subdomain), `p256dh` 65 bytes and `auth` 16 bytes of
+base64url, else 400 `validation_failed`. The row is upserted by endpoint: the same endpoint from another account moves
+to the current user. `DELETE /api/push/subscribe { "endpoint": "…" }` → 204, or 404 `not_found` when the current user
+has no such subscription. Both answer 409 `push_disabled` without VAPID keys. `GET /api/meta` adds
+`vapid_public_key` (base64url, `null` when push is off) for `pushManager.subscribe`.
 
 Error response: `{ "code": "invalid_credentials", "details": null }` with the appropriate HTTP status. A request
 body that is not valid JSON of the expected shape is 400 `validation_failed`; a body over the route's limit is 413
@@ -607,6 +618,7 @@ CREATE INDEX idx_states_user_seq       ON card_states(user_id, server_seq);
 CREATE INDEX idx_states_user_due       ON card_states(user_id, due);
 CREATE INDEX idx_log_user_seq          ON review_log(user_id, server_seq);
 CREATE INDEX idx_log_user_reviewed     ON review_log(user_id, reviewed_at);
+CREATE INDEX idx_push_subscriptions_user ON push_subscriptions(user_id);
 ```
 
 ### 5.5 Settings document
@@ -890,7 +902,7 @@ recipes load it).
 | `ANTHROPIC_API_KEY` | — | Enables enrichment (read without the `ANNETTE_` prefix, the name Anthropic tools use; blank = unset). Never logged |
 | `ANNETTE_LLM_MODEL` | `claude-haiku-4-5` | Anthropic model for enrichment |
 | `ANNETTE_ENRICH_DAILY_LIMIT` | `200` | Successful suggestions per user and UTC day |
-| `ANNETTE_VAPID_PUBLIC_KEY` / `_PRIVATE_KEY` | — | Enables Web Push |
+| `ANNETTE_VAPID_PUBLIC_KEY` / `_PRIVATE_KEY` | — | Enables Web Push reminders when both are set (blank = unset): a P-256 key pair, base64url (uncompressed public point, 32-byte private scalar; generating them: `deploy/README.md`). The server does not start when the public key is not the private key's. The private key is never logged; `ANNETTE_PUBLIC_URL` is the VAPID contact |
 | `ANNETTE_LOG_FORMAT` | `pretty` in debug builds, `json` in release | Log output format (`pretty` \| `json`) |
 | `RUST_LOG` | `info` | Log filter |
 
@@ -911,8 +923,26 @@ Deployment-only variables (not read by the server):
 | Task | Interval | Action |
 | --- | --- | --- |
 | Session cleanup | hourly, first run at startup | Delete expired sessions |
-| Reminders | every minute | For users whose reminder time (in their tz) is now and who have due cards, send Web Push |
+| Reminders | every minute (`MissedTickBehavior::Skip`), only with VAPID keys | See below |
 | Purge | daily | Physically delete rows soft-deleted > 90 days ago and orphaned audio |
+
+**Reminder selection** (`push/reminders.rs`, UC-23). Candidates: users whose settings document has
+`reminder.enabled = true` and who have at least one push subscription. A candidate is reminded when all hold:
+
+1. the current minute in `reminder.tz` (IANA name, set by the device that turned reminders on or changed the time)
+   equals `reminder.time` (`HH:MM`); on DST days the local time is used, so 20:00 still comes once;
+2. the user was not reminded yet on that local date (kept in memory by the task: a repeated hour after a DST change
+   back, or two ticks in one minute, send nothing more; a server restart within the reminder minute may send twice);
+3. at least one card is due for review: a non-deleted `card_states` row with `state <> 0` (New cards are not
+   reviews) and `due <= now`, in a direction the deck studies, of a non-deleted card in a deck that is neither
+   deleted nor archived;
+4. no non-deleted `review_log` row since the start of the current study day: `day_start_hour` (default 4) o'clock
+   in `reminder.tz`, today or, before that hour, yesterday (an hour that does not exist on a DST day moves one hour
+   later). Practice answers count as studying.
+
+Every query names the user. The payload is `{ "type": "reminder", "due": <count from 3> }` with a TTL of 1 hour; it
+goes to each of the user's subscriptions. 404/410 from the push service delete that subscription; other errors are
+logged and the task goes on.
 
 ## 12. Deployment
 

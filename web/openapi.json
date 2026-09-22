@@ -935,6 +935,122 @@
         }
       }
     },
+    "/api/push/subscribe": {
+      "post": {
+        "tags": [
+          "push"
+        ],
+        "summary": "Stores this browser's push subscription for the daily reminder. Subscribing the same endpoint again replaces\nits keys (and moves it to the current user when another account had it).",
+        "operationId": "subscribe",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PushSubscriptionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Stored"
+          },
+          "400": {
+            "description": "`validation_failed`: not a known push service or malformed keys",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`push_disabled`: no VAPID keys on this server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "push"
+        ],
+        "summary": "Removes this browser's subscription (reminders turned off, or sign-out).",
+        "operationId": "unsubscribe",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnsubscribeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Removed"
+          },
+          "401": {
+            "description": "`unauthorized`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: the user has no subscription with this endpoint",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`push_disabled`: no VAPID keys on this server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      }
+    },
     "/api/sync/pull": {
       "get": {
         "tags": [
@@ -1804,6 +1920,13 @@
           "features": {
             "$ref": "#/components/schemas/Features"
           },
+          "vapid_public_key": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "VAPID public key (base64url) for `pushManager.subscribe`; `null` when push is disabled."
+          },
           "version": {
             "type": "string",
             "description": "Server version (Cargo package version)."
@@ -1830,6 +1953,23 @@
           "has_more": {
             "type": "boolean",
             "description": "Another page follows."
+          }
+        }
+      },
+      "PushKeysDto": {
+        "type": "object",
+        "required": [
+          "p256dh",
+          "auth"
+        ],
+        "properties": {
+          "auth": {
+            "type": "string",
+            "description": "Auth secret of the browser, base64url (16 bytes)."
+          },
+          "p256dh": {
+            "type": "string",
+            "description": "P-256 public key of the browser, base64url (65 bytes)."
           }
         }
       },
@@ -1876,6 +2016,23 @@
           "skipped": {
             "$ref": "#/components/schemas/EntityIds",
             "description": "Not written because the server's row wins last-write-wins (or is identical); the client gets it on pull."
+          }
+        }
+      },
+      "PushSubscriptionDto": {
+        "type": "object",
+        "description": "`PushSubscription.toJSON()` of the browser, without `expirationTime`.",
+        "required": [
+          "endpoint",
+          "keys"
+        ],
+        "properties": {
+          "endpoint": {
+            "type": "string",
+            "description": "The push service URL of this browser."
+          },
+          "keys": {
+            "$ref": "#/components/schemas/PushKeysDto"
           }
         }
       },
@@ -2082,6 +2239,17 @@
           "review_log",
           "settings"
         ]
+      },
+      "UnsubscribeRequest": {
+        "type": "object",
+        "required": [
+          "endpoint"
+        ],
+        "properties": {
+          "endpoint": {
+            "type": "string"
+          }
+        }
       }
     },
     "securitySchemes": {

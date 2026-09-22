@@ -108,6 +108,16 @@
     "listeningAnswers": {
       "choose": "Choose",
       "type": "Type"
+    },
+    "reminders": {
+      "title": "Reminders",
+      "enable": "Daily reminder",
+      "time": "Time",
+      "hint": "A notification at this time when words are due and you have not studied today.",
+      "install": "Install the app to get reminders: Share → Add to Home Screen.",
+      "signIn": "Sign in to get reminders.",
+      "denied": "Notifications are turned off for Annette. Allow them in Settings → Notifications → Annette, then try again.",
+      "unsupported": "This browser cannot show reminders."
     }
   },
   "languages": {
@@ -679,6 +689,7 @@
     "provider_timeout": "The service took too long to answer. Try again later.",
     "enrich_disabled": "AI suggestions are not available on this server.",
     "enrich_quota_exceeded": "Daily AI limit reached, try tomorrow.",
+    "push_disabled": "Reminders are not set up on this server.",
     "internal_error": "Something went wrong on the server. Try again later.",
     "service_unavailable": "The server is unavailable. Try again later.",
     "network": "Cannot reach the server. Check your connection.",
@@ -795,5 +806,12 @@
     "dayAnswers_other": "{{date}}: {{count}} answers",
     "less": "Less",
     "more": "More"
+  },
+  "notifications": {
+    "reminder": {
+      "title": "Time to review",
+      "body_one": "{{count}} word to review",
+      "body_other": "{{count}} words to review"
+    }
   }
 }

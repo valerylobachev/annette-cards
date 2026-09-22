@@ -3,5 +3,6 @@ export * from './audio/audio.ts';
 export * from './auth/auth.ts';
 export * from './backup/backup.ts';
 export * from './enrich/enrich.ts';
+export * from './push/push.ts';
 export * from './sync/sync.ts';
 export * from './system/system.ts';

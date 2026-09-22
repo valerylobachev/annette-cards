@@ -403,7 +403,7 @@ steps of 10, day start 00:00–23:00); retention is a slider 0.80–0.95.
   FSRS weights (Phase 4: "Optimize" button, last optimized date).
 - **Audio:** autoplay (Off / Front / Front and answer), speech rate, "Download audio for offline" (this device:
   after each sync, clips of active decks are saved), **Voices** → S-16.
-- **Reminders:** enable, time; requires installed PWA (else explanation).
+- **Reminders** (hidden when the server has no push): "Daily reminder" switch and, when on, a time picker (native `<input type="time">`). The switch shows whether this device receives reminders (account setting on and a push subscription here). Disabled with an explanation instead of the hint when: not installed ("Install the app to get reminders: Share → Add to Home Screen"), no push support, signed out ("Sign in to get reminders"), offline ("Available online"). Turning on asks for notification permission first (iOS allows the prompt only in the tap); denied → the switch stays off with "Notifications are turned off for Annette. Allow them in Settings → Notifications → Annette". Turning off stops reminders for the account and removes this device's subscription. A new time is saved with this device's current time zone.
 - **Appearance:** theme (System / Light / Dark), UI language (Русский / English).
 - **Data:** Export (JSON full backup, CSV per deck), Import backup, storage usage (`navigator.storage.estimate()`,
   "12.5 MB of 2 GB"), number of saved audio clips, "Clear cached audio" (confirm sheet).

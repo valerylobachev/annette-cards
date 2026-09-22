@@ -2,6 +2,7 @@ import { logout } from '@/api/endpoints/auth/auth'
 import { wipeLocalData } from '@/db/localData'
 import { db } from '@/db/schema'
 import { callApi } from '@/lib/api'
+import { removeSubscription } from '../settings/reminders'
 import { syncNow, waitForIdle } from '../sync/engine'
 import { clearAccount } from './account'
 
@@ -15,13 +16,14 @@ export async function unsyncedBeforeSignOut(): Promise<number> {
 }
 
 /**
- * Signs out (UC-03): stops syncing, revokes the session on the server (ignored when offline), removes the account's
- * data from this device (`wipeLocalData`) and the cached files except the app itself (the service worker's precache
+ * Signs out (UC-03): stops syncing, removes this device's reminder subscription (UC-23), revokes the session on the
+ * server (both ignored when offline), removes the account's data from this device (`wipeLocalData`) and the cached files except the app itself (the service worker's precache
  * stays, so the app still opens offline).
  */
 export async function signOut(): Promise<void> {
   await clearAccount()
   await waitForIdle()
+  await removeSubscription()
   try {
     await callApi(() => logout())
   } catch {

@@ -9,6 +9,11 @@ import type { Features } from './features.ts';
 
 export interface MetaResponse {
   features: Features;
+  /**
+     * VAPID public key (base64url) for `pushManager.subscribe`; `null` when push is disabled.
+     * @nullable
+     */
+  vapid_public_key?: string | null;
   /** Server version (Cargo package version). */
   version: string;
 }
