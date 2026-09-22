@@ -38,6 +38,16 @@ export function updateSettings(patch: Partial<Settings>): Promise<Settings> {
   return mutate(['settings'], (ctx) => writeSettings(ctx, patch))
 }
 
+/** Applies optimized FSRS weights (UC-30): both fields in one write, synced to the other devices. */
+export function applyFsrsWeights(weights: number[], now: number = Date.now()): Promise<Settings> {
+  return updateSettings({ fsrs_weights: weights, fsrs_optimized_at: now })
+}
+
+/** Back to the ts-fsrs default weights. */
+export function resetFsrsWeights(): Promise<Settings> {
+  return updateSettings({ fsrs_weights: null, fsrs_optimized_at: null })
+}
+
 /** `updateSettings` inside the caller's transaction (which must include `settings`); `patch` must be valid. */
 export async function writeSettings(ctx: WriteContext, patch: Partial<Settings>): Promise<Settings> {
   const stored = await ctx.db.settings.get(SETTINGS_ID)

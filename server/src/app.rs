@@ -37,7 +37,7 @@ use crate::{
     config::Config,
     enrich::{self, Enricher, anthropic::AnthropicEnricher},
     error::ErrorBody,
-    health,
+    fsrs, health,
     push::{self, PushSender, sender::WebPushSender},
     security::{self, PerUserLimit, UuidV7RequestId},
     static_files, sync,
@@ -64,6 +64,8 @@ pub struct AppState {
     pub enrich_limit: PerUserLimit,
     /// The Web Push sender; `None` without VAPID keys (`features.push = false`).
     pub push: Option<Arc<dyn PushSender>>,
+    /// Per-user limit of `POST /api/fsrs/optimize`.
+    pub fsrs_limit: PerUserLimit,
 }
 
 impl AppState {
@@ -111,6 +113,7 @@ impl AppState {
             audio_limit: PerUserLimit::new(security::AUDIO_REQUESTS_PER_HOUR, HOUR_MS),
             enricher,
             enrich_limit: PerUserLimit::new(security::ENRICH_REQUESTS_PER_MINUTE, MINUTE_MS),
+            fsrs_limit: PerUserLimit::new(security::FSRS_OPTIMIZATIONS_PER_HOUR, HOUR_MS),
         })
     }
 }
@@ -178,6 +181,7 @@ fn api_routes() -> OpenApiRouter<Arc<AppState>> {
             push::handlers::subscribe,
             push::handlers::unsubscribe
         ))
+        .routes(routes!(fsrs::handlers::optimize))
 }
 
 fn sync_routes() -> OpenApiRouter<Arc<AppState>> {

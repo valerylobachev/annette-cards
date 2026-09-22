@@ -34,6 +34,9 @@ pub enum AppError {
     /// The user's daily AI enrichment quota is used up; it resets at 00:00 UTC.
     #[error("enrich quota exceeded")]
     EnrichQuotaExceeded,
+    /// Too few reviews to fit FSRS parameters; `details: { count, required }`.
+    #[error("not enough reviews: {count} of {required}")]
+    NotEnoughReviews { count: i64, required: i64 },
     #[error("not found")]
     NotFound,
     /// The request conflicts with existing data; the code says how (`email_taken`, …).
@@ -72,6 +75,7 @@ impl AppError {
             AppError::RateLimited | AppError::EnrichQuotaExceeded => StatusCode::TOO_MANY_REQUESTS,
             AppError::NotFound => StatusCode::NOT_FOUND,
             AppError::Conflict(_) => StatusCode::CONFLICT,
+            AppError::NotEnoughReviews { .. } => StatusCode::UNPROCESSABLE_ENTITY,
             AppError::ServiceUnavailable => StatusCode::SERVICE_UNAVAILABLE,
             AppError::ProviderError => StatusCode::BAD_GATEWAY,
             AppError::ProviderTimeout => StatusCode::GATEWAY_TIMEOUT,
@@ -90,10 +94,21 @@ impl AppError {
             AppError::RateLimited => "rate_limited",
             AppError::EnrichQuotaExceeded => "enrich_quota_exceeded",
             AppError::NotFound => "not_found",
+            AppError::NotEnoughReviews { .. } => "not_enough_reviews",
             AppError::ServiceUnavailable => "service_unavailable",
             AppError::ProviderError => "provider_error",
             AppError::ProviderTimeout => "provider_timeout",
             AppError::Database(_) | AppError::Internal(_) => "internal_error",
+        }
+    }
+
+    /// Machine-readable details for the client (numbers it shows in its own message), `None` for most codes.
+    fn details(&self) -> Option<serde_json::Value> {
+        match self {
+            AppError::NotEnoughReviews { count, required } => {
+                Some(serde_json::json!({ "count": count, "required": required }))
+            }
+            _ => None,
         }
     }
 }
@@ -107,7 +122,7 @@ impl IntoResponse for AppError {
         }
         let body = ErrorBody {
             code: self.code().to_string(),
-            details: None,
+            details: self.details(),
         };
         (status, Json(body)).into_response()
     }
@@ -143,6 +158,20 @@ mod tests {
         let (status, body) = response_parts(AppError::Unauthorized).await;
         assert_eq!(status, StatusCode::UNAUTHORIZED);
         assert_eq!(body["code"], "unauthorized");
+    }
+
+    #[tokio::test]
+    async fn details_carry_the_numbers_of_the_error() {
+        let error = AppError::NotEnoughReviews {
+            count: 999,
+            required: 1000,
+        };
+        let (status, body) = response_parts(error).await;
+        assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(
+            body,
+            serde_json::json!({ "code": "not_enough_reviews", "details": { "count": 999, "required": 1000 } })
+        );
     }
 
     #[tokio::test]

@@ -1,0 +1,69 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT card_id, direction, rating, reviewed_at,\n                  COALESCE(json_extract(state_before, '$.state'), 0) AS \"state_before!: i64\"\n           FROM review_log\n           WHERE user_id = ? AND deleted_at IS NULL AND practice = 0\n           ORDER BY card_id, direction, reviewed_at",
+  "describe": {
+    "columns": [
+      {
+        "name": "card_id",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "review_log",
+            "name": "card_id"
+          }
+        }
+      },
+      {
+        "name": "direction",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "review_log",
+            "name": "direction"
+          }
+        }
+      },
+      {
+        "name": "rating",
+        "ordinal": 2,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "review_log",
+            "name": "rating"
+          }
+        }
+      },
+      {
+        "name": "reviewed_at",
+        "ordinal": 3,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "review_log",
+            "name": "reviewed_at"
+          }
+        }
+      },
+      {
+        "name": "state_before!: i64",
+        "ordinal": 4,
+        "type_info": "Null",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "8f1d6b48809d60e3c82e2de0096aacb20aaaf3ecfd86c5ed1b260f0427722e1a"
+}

@@ -490,12 +490,15 @@ settings and synced.
 
 **Actor:** Learner · **Screens:** S-14
 
-**Preconditions:** At least ~1 000 review log entries; signed in, online.
+**Preconditions:** At least 1 000 answers in the review log (undone and practice answers do not count); signed in,
+online.
 
 **Main flow:**
 1. Learner taps "Optimize" in study settings.
 2. Server runs the FSRS optimizer on the Learner's review log and returns weights with a comparison of predicted
    log loss (default vs optimized).
 3. Learner applies the weights; they are stored in settings and used for future scheduling on all devices.
+   Intervals already scheduled stay until the next answer to each card.
 
-**Alternatives:** Not enough reviews → message with the current count and the required minimum.
+**Alternatives:** Not enough reviews → message with the current count and the required minimum. The comparison is
+not better → the Learner cancels; nothing changes. "Reset to default" returns to the default weights.

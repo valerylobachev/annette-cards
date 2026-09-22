@@ -1,3 +1,4 @@
+import { validWeights } from './fsrs'
 import type { Settings } from './types'
 import type { FieldError } from './validation'
 
@@ -10,6 +11,7 @@ export const DEFAULT_SETTINGS: Settings = {
   answer_mode: 'simple',
   desired_retention: 0.9,
   fsrs_weights: null,
+  fsrs_optimized_at: null,
   autoplay: 'front',
   reminder: { enabled: false, time: '20:00', tz: 'Europe/Riga' },
   default_directions: 'both',
@@ -37,9 +39,13 @@ export const SETTINGS_LIMITS = {
 type LimitedField = keyof typeof SETTINGS_LIMITS
 const INTEGER_FIELDS: LimitedField[] = ['new_per_day', 'max_reviews_per_day', 'day_start_hour']
 
-/** Errors of a settings change: numbers outside their range (`SETTINGS_LIMITS`) or not whole where required. */
+/**
+ * Errors of a settings change: numbers outside their range (`SETTINGS_LIMITS`) or not whole where required, and
+ * FSRS weights that are not 21 finite numbers.
+ */
 export function validateSettingsPatch(patch: Partial<Settings>): FieldError[] {
   const errors: FieldError[] = []
+  if (patch.fsrs_weights && !validWeights(patch.fsrs_weights)) errors.push({ field: 'fsrs_weights', code: 'invalid' })
   for (const field of Object.keys(SETTINGS_LIMITS) as LimitedField[]) {
     const value = patch[field]
     if (value === undefined) continue

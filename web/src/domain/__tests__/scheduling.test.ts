@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest'
+import { default_w } from 'ts-fsrs'
+import { describe, expect, it, vi } from 'vitest'
 import { dailyCounters } from '../counters'
 import { createScheduler, fromFsrsCard, nextState, snapshotOf, toFsrsCard } from '../fsrs'
 import { DEFAULT_SETTINGS } from '../settings'
@@ -29,6 +30,19 @@ describe('FSRS wrapper', () => {
     expect(next.state).toBe(3)
     expect(next.lapses).toBe(2)
     expect(next.due - start).toBeLessThan(20 * MINUTE)
+  })
+
+  it('schedules with optimized weights, and ignores weights of the wrong length', () => {
+    const card = review('c', start - MINUTE, { stability: 10, difficulty: 5, last_review: start - 10 * 86_400_000 })
+    const stability = (weights: number[] | null) =>
+      nextState(createScheduler({ ...DEFAULT_SETTINGS, fsrs_weights: weights }), card, 3, start).state.stability
+    const faster = default_w.map((w, i) => (i === 8 ? w * 1.5 : w))
+    expect(stability(faster)).toBeGreaterThan(stability(null))
+
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    expect(stability([1, 2, 3])).toBe(stability(null))
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('FSRS weights ignored'))
+    warn.mockRestore()
   })
 
   it('converts states to ts-fsrs cards and back without loss', () => {

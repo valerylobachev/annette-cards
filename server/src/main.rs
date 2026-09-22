@@ -7,6 +7,7 @@ mod config;
 mod db;
 mod enrich;
 mod error;
+mod fsrs;
 mod health;
 mod json;
 mod push;

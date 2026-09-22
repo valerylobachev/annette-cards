@@ -3,7 +3,7 @@ import { DEFAULT_SETTINGS } from '@/domain/settings'
 import { resetDb } from '@/test/db'
 import { getDeviceId } from './device'
 import { db } from './schema'
-import { getSettings, updateSettings } from './settings'
+import { applyFsrsWeights, getSettings, resetFsrsWeights, updateSettings } from './settings'
 
 beforeEach(resetDb)
 
@@ -41,6 +41,18 @@ describe('settings repository', () => {
     await db.outbox.clear()
     expect((await updateSettings({ listening_answer: 'type' })).listening_answer).toBe('type')
     expect(await db.outbox.toArray()).toMatchObject([{ entity: 'settings', entity_id: 'user' }])
+  })
+
+  it('applies optimized FSRS weights with their date in one change, and resets them', async () => {
+    const weights = Array.from({ length: 21 }, (_, i) => i / 10)
+    await db.outbox.clear()
+    await applyFsrsWeights(weights, 1_790_000_000_000)
+    expect(await db.settings.get('user')).toMatchObject({ fsrs_weights: weights, fsrs_optimized_at: 1_790_000_000_000 })
+    expect(await db.outbox.toArray()).toMatchObject([{ entity: 'settings', entity_id: 'user' }])
+
+    await resetFsrsWeights()
+    expect(await getSettings()).toMatchObject({ fsrs_weights: null, fsrs_optimized_at: null })
+    await expect(applyFsrsWeights([1, 2, 3])).rejects.toThrow()
   })
 
   it('stores only the fields that were set', async () => {

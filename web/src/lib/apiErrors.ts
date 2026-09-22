@@ -27,6 +27,7 @@ export const API_ERROR_CODES = [
   'enrich_disabled',
   'enrich_quota_exceeded',
   'push_disabled',
+  'not_enough_reviews',
   'internal_error',
   'service_unavailable',
   'network',

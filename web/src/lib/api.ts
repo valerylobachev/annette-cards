@@ -7,12 +7,15 @@
 export class ApiError extends Error {
   readonly status: number
   readonly code: string
+  /** The error body's `details` (e.g. `{ count, required }` of `not_enough_reviews`), `null` for most codes. */
+  readonly details: unknown
 
-  constructor(status: number, code: string) {
+  constructor(status: number, code: string, details: unknown = null) {
     super(`API error ${status}: ${code}`)
     this.name = 'ApiError'
     this.status = status
     this.code = code
+    this.details = details
   }
 }
 
@@ -30,7 +33,11 @@ export async function callApi<R extends ApiResponse>(request: () => Promise<R>):
     throw new ApiError(0, 'network')
   }
   if (response.status >= 200 && response.status < 300) return response.data as SuccessData<R>
-  throw new ApiError(response.status, errorCode(response.data))
+  throw new ApiError(response.status, errorCode(response.data), errorDetails(response.data))
+}
+
+function errorDetails(data: unknown): unknown {
+  return typeof data === 'object' && data !== null && 'details' in data ? data.details : null
 }
 
 function errorCode(data: unknown): string {

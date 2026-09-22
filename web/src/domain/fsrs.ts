@@ -1,4 +1,5 @@
 import {
+  default_w,
   type FSRS,
   type Card as FsrsCard,
   type ReviewLog as FsrsReviewLog,
@@ -11,18 +12,35 @@ import type { CardState, CardStateSnapshot, FsrsState, Rating, Settings } from '
 /** Longest interval FSRS may schedule, in days (architecture.md §4.4). */
 export const MAXIMUM_INTERVAL = 36500
 
+/** FSRS-6 parameters: what ts-fsrs 5 takes and the server's optimizer (`fsrs` 6.6) returns. */
+export const FSRS_PARAMETER_COUNT = default_w.length
+
+/** Weights ts-fsrs can use: exactly `FSRS_PARAMETER_COUNT` finite numbers. */
+export function validWeights(weights: unknown): weights is number[] {
+  return (
+    Array.isArray(weights) &&
+    weights.length === FSRS_PARAMETER_COUNT &&
+    weights.every((w) => typeof w === 'number' && Number.isFinite(w))
+  )
+}
+
 /**
- * The FSRS scheduler for the user's settings: desired retention, optimized weights when present (Phase 4),
- * learning/relearning steps and fuzz on.
+ * The FSRS scheduler for the user's settings: desired retention, optimized weights when present and valid (P4-T05;
+ * invalid ones fall back to the defaults with a warning), learning/relearning steps and fuzz on.
  */
 export function createScheduler(settings: Pick<Settings, 'desired_retention' | 'fsrs_weights'>): FSRS {
+  const weights = settings.fsrs_weights
+  const useWeights = weights !== null && validWeights(weights)
+  if (weights !== null && !useWeights) {
+    console.warn(`FSRS weights ignored: expected ${FSRS_PARAMETER_COUNT} numbers, using the defaults`)
+  }
   return fsrs(
     generatorParameters({
       request_retention: settings.desired_retention,
       maximum_interval: MAXIMUM_INTERVAL,
       enable_fuzz: true,
       enable_short_term: true,
-      ...(settings.fsrs_weights ? { w: settings.fsrs_weights } : {}),
+      ...(useWeights ? { w: weights } : {}),
     }),
   )
 }

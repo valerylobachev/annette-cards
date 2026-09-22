@@ -70,7 +70,7 @@ rejected. Versions: use the latest stable release at bootstrap time and pin them
 | Web Push | `web-push-native` (feature `vapid`) | VAPID-signed (RFC 8292), `aes128gcm`-encrypted (RFC 8291) messages, sent with the shared `reqwest` client. Pure Rust (RustCrypto `p256`, `aes-gcm`, `hkdf`; `jwt-simple` pure-rust): the `web-push` crate needs OpenSSL through `ece`, which would break the static musl build |
 | Time zones | `chrono`, `chrono-tz` | The reminder time in the user's IANA time zone, with DST (Phase 4) |
 | Scheduling | `tokio` interval tasks | Reminder dispatch, purge jobs; no cron dependency |
-| FSRS optimizer | `fsrs` (fsrs-rs) | Official optimizer to fit per-user weights (Phase 4) |
+| FSRS optimizer | `fsrs` (fsrs-rs), pinned `=6.6.2` | Official optimizer to fit per-user weights (Phase 4). FSRS-6, 21 parameters, the same version as the client's `ts-fsrs` 5.4 (`default_w.length` = 21); the server refuses a result of another length. Pure Rust on `ndarray` (no `burn` since 6.x). Update both libraries together |
 | Tests | built-in + `#[sqlx::test]`, `tower::ServiceExt` (dev: `tower` with `util`, `http-body-util` to read bodies) | No extra frameworks needed |
 
 ### Why sessions instead of JWT

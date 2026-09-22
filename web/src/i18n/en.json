@@ -118,6 +118,25 @@
       "signIn": "Sign in to get reminders.",
       "denied": "Notifications are turned off for Annette. Allow them in Settings → Notifications → Annette, then try again.",
       "unsupported": "This browser cannot show reminders."
+    },
+    "fsrs": {
+      "title": "FSRS weights",
+      "default": "Default",
+      "optimizedOn": "Optimized on {{date}}",
+      "hint": "Fits the schedule to how you remember. Needs an account and at least 1000 reviews.",
+      "signIn": "Sign in to optimize.",
+      "optimize": "Optimize",
+      "optimizing": "Optimizing…",
+      "reset": "Reset to default",
+      "resultTitle": "Optimized weights",
+      "reviews_one": "Fitted to {{count}} review",
+      "reviews_other": "Fitted to {{count}} reviews",
+      "lossDefault": "Prediction error with the default weights",
+      "lossOptimized": "Prediction error with the optimized weights",
+      "better": "{{value}} more accurate",
+      "notBetter": "Not more accurate than the default weights.",
+      "applyHint": "New weights apply to your next answers; intervals already scheduled stay.",
+      "apply": "Apply"
     }
   },
   "languages": {
@@ -690,6 +709,7 @@
     "enrich_disabled": "AI suggestions are not available on this server.",
     "enrich_quota_exceeded": "Daily AI limit reached, try tomorrow.",
     "push_disabled": "Reminders are not set up on this server.",
+    "not_enough_reviews": "Reviews so far: {{count}}. At least {{required}} are needed.",
     "internal_error": "Something went wrong on the server. Try again later.",
     "service_unavailable": "The server is unavailable. Try again later.",
     "network": "Cannot reach the server. Check your connection.",

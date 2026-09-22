@@ -30,6 +30,7 @@ export * from './inviteSummary.ts';
 export * from './loginRequest.ts';
 export * from './meResponse.ts';
 export * from './metaResponse.ts';
+export * from './optimizeResponse.ts';
 export * from './pullParams.ts';
 export * from './pullResponse.ts';
 export * from './pushKeysDto.ts';

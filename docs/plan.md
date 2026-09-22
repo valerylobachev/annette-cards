@@ -310,9 +310,9 @@ Task: [P4-T04](../dev/impl/phase-04-polish/task-04-reminders.md)
 ### 4.4 FSRS optimization
 Task: [P4-T05](../dev/impl/phase-04-polish/task-05-fsrs-optimization.md)
 
-- [ ] Server endpoint using `fsrs` crate on the user's review log; minimum review count check
-- [ ] Client: Optimize button, comparison display, apply weights to settings
-- [ ] (added) `fsrs_optimized_at` setting (last optimized date in S-14)
+- [x] Server endpoint using `fsrs` crate on the user's review log; minimum review count check
+- [x] Client: Optimize button, comparison display, apply weights to settings
+- [x] (added) `fsrs_optimized_at` setting (last optimized date in S-14)
 
 ### 4.5 Quality
 Tasks: [P4-T06](../dev/impl/phase-04-polish/task-06-accessibility-performance.md) · [P4-T07](../dev/impl/phase-04-polish/task-07-purge-docs.md)

@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { setMeta } from '@/db/meta'
@@ -141,7 +141,8 @@ describe('Reminders', () => {
     installPush('granted')
     setOnline(false)
     const toggle = await openSettings()
-    expect(await screen.findByText('Available online')).toBeInTheDocument()
+    const row = toggle.parentElement as HTMLElement
+    expect(await within(row).findByText('Available online')).toBeInTheDocument()
     expect(toggle).toBeDisabled()
   })
 })

@@ -807,6 +807,62 @@
         ]
       }
     },
+    "/api/fsrs/optimize": {
+      "post": {
+        "tags": [
+          "fsrs"
+        ],
+        "summary": "Fits FSRS parameters to the user's review history (UC-30). Only answers that are not undone and not practice\ncount; at least 1 000 are needed. Returns the weights and log losses; the client decides whether to apply them.",
+        "operationId": "optimize",
+        "responses": {
+          "200": {
+            "description": "Fitted parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OptimizeResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`not_enough_reviews`, `details: { count, required }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`rate_limited`: more than 3 optimizations an hour",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      }
+    },
     "/api/health": {
       "get": {
         "tags": [
@@ -1930,6 +1986,41 @@
           "version": {
             "type": "string",
             "description": "Server version (Cargo package version)."
+          }
+        }
+      },
+      "OptimizeResponse": {
+        "type": "object",
+        "description": "Fitted FSRS-6 parameters and how well they explain the history compared with the defaults. Nothing is saved: the\nlearner applies the weights on the device.",
+        "required": [
+          "weights",
+          "log_loss_default",
+          "log_loss_optimized",
+          "review_count"
+        ],
+        "properties": {
+          "log_loss_default": {
+            "type": "number",
+            "format": "double",
+            "description": "Log loss of the default parameters on the history (lower is better)."
+          },
+          "log_loss_optimized": {
+            "type": "number",
+            "format": "double",
+            "description": "Log loss of the fitted parameters on the same history."
+          },
+          "review_count": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Answers used: not undone, not practice."
+          },
+          "weights": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "format": "float"
+            },
+            "description": "The 21 FSRS-6 parameters (`ts-fsrs` `w`)."
           }
         }
       },

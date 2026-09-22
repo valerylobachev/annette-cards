@@ -20,6 +20,7 @@ import { useOnline } from '@/lib/useOnline'
 import { AudioSettingsSection } from './AudioSettingsSection'
 import { RecordingAttributions } from './AudioStorage'
 import { DataSection } from './DataSection'
+import { FsrsWeightsRow } from './FsrsWeightsRow'
 import { ReminderSection } from './ReminderSection'
 import { NumberSelect, Segmented, SettingsGroup, SettingsRow, useSettingsDraft } from './SettingsList'
 
@@ -167,6 +168,7 @@ function StudyGroup() {
           className="h-11 accent-primary"
         />
       </SettingsRow>
+      <FsrsWeightsRow />
       <p className="px-4 py-3 text-sm text-muted-foreground">{t('settings.changesNextSession')}</p>
     </SettingsGroup>
   )

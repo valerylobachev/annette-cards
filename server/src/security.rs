@@ -128,6 +128,9 @@ pub const AUDIO_REQUESTS_PER_HOUR: usize = 60;
 /// `POST /api/enrich`: at most 20 requests a minute per user, on top of the daily quota (architecture.md §8).
 pub const ENRICH_REQUESTS_PER_MINUTE: usize = 20;
 
+/// `POST /api/fsrs/optimize`: 3 optimizations an hour per user (each takes seconds of CPU).
+pub const FSRS_OPTIMIZATIONS_PER_HOUR: usize = 3;
+
 impl PerUserLimit {
     pub fn new(max: usize, window_ms: i64) -> Self {
         Self {

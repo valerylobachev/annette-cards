@@ -125,7 +125,10 @@ transaction per page together with `sync_cursor`, never outboxed and never annou
 
 **FSRS.** `ts-fsrs` with `enable_short_term = true` (learning/relearning steps), `request_retention` from settings
 (default 0.90), `maximum_interval` 36500 days, fuzz enabled. Weights default to ts-fsrs defaults and can be
-replaced by optimized weights (Phase 4).
+replaced by optimized weights (P4-T05, UC-30): the server fits them (`POST /api/fsrs/optimize`), the learner applies
+them in S-14, and `fsrs_weights` + `fsrs_optimized_at` are written to the settings document in one change (synced
+to every device). The scheduler uses them from the next answer on; scheduled due dates stay. Weights that are not 21
+finite numbers (FSRS-6) are ignored with a console warning. **Reset to default** sets both fields to `null`.
 
 **Directions.** Each card has up to two states: `forward` (see studied word → recall translation) and `reverse`
 (see translation → recall studied word). The deck setting decides which directions are active. Every card write
@@ -318,7 +321,7 @@ flowchart TD
 | `audio/` | `TtsProvider` trait (Azure impl), Commons lookup, `audio_assets` storage and serving |
 | `enrich/` | `Enricher` trait (Anthropic impl), prompt, JSON validation, daily quota |
 | `push/` | Web Push subscriptions, VAPID, reminder task |
-| `fsrs/` | Weight optimization from review logs (Phase 4) |
+| `fsrs/` | Weight optimization from review logs (Phase 4): log rows → training items (`items.rs`), fitting with the `fsrs` crate on a blocking thread (`service.rs`) |
 | `admin/` | Invite management (CLI + admin-only endpoints); the invite code generator |
 | `security.rs` | Origin check, per-IP rate limits, security headers, request ids |
 | `static_files.rs` | Serve embedded PWA with SPA fallback and cache headers |
@@ -375,6 +378,17 @@ base64url, else 400 `validation_failed`. The row is upserted by endpoint: the sa
 to the current user. `DELETE /api/push/subscribe { "endpoint": "…" }` → 204, or 404 `not_found` when the current user
 has no such subscription. Both answer 409 `push_disabled` without VAPID keys. `GET /api/meta` adds
 `vapid_public_key` (base64url, `null` when push is off) for `pushManager.subscribe`.
+
+**FSRS optimization** (P4-T05). `POST /api/fsrs/optimize` (no body) → 200
+`{ "weights": [21 numbers], "log_loss_default": 0.41, "log_loss_optimized": 0.37, "review_count": 1234 }`. It uses
+the user's `review_log` rows that are not undone and not practice (`deleted_at IS NULL AND practice = 0`); with
+fewer than 1 000 → 422 `not_enough_reviews` with `details: { "count": n, "required": 1000 }` (also when no card has
+two answers on different study days). Each card direction is one history in answer order; `delta_t` is the number of
+study days since the previous answer (`day_start_hour` in the time zone of `reminder.tz`, else UTC). Histories whose
+first log is not an answer to a New card are left out; every prefix that ends on a later study day is a training
+item. The fit runs on a blocking thread (seconds of CPU) with short-term steps and one relearning step, like the
+client scheduler; the log losses compare default and fitted parameters on the same items. Nothing is stored. At most
+3 requests an hour per user (429 `rate_limited`).
 
 Error response: `{ "code": "invalid_credentials", "details": null }` with the appropriate HTTP status. A request
 body that is not valid JSON of the expected shape is 400 `validation_failed`; a body over the route's limit is 413
@@ -632,6 +646,7 @@ CREATE INDEX idx_push_subscriptions_user ON push_subscriptions(user_id);
   "answer_mode": "simple",
   "desired_retention": 0.9,
   "fsrs_weights": null,
+  "fsrs_optimized_at": null,
   "autoplay": "front",
   "reminder": { "enabled": false, "time": "20:00", "tz": "Europe/Riga" },
   "default_directions": "both",
@@ -641,6 +656,8 @@ CREATE INDEX idx_push_subscriptions_user ON push_subscriptions(user_id);
 ```
 
 - `answer_mode`: `simple` | `detailed`; `autoplay`: `off` | `front` | `front_and_back` (UI: Off / Front / Front and answer).
+- `fsrs_weights`: 21 FSRS-6 weights from `POST /api/fsrs/optimize`, or `null` for the ts-fsrs defaults;
+  `fsrs_optimized_at`: when they were applied (ms), `null` with the defaults (§4.4).
 - `default_directions` (`forward` | `reverse` | `both`): directions preselected for a new deck.
 - `show_ipa_on_front`: show the IPA with the studied word on the front of a study card.
 - Missing fields fall back to these defaults (`web/src/domain/settings.ts`), so older documents stay valid.

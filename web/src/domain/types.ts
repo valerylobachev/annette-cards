@@ -104,7 +104,10 @@ export type Settings = {
   max_reviews_per_day: number
   answer_mode: AnswerMode
   desired_retention: number
+  /** Optimized FSRS-6 weights (21 numbers, P4-T05); `null` = ts-fsrs defaults. */
   fsrs_weights: number[] | null
+  /** When `fsrs_weights` were applied (ms); `null` with the defaults. */
+  fsrs_optimized_at: number | null
   autoplay: Autoplay
   reminder: { enabled: boolean; time: string; tz: string }
   /** Default directions for new decks (decision D3). */
