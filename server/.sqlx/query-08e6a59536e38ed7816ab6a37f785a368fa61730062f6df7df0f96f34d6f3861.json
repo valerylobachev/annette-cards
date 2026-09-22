@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM audio_assets WHERE card_id IN (\n           SELECT id FROM cards WHERE deleted_at < ?1\n             OR deck_id IN (SELECT id FROM decks WHERE deleted_at < ?1))",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "08e6a59536e38ed7816ab6a37f785a368fa61730062f6df7df0f96f34d6f3861"
+}

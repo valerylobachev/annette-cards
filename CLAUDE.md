@@ -54,12 +54,12 @@ annette-cards/
 │   ├── bacon.toml        # `serve` job for just dev / dev-server
 │   ├── tests/fixtures/   # embedded-files fixture for static_files tests
 │   └── src/
-│       ├── main.rs       # clap CLI: serve | create-user | invite | openapi
+│       ├── main.rs       # clap CLI: serve | create-user | invite | openapi | purge
 │       ├── app.rs        # AppState, router assembly, OpenAPI, middleware
 │       ├── config.rs  error.rs  db.rs  clock.rs
 │       ├── security.rs   # Origin check, rate limits, security headers, request ids
 │       ├── health.rs     # GET /api/health, GET /api/meta
-│       ├── auth/  sync/  audio/  enrich/  push/  admin/  fsrs/
+│       ├── auth/  sync/  audio/  enrich/  push/  admin/  fsrs/  purge/
 │       └── static_files.rs   # embedded PWA (rust-embed)
 └── deploy/               # Caddyfile, systemd units, env templates, litestream.yml, README (provision, deploy, restore)
 ```
@@ -81,6 +81,7 @@ and `sqlx-prepare`; `lint`, `test` and CI compile against the committed `.sqlx/`
 | `just dev-https` | Vite over HTTPS on the LAN for testing on iPhone |
 | `just test` | `cargo test` + `pnpm vitest run` |
 | `just e2e` | Playwright tests (WebKit project is mandatory) |
+| `just screenshots` | README and user-guide screenshots into `docs/images/` (Playwright `screenshots` project, only with `SCREENSHOTS=1`) |
 | `just lint` | `cargo clippy --all-targets -- -D warnings`, `cargo fmt --check`, `pnpm biome check`, `pnpm tsc --noEmit` (app, then the service worker with `-p tsconfig.sw.json`) |
 | `just fmt` | Format Rust and TS |
 | `just gen-api` | `server openapi > web/openapi.json` then `pnpm orval` |
@@ -112,7 +113,8 @@ Definition of done: code + tests + lint clean + docs updated + works offline in 
 - **Every local mutation** sets `updated_at` (ms since epoch), `updated_by` (device id) and adds an outbox entry,
   inside one Dexie transaction.
 - **IDs are UUIDv7**, generated on the client (or server for server-only entities).
-- **Deletes are soft** (`deleted_at`) for all synced entities. Physical purge only by server maintenance job.
+- **Deletes are soft** (`deleted_at`) for all synced entities. Physical purge only by the server maintenance job
+  (`server/src/purge/`: daily in `serve` and the `purge` CLI subcommand).
 - **`review_log` is append-only.** The only allowed change is a soft delete for "undo last answer".
 - **FSRS scheduling runs on the client** (`ts-fsrs`). The server never recalculates intervals; it only stores
   states and logs and (Phase 4) optimizes FSRS weights.

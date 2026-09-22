@@ -10,6 +10,7 @@ mod error;
 mod fsrs;
 mod health;
 mod json;
+mod purge;
 mod push;
 mod security;
 mod static_files;
@@ -75,6 +76,15 @@ enum Command {
     },
     /// Print the OpenAPI spec (JSON) to stdout
     Openapi,
+    /// Physically delete rows soft-deleted long ago and audio no card uses (also runs daily inside `serve`)
+    Purge {
+        /// Count what would be deleted, then roll back
+        #[arg(long)]
+        dry_run: bool,
+        /// Delete rows soft-deleted more than this many days ago
+        #[arg(long, default_value_t = purge::RETENTION_DAYS, value_parser = clap::value_parser!(u32).range(1..))]
+        older_than_days: u32,
+    },
 }
 
 #[tokio::main]
@@ -92,6 +102,10 @@ async fn main() -> anyhow::Result<()> {
             create_invite(note.as_deref(), days, by.as_deref()).await
         }
         Command::Openapi => print_openapi(),
+        Command::Purge {
+            dry_run,
+            older_than_days,
+        } => run_purge(dry_run, older_than_days).await,
     }
 }
 
@@ -114,6 +128,7 @@ async fn serve() -> anyhow::Result<()> {
     tracing::info!(address = %config.bind, version = env!("CARGO_PKG_VERSION"), "listening");
 
     auth::spawn_session_cleanup(pool.clone());
+    purge::spawn_daily_purge(pool.clone());
     tracing::info!(
         tts = config.tts_enabled(),
         commons = config.commons_enabled,
@@ -212,6 +227,19 @@ async fn create_invite(note: Option<&str>, days: i64, by: Option<&str>) -> anyho
         None => println!("Link: set ANNETTE_PUBLIC_URL to print the full registration link"),
     }
     println!("Expires in {days} days.");
+    Ok(())
+}
+
+async fn run_purge(dry_run: bool, older_than_days: u32) -> anyhow::Result<()> {
+    let (_, pool) = open_database().await?;
+    let report = purge::purge(&pool, clock::now_ms(), older_than_days, dry_run)
+        .await
+        .map_err(|err| anyhow::anyhow!("purge failed: {err}"))?;
+    if dry_run {
+        println!("Dry run, nothing deleted. Would delete: {report}");
+    } else {
+        println!("Deleted: {report}");
+    }
     Ok(())
 }
 

@@ -50,6 +50,10 @@ test:
 e2e:
     cd web && pnpm playwright test
 
+# README and user-guide screenshots (docs/images/, WebKit on an iPhone viewport)
+screenshots:
+    cd web && SCREENSHOTS=1 pnpm playwright test --project screenshots
+
 # clippy, rustfmt, biome, tsc
 lint:
     cd server && cargo clippy --all-targets -- -D warnings

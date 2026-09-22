@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM cards WHERE deleted_at < ?1\n           OR deck_id IN (SELECT id FROM decks WHERE deleted_at < ?1)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "f0320b6fe1bbd529a2e472ee2537fa56175025cd41e4d99f5e2f4c11f2f1d809"
+}

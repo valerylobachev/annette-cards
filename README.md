@@ -6,10 +6,20 @@ Annette Cards is a Duocards-style flashcard app built as an offline-first Progre
 backend. Import your word lists from CSV/TSV, swipe through cards, hear every word pronounced, and let the FSRS
 algorithm decide when you should see each word again.
 
-> **Status:** Phase 1 (local MVP) implemented and verified by automated tests: the app works fully offline;
-> the real-iPhone acceptance check is pending. Phase 2 (invite-only accounts, sync between devices, deployment to the
-> VPS with backups) is complete. Phase 3 (server audio: generated
-> pronunciation and Wikimedia recordings; AI enrichment) is complete (see [`docs/plan.md`](docs/plan.md)).
+> **Status:** all four phases are implemented (see [`docs/plan.md`](docs/plan.md)): the offline app with swipe,
+> choice, listening and typing modes; accounts and sync; server audio and AI suggestions; statistics, reminders,
+> FSRS optimization and the maintenance purge. Open before Phase 4 is closed: the VoiceOver pass on a real iPhone
+> and 30 days of daily use (the phase acceptance).
+
+<p>
+  <img src="docs/images/today-en.png" alt="Today" width="180">
+  <img src="docs/images/study-en.png" alt="Swipe study" width="180">
+  <img src="docs/images/deck-en.png" alt="Deck detail" width="180">
+  <img src="docs/images/statistics-en.png" alt="Statistics" width="180">
+  <img src="docs/images/settings-en.png" alt="Settings" width="180">
+</p>
+
+How to use the app: the user guide [in English](docs/user-guide/en.md) and [in Russian](docs/user-guide/ru.md).
 
 ## Features
 
@@ -85,6 +95,7 @@ just gen-api    # regenerate TS client from the server's OpenAPI spec
 just build      # production build with embedded PWA
 just release    # static Linux binary (x86_64 musl)
 just deploy     # ship to the VPS
+just screenshots  # regenerate docs/images/ (README and user guide)
 ```
 
 ## Import format
@@ -125,11 +136,14 @@ Without a header row, column 1 is `front`, column 2 is `back` and the other colu
 
 One binary contains the API and the PWA. On the VPS it runs under systemd behind Caddy (automatic HTTPS), with
 the SQLite database continuously replicated to S3-compatible storage by Litestream. `just deploy` builds the static
-binary, uploads it and switches to it; `just rollback <version>` goes back. Provisioning, deploy, logs, backups and
-restore: [`deploy/README.md`](deploy/README.md); design: [`docs/architecture.md`](docs/architecture.md#12-deployment).
+binary, uploads it and switches to it; `just rollback <version>` goes back. Once a day the server deletes rows
+soft-deleted more than 90 days ago and unused audio clips (`annette-cards purge --dry-run` shows what it would
+delete). Provisioning, deploy, logs, backups and restore: [`deploy/README.md`](deploy/README.md); design:
+[`docs/architecture.md`](docs/architecture.md#12-deployment).
 
 ## Documentation
 
+- User guide: [English](docs/user-guide/en.md) · [Русский](docs/user-guide/ru.md)
 - [UI/UX](docs/ui_ux.md)
 - [Use cases](docs/use_cases.md)
 - [Tech stack](docs/tech_stack.md)

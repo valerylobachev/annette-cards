@@ -485,6 +485,8 @@ settings and synced.
   file.
 - **Restore:** stop the service, `litestream restore` the database, start the service.
 - **Monitor:** `/api/health` checked by an uptime monitor; logs via `journalctl -u annette-cards`.
+- **Purge:** the server deletes rows soft-deleted more than 90 days ago and unused audio daily; Admin can check
+  with `annette-cards purge --dry-run` or run it at once (`--older-than-days N`).
 
 ## UC-30 Optimize FSRS parameters
 

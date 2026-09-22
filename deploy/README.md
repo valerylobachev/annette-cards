@@ -12,7 +12,7 @@ One static binary serves the API and the PWA. On the VPS it runs under systemd a
 | `litestream.yml` | `/etc/annette-cards/litestream.yml` | Replication of `/var/lib/annette-cards/annette.db` |
 | `litestream.env.example` | `/etc/annette-cards/litestream.env` (0640 root:annette) | Bucket, endpoint and keys for Litestream |
 | `litestream.service` | `/etc/systemd/system/litestream.service` | Litestream as the user `annette` |
-| `annette-cards-admin` | `/usr/local/bin/annette-cards-admin` | Runs the CLI (`create-user`, `invite`) as `annette` with the server's settings |
+| `annette-cards-admin` | `/usr/local/bin/annette-cards-admin` | Runs the CLI (`create-user`, `invite`, `purge`) as `annette` with the server's settings |
 
 Layout on the VPS:
 
@@ -164,6 +164,21 @@ journalctl -u annette-cards -f               # JSON lines: request_id, path, sta
 systemctl status annette-cards litestream caddy
 curl -fsS https://cards.example.com/api/health
 ```
+
+## Purge
+
+The server physically deletes rows soft-deleted more than 90 days ago, and audio clips no card uses, once a day
+(the first run 5 minutes after a start; details in `docs/architecture.md` §11). Each run logs one line:
+
+```bash
+journalctl -u annette-cards --since today | grep 'purge'   # "purge finished" with counts, or "purge failed"
+annette-cards-admin purge --dry-run                          # what would be deleted now; changes nothing
+annette-cards-admin purge --older-than-days 30               # purge now with a shorter retention
+```
+
+A shorter retention means a device offline for longer than that may push purged rows back; sign out and in on such
+a device. The database file does not shrink after a purge: SQLite reuses the freed pages for new data, so there is
+no `VACUUM` step.
 
 ## Backups
 

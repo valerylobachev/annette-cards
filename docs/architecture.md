@@ -335,6 +335,7 @@ for 10 000 cards in WebKit), so `statesOfCards` reads the whole table and filter
 | Module | Responsibility |
 | --- | --- |
 | `main.rs` | CLI (`clap`): `serve`, `create-user`, `invite`, `openapi`, `purge` |
+| `purge/` | Maintenance purge of old soft-deleted rows and orphaned audio (daily task and CLI, §11) |
 | `config.rs` | Typed config from env (`figment`) |
 | `app.rs` | `AppState` (pool, config, providers), router assembly, middleware |
 | `error.rs` | `AppError` → HTTP status + `{ "code": "...", "details": ... }` |
@@ -699,6 +700,10 @@ CREATE INDEX idx_push_subscriptions_user ON push_subscriptions(user_id);
   client also marks the cards and their states deleted, in the same transaction and with the same `deleted_at`
   (which lets "Undo" restore exactly those rows).
 - Clock skew risk is accepted for a personal app; the client warns if `|server_time − device_time| > 5 min`.
+- **Purged rows (known limitation).** Rows soft-deleted more than 90 days ago are physically deleted (§11). A device
+  that stayed offline longer than that still holds them and may push an edit of such a row back, which recreates it
+  (a card or state whose parent was purged is rejected by the ownership check; the other rows go through). This is accepted for a personal app; the fix on such a
+  device is to sign out and sign in again, which replaces its data with the server's.
 
 ### 6.2 Sequence
 
@@ -965,7 +970,7 @@ Deployment-only variables (not read by the server):
 | --- | --- | --- |
 | Session cleanup | hourly, first run at startup | Delete expired sessions |
 | Reminders | every minute (`MissedTickBehavior::Skip`), only with VAPID keys | See below |
-| Purge | daily | Physically delete rows soft-deleted > 90 days ago and orphaned audio |
+| Purge | daily, first run 5 min after startup | Physically delete rows soft-deleted > 90 days ago and orphaned audio; see below |
 
 **Reminder selection** (`push/reminders.rs`, UC-23). Candidates: users whose settings document has
 `reminder.enabled = true` and who have at least one push subscription. A candidate is reminded when all hold:
@@ -984,6 +989,23 @@ Deployment-only variables (not read by the server):
 Every query names the user. The payload is `{ "type": "reminder", "due": <count from 3> }` with a TTL of 1 hour; it
 goes to each of the user's subscriptions. 404/410 from the push service delete that subscription; other errors are
 logged and the task goes on.
+
+**Purge** (`purge/mod.rs`, UC-29). The only code that physically deletes synced rows. The same service function
+runs daily inside `serve` (logs `purge finished` with the counts per table; a failure is logged and retried the next
+day) and as `annette-cards purge [--dry-run] [--older-than-days N]` (default 90, at least 1; `--dry-run` runs the
+same transaction and rolls it back, printing what would be deleted). With `cutoff = now − N days`, one
+`BEGIN IMMEDIATE` transaction deletes children before parents (foreign keys are on), for all users:
+
+1. `review_log` rows with `deleted_at < cutoff` (undone answers), and every answer of a purged card;
+2. `card_states` rows with `deleted_at < cutoff`, and every state of a purged card;
+3. `audio_assets` of purged cards;
+4. purged cards: `deleted_at < cutoff`, or in a deck with `deleted_at < cutoff`;
+5. `decks` with `deleted_at < cutoff`;
+6. orphaned audio: `audio_assets` rows that no `cards.audio_id` points to (replaced or removed clips) and that were
+   created more than a day ago (a clip being attached right now is never raced).
+
+Rows without `deleted_at` or deleted after the cutoff are never touched, except orphaned clips. Freed pages are
+reused by SQLite; the file does not shrink (no `VACUUM`).
 
 ## 12. Deployment
 

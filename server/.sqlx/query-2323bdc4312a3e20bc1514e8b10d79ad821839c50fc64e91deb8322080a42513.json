@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM audio_assets WHERE created_at < ?\n           AND NOT EXISTS (SELECT 1 FROM cards WHERE cards.audio_id = audio_assets.id)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "2323bdc4312a3e20bc1514e8b10d79ad821839c50fc64e91deb8322080a42513"
+}
