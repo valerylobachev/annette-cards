@@ -326,7 +326,8 @@ Tasks: [P4-T06](../dev/impl/phase-04-polish/task-06-accessibility-performance.md
 - [ ] (added) Measure DB size with audio and record the 1 GB decision (architecture §15) — decided from clip sizes
   (keep BLOBs, ADR-6); the production numbers are still to be measured
 
-Acceptance task: [P4-T08](../dev/impl/phase-04-polish/task-08-phase-acceptance.md)
+Acceptance task: [P4-T08](../dev/impl/phase-04-polish/task-08-phase-acceptance.md) · log:
+[acceptance-log.md](../dev/impl/phase-04-polish/acceptance-log.md) (started 2026-09-22)
 
 **Acceptance:** 30 consecutive days of daily use by the owner with EN and PL decks without needing any other app.
 
