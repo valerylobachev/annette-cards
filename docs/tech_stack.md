@@ -41,7 +41,7 @@ rejected. Versions: use the latest stable release at bootstrap time and pin them
 | String distance | small in-house Damerau–Levenshtein in `domain/` | Typing-mode tolerance; no dependency needed |
 | Lint / format | Biome | One fast tool for lint + format |
 | Unit tests | Vitest + Testing Library + `fake-indexeddb` | Vite-native, fast |
-| E2E tests | Playwright (WebKit, Chromium) | WebKit approximates iOS Safari. Sign-in and sync specs start the Rust server with a fresh database behind an HTTPS dev server (WebKit keeps `Secure` cookies only over HTTPS) |
+| E2E tests | Playwright (WebKit, Chromium); `@axe-core/playwright` (P4-T06) | WebKit approximates iOS Safari. axe-core checks every main screen for WCAG 2.1 A/AA violations (contrast, names, roles) in both themes. Sign-in and sync specs start the Rust server with a fresh database behind an HTTPS dev server (WebKit keeps `Secure` cookies only over HTTPS) |
 | Dev HTTPS | `@vitejs/plugin-basic-ssl` | Self-signed HTTPS for `just dev-https` (service workers on a real iPhone need HTTPS) |
 
 ## Server (`server/`)
@@ -86,7 +86,7 @@ does not require authentication at all, so long-lived sliding sessions (90 days)
 | --- | --- | --- |
 | Engine | SQLite (WAL mode, `foreign_keys=ON`, `busy_timeout`) | Zero-ops, one file, fast enough for a few users |
 | Migrations | sqlx migrations, applied on startup | Versioned, embedded in the binary |
-| Audio storage | BLOBs in SQLite (`audio_assets`) | 10–40 KB per clip; backed up by Litestream together with data. Revisit if DB > 1 GB |
+| Audio storage | BLOBs in SQLite (`audio_assets`) | 10–30 KB per clip (Azure 48 kbit/s mono MP3 ≈ 6 KB per second; Commons MP3 transcodes 14–26 KB); backed up by Litestream together with data. Kept after the P4-T06 estimate (architecture.md ADR-6): revisit when the database passes 2 GB |
 | Backups | Litestream → S3-compatible bucket | Continuous replication, point-in-time restore |
 
 Rejected: PostgreSQL (unnecessary ops for this scale; sqlx makes a later migration feasible), libSQL/Turso

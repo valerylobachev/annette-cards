@@ -20,8 +20,16 @@ export default defineConfig({
   use: { baseURL, trace: 'on-first-retry' },
   projects: [
     // WebKit approximates iOS Safari and is mandatory.
-    { name: 'webkit', use: { ...devices['iPhone 15'] } },
-    { name: 'chromium', use: { ...devices['Pixel 7'] } },
+    { name: 'webkit', use: { ...devices['iPhone 15'] }, testIgnore: /performance\.spec/ },
+    { name: 'chromium', use: { ...devices['Pixel 7'] }, testIgnore: /performance\.spec/ },
+    // The 10 000-card benchmarks (P4-T06) seed 130 000 rows: they run in WebKit after the other projects, one at a
+    // time (the spec is serial), so they neither slow the other tests down nor get slowed down by them.
+    {
+      name: 'performance',
+      use: { ...devices['iPhone 15'] },
+      testMatch: /performance\.spec/,
+      dependencies: ['webkit', 'chromium'],
+    },
   ],
   webServer: [
     {

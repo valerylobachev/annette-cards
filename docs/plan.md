@@ -317,12 +317,14 @@ Task: [P4-T05](../dev/impl/phase-04-polish/task-05-fsrs-optimization.md)
 ### 4.5 Quality
 Tasks: [P4-T06](../dev/impl/phase-04-polish/task-06-accessibility-performance.md) · [P4-T07](../dev/impl/phase-04-polish/task-07-purge-docs.md)
 
-- [ ] Accessibility pass (VoiceOver, dynamic type, contrast)
-- [ ] Performance pass: 10 000 cards deck — list scroll, session build < 100 ms, import < 10 s
+- [ ] Accessibility pass (VoiceOver, dynamic type, contrast) — automated part done (P4-T06: axe gate, dynamic type,
+  contrast); the VoiceOver pass on the iPhone is still open
+- [x] Performance pass: 10 000 cards deck — list scroll, session build < 100 ms, import < 10 s
 - [ ] Purge job for old soft-deleted rows and orphaned audio
 - [ ] Documentation refresh (README screenshots, user guide in RU/EN)
 - [ ] (added) `purge` CLI subcommand reusing the purge job
-- [ ] (added) Measure DB size with audio and record the 1 GB decision (architecture §15)
+- [ ] (added) Measure DB size with audio and record the 1 GB decision (architecture §15) — decided from clip sizes
+  (keep BLOBs, ADR-6); the production numbers are still to be measured
 
 Acceptance task: [P4-T08](../dev/impl/phase-04-polish/task-08-phase-acceptance.md)
 

@@ -53,10 +53,13 @@ function maxDifficulty({ states }: CardWithStates): number {
   return Math.max(0, ...states.map((s) => s.difficulty))
 }
 
+/** One collator for every comparison: `localeCompare` sets one up per call (seconds for 10 000 cards in WebKit). */
+const collator = new Intl.Collator()
+
 const comparators: Record<CardSort, (a: CardWithStates, b: CardWithStates) => number> = {
   added_desc: (a, b) => b.card.created_at - a.card.created_at,
   due_asc: (a, b) => (nextDue(a) ?? Number.POSITIVE_INFINITY) - (nextDue(b) ?? Number.POSITIVE_INFINITY),
-  alpha: (a, b) => a.card.front.localeCompare(b.card.front),
+  alpha: (a, b) => collator.compare(a.card.front, b.card.front),
   difficulty_desc: (a, b) => maxDifficulty(b) - maxDifficulty(a),
 }
 

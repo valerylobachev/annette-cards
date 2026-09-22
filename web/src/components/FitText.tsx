@@ -3,9 +3,9 @@ import { cn } from '@/lib/utils'
 
 type Props = {
   text: string
-  /** Starting font size in px. */
+  /** Starting font size in px at the default text size (rendered in rem, so it follows Dynamic Type). */
   max: number
-  /** Smallest font size in px; below it the text scrolls. */
+  /** Smallest font size, likewise; below it the text scrolls. */
   min?: number
   lang?: string
   className?: string
@@ -32,7 +32,7 @@ export function FitText({ text, max, min = 20, lang, className }: Props) {
       <p
         lang={lang}
         data-font-size={size}
-        style={{ fontSize: size }}
+        style={{ fontSize: `${size / 16}rem` }}
         className={cn('leading-tight break-words whitespace-pre-line', className)}
       >
         {text}

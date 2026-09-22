@@ -79,7 +79,7 @@
   --muted-foreground: oklch(0.556 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
+  --destructive: oklch(0.505 0.213 27.518);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
@@ -153,6 +153,19 @@
   body {
     @apply bg-background text-foreground antialiased;
     overscroll-behavior-y: none;
+  }
+  /*
+   * Dynamic Type (ui_ux.md §8): on iOS the root font size follows Settings → Display & Brightness → Text Size
+   * (17 px at the default size) and every size is in rem. Only on iOS (`-webkit-touch-callout`): macOS Safari's
+   * body font would be 13 px.
+   */
+  @supports (font: -apple-system-body) and (-webkit-touch-callout: none) {
+    html {
+      /* biome-ignore lint/a11y/useGenericFontNames: a system font keyword (size only); the family is set below */
+      font: -apple-system-body;
+      font-family: var(--font-sans);
+      line-height: 1.5;
+    }
   }
   /* iOS Safari zooms into inputs with a font size below 16 px */
   input,

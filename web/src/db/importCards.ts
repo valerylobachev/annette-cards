@@ -4,7 +4,7 @@ import { normalizeFront } from '@/domain/normalize'
 import type { Card } from '@/domain/types'
 import { newId } from '@/lib/ids'
 import { ensureStatesForCards } from './cardStates'
-import { listCards, writeCard } from './cards'
+import { listCards, writeCard, writeCards } from './cards'
 import { requireDeckInTx } from './decks'
 import { mutate } from './write'
 
@@ -41,7 +41,7 @@ export async function importRows(
     const batch = rows.slice(start, start + IMPORT_BATCH_SIZE)
     await mutate(['decks', 'cards', 'card_states'], async (ctx) => {
       const deck = await requireDeckInTx(ctx, deck_id)
-      const inserted: Card[] = []
+      const created: Card[] = []
       for (const row of batch) {
         const key = normalizeFront(row.front)
         const existingId = byFront.get(key)
@@ -56,7 +56,7 @@ export async function importRows(
           counts.updated++
           continue
         }
-        const card = await writeCard(ctx, {
+        const card: Card = {
           id: newId(),
           deck_id,
           front: row.front,
@@ -71,11 +71,13 @@ export async function importRows(
           deleted_at: null,
           updated_at: ctx.now,
           updated_by: ctx.deviceId,
-        })
-        inserted.push(card)
+        }
+        created.push(card)
         if (existingId === undefined) byFront.set(key, card.id)
         counts.inserted++
       }
+      // New cards of the batch in bulk: one put, one state write and one outbox write per table, not per card.
+      const inserted = await writeCards(ctx, created)
       await ensureStatesForCards(ctx, inserted, deck)
     })
     onProgress?.(Math.min(1, (start + batch.length) / rows.length))

@@ -41,7 +41,10 @@ export type ReviewsOnDay = { day: StudyDay; again: number; hard: number; good: n
 
 /** Answers per study day stacked by rating (practice answers included: they are reviews too). */
 export function reviewsPerDay(logs: Log[], days: StudyDay[], clock: StatsClock): ReviewsOnDay[] {
-  const byDay = logsByDay(logs, clock)
+  return reviewsOnDays(logsByDay(logs, clock), days)
+}
+
+function reviewsOnDays(byDay: Map<StudyDay, Log[]>, days: StudyDay[]): ReviewsOnDay[] {
   return days.map((day) => {
     const counts = { day, again: 0, hard: 0, good: 0, easy: 0 }
     for (const log of byDay.get(day) ?? []) {
@@ -56,7 +59,10 @@ export function reviewsPerDay(logs: Log[], days: StudyDay[], clock: StatsClock):
 
 /** Minutes spent answering per study day (`duration_ms`, capped at 60 s per answer when logged). */
 export function timePerDay(logs: Log[], days: StudyDay[], clock: StatsClock): { day: StudyDay; minutes: number }[] {
-  const byDay = logsByDay(logs, clock)
+  return timeOnDays(logsByDay(logs, clock), days)
+}
+
+function timeOnDays(byDay: Map<StudyDay, Log[]>, days: StudyDay[]): { day: StudyDay; minutes: number }[] {
   return days.map((day) => {
     const ms = (byDay.get(day) ?? []).reduce((sum, log) => sum + log.duration_ms, 0)
     return { day, minutes: Math.round(ms / 6_000) / 10 }
@@ -79,7 +85,10 @@ export function retentionPerDay(
   days: StudyDay[],
   clock: StatsClock,
 ): { day: StudyDay; retention: number | null }[] {
-  const byDay = logsByDay(logs, clock)
+  return retentionOnDays(logsByDay(logs, clock), days)
+}
+
+function retentionOnDays(byDay: Map<StudyDay, Log[]>, days: StudyDay[]): { day: StudyDay; retention: number | null }[] {
   return days.map((day) => ({ day, retention: retention(byDay.get(day) ?? []) }))
 }
 
@@ -122,6 +131,10 @@ export type Kpis = { totalCards: number; matureCards: number; currentStreak: num
  * every answer on any deck, like Today.
  */
 export function kpis(cards: Card[], states: CardState[], allLogs: Log[], clock: StatsClock): Kpis {
+  return kpisOfDays(cards, states, studyDays(allLogs, clock.dayStartHour, clock.timeZone), clock)
+}
+
+function kpisOfDays(cards: Card[], states: CardState[], days: ReadonlySet<StudyDay>, clock: StatsClock): Kpis {
   const statesByCard = new Map<string, CardState[]>()
   for (const state of states) {
     if (state.deleted_at !== null) continue
@@ -133,7 +146,6 @@ export function kpis(cards: Card[], states: CardState[], allLogs: Log[], clock: 
     const cardStates = statesByCard.get(card.id) ?? []
     return cardStates.length > 0 && cardStates.every((s) => s.state === 2 && s.scheduled_days >= MATURE_DAYS)
   })
-  const days = studyDays(allLogs, clock.dayStartHour, clock.timeZone)
   return {
     totalCards: cards.length,
     matureCards: mature.length,
@@ -184,28 +196,34 @@ export function buildStats(input: StatsInput, period: StatsPeriod, deckId: strin
       .map((deck) => deck.id),
   )
   const deckOfCard = new Map(input.cards.map((card) => [card.id, card.deck_id]))
-  const logs = input.logs.filter((log) => {
+  const inLiveDeck = (log: Log & { card_id: string }) => {
     const deck = deckOfCard.get(log.card_id)
-    return log.deleted_at === null && deck !== undefined && liveDecks.has(deck)
-  })
+    return deck !== undefined && liveDecks.has(deck)
+  }
 
+  // Each answer's study day is computed once (100 000 answers take tens of ms): the streaks use every answer, the
+  // series below only the answers of the active decks, looked up by day.
+  const allByDay = logsByDay(input.logs, clock)
+  const byDay = new Map<StudyDay, ReviewLog[]>()
+  for (const [day, list] of allByDay) {
+    const live = list.filter(inLiveDeck)
+    if (live.length > 0) byDay.set(day, live)
+  }
   const days = periodDays(period, clock)
-  const first = days[0] ?? ''
-  const inPeriod = logs.filter((log) => dayOf(log.reviewed_at, clock) >= first)
-  const reviews = reviewsPerDay(inPeriod, days, clock)
-  const year = reviewsPerDay(logs, periodDays(365, clock), clock).map(({ day, again, hard, good, easy }) => ({
+  const reviews = reviewsOnDays(byDay, days)
+  const year = reviewsOnDays(byDay, periodDays(365, clock)).map(({ day, again, hard, good, easy }) => ({
     day,
     count: again + hard + good + easy,
   }))
   return {
     days,
     reviews,
-    time: timePerDay(inPeriod, days, clock),
-    retention: retentionPerDay(inPeriod, days, clock),
-    periodRetention: retention(inPeriod),
+    time: timeOnDays(byDay, days),
+    retention: retentionOnDays(byDay, days),
+    periodRetention: retention(days.flatMap((day) => byDay.get(day) ?? [])),
     forecast: dueForecast(eligible, clock),
     states: stateDistribution(eligible),
-    kpis: kpis([...cardById.values()], eligible, input.logs, clock),
+    kpis: kpisOfDays([...cardById.values()], eligible, new Set(allByDay.keys()), clock),
     year,
     total: reviews.reduce((sum, day) => sum + day.again + day.hard + day.good + day.easy, 0),
     hasHistory: input.logs.some((log) => log.deleted_at === null),

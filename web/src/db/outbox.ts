@@ -20,6 +20,16 @@ export async function addToOutbox(ctx: WriteContext, entity: SyncedEntity, entit
   await ctx.db.outbox.add({ entity, entity_id })
 }
 
+/** `addToOutbox` for many entities of one kind with bulk operations (imports and other batches). */
+export async function addAllToOutbox(ctx: WriteContext, entity: SyncedEntity, entity_ids: string[]): Promise<void> {
+  if (entity_ids.length === 0) return
+  await ctx.db.outbox
+    .where('[entity+entity_id]')
+    .anyOf(entity_ids.map((id) => [entity, id]))
+    .delete()
+  await ctx.db.outbox.bulkAdd(entity_ids.map((entity_id) => ({ entity, entity_id })))
+}
+
 export function listOutbox(): Promise<OutboxEntry[]> {
   return db.outbox.orderBy('seq').toArray()
 }

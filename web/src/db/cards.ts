@@ -5,9 +5,9 @@ import { normalizeFront } from '@/domain/normalize'
 import type { Card } from '@/domain/types'
 import { ValidationError } from '@/domain/validation'
 import { newId } from '@/lib/ids'
-import { ensureStatesForCard, writeCardState } from './cardStates'
+import { ensureStatesForCard, statesOfCards, writeCardState } from './cardStates'
 import { getDeck, requireDeckInTx } from './decks'
-import { addToOutbox } from './outbox'
+import { addAllToOutbox, addToOutbox } from './outbox'
 import { db } from './schema'
 import { mutate, stamp, type WriteContext } from './write'
 
@@ -39,6 +39,18 @@ export async function writeCard(ctx: WriteContext, card: Card): Promise<Card> {
   const stamped = stamp(ctx, card)
   await ctx.db.cards.put(stamped)
   await addToOutbox(ctx, 'cards', stamped.id)
+  return stamped
+}
+
+/** `writeCard` for many cards with bulk operations (import). */
+export async function writeCards(ctx: WriteContext, cards: Card[]): Promise<Card[]> {
+  const stamped = cards.map((card) => stamp(ctx, card))
+  await ctx.db.cards.bulkPut(stamped)
+  await addAllToOutbox(
+    ctx,
+    'cards',
+    stamped.map((card) => card.id),
+  )
   return stamped
 }
 
@@ -221,11 +233,12 @@ export async function listDeckCardsWithStates(deck_id: string): Promise<CardWith
   if (!deck) return null
   const directions = new Set(activeDirections(deck.directions))
   const cards = await listCards(deck_id)
-  const states = await db.card_states
-    .where('card_id')
-    .anyOf(cards.map((card) => card.id))
-    .filter((state) => state.deleted_at === null && directions.has(state.direction))
-    .toArray()
+  const states = (
+    await statesOfCards(
+      db.card_states,
+      cards.map((card) => card.id),
+    )
+  ).filter((state) => state.deleted_at === null && directions.has(state.direction))
   const byCard = new Map<string, CardWithStates>(cards.map((card) => [card.id, { card, states: [] }]))
   for (const state of states) byCard.get(state.card_id)?.states.push(state)
   return [...byCard.values()]

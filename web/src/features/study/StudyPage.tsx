@@ -274,7 +274,9 @@ function TopBar({ closeButton, progress, canUndo, onUndo }: TopBarProps) {
             {t('study.counts.new', { count: counts.new })} · {t('study.counts.learning', { count: counts.learning })} ·{' '}
             {t('study.counts.review', { count: counts.review })}
           </span>
-          <span data-testid="study-progress">{text}</span>
+          <span data-testid="study-progress" className="shrink-0 whitespace-nowrap">
+            {text}
+          </span>
         </p>
       </div>
       <Button variant="ghost" size="icon-xl" aria-label={t('study.undo')} disabled={!canUndo} onClick={onUndo}>

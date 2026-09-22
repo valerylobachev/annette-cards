@@ -38,7 +38,8 @@ import { cn } from '@/lib/utils'
 import { BulkActions } from './BulkActions'
 import { DeckFormSheet } from './DeckFormSheet'
 
-const ROW_HEIGHT = 68
+/** Row height in rem (68 px at the default 16 px), so rows grow with the text size (Dynamic Type). */
+const ROW_REM = 4.25
 const SWIPE_ACTIONS_WIDTH = 88
 const DELETE_UNDO_MS = 10_000
 const filters: StateFilter[] = ['new', 'learning', 'review', 'difficult']
@@ -189,7 +190,10 @@ function DeckDetail({ deck, items }: { deck: Deck; items: CardWithStates[] }) {
         </EmptyState>
       ) : (
         <>
-          <fieldset aria-label={t('deck.filters.label')} className="grid grid-cols-4 gap-1 px-4 pt-2">
+          <fieldset
+            aria-label={t('deck.filters.label')}
+            className="grid grid-cols-[repeat(auto-fit,minmax(5rem,1fr))] gap-1 px-4 pt-2"
+          >
             {filters.map((name) => (
               <button
                 key={name}
@@ -323,14 +327,16 @@ function CardList({ items, lang, selection, onToggle, onStartSelection, onDelete
   const { t } = useTranslation()
   const listRef = useRef<HTMLUListElement>(null)
   const [scrollMargin, setScrollMargin] = useState(0)
+  const [rowHeight, setRowHeight] = useState(ROW_REM * 16)
 
   useLayoutEffect(() => {
     setScrollMargin(listRef.current?.offsetTop ?? 0)
+    setRowHeight(ROW_REM * Number.parseFloat(getComputedStyle(document.documentElement).fontSize))
   })
 
   const virtualizer = useWindowVirtualizer({
     count: items.length,
-    estimateSize: () => ROW_HEIGHT,
+    estimateSize: () => rowHeight,
     overscan: 10,
     scrollMargin,
     getItemKey: (index) => items[index]?.card.id ?? index,
@@ -350,7 +356,7 @@ function CardList({ items, lang, selection, onToggle, onStartSelection, onDelete
           <li
             key={row.key}
             className="absolute inset-x-0 top-0 border-b"
-            style={{ height: ROW_HEIGHT, transform: `translateY(${row.start - scrollMargin}px)` }}
+            style={{ height: rowHeight, transform: `translateY(${row.start - scrollMargin}px)` }}
           >
             <CardRow
               item={item}
@@ -406,7 +412,7 @@ function CardRow({ item, lang, selected, onToggle, onLongPress, onDelete }: Card
           type="button"
           aria-pressed={selected}
           aria-label={t('deck.selectCard', { front: card.front })}
-          className="flex h-[67px] w-full items-center gap-3 px-4 text-left"
+          className="flex h-[4.1875rem] w-full items-center gap-3 px-4 text-left"
           onClick={onToggle}
         >
           <span
@@ -445,7 +451,7 @@ function CardRow({ item, lang, selected, onToggle, onLongPress, onDelete }: Card
         to="/cards/$cardId"
         params={{ cardId: card.id }}
         draggable={false}
-        className="flex h-[67px] min-w-0 flex-1 items-center gap-3 pl-4"
+        className="flex h-[4.1875rem] min-w-0 flex-1 items-center gap-3 pl-4"
       >
         {content}
       </Link>

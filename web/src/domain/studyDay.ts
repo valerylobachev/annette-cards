@@ -1,4 +1,4 @@
-import { addDays, format, parseISO, startOfDay, subDays } from 'date-fns'
+import { addDays, format, parseISO } from 'date-fns'
 
 /** A study day as `YYYY-MM-DD` (local time). */
 export type StudyDay = string
@@ -35,14 +35,17 @@ function zonedDateHour(ms: number, timeZone: string): { date: StudyDay; hour: nu
  * so days studied before a move to another zone keep their order and a nearby zone creates no gap.
  */
 export function studyDayOf(ms: number, dayStartHour: number, timeZone?: string): StudyDay {
-  if (timeZone === undefined || timeZone === deviceTimeZone()) {
-    const date = new Date(ms)
-    const day = date.getHours() < dayStartHour ? subDays(startOfDay(date), 1) : startOfDay(date)
-    return format(day, 'yyyy-MM-dd')
+  if (timeZone !== undefined && timeZone !== deviceTimeZone()) {
+    const { date, hour } = zonedDateHour(ms, timeZone)
+    return hour < dayStartHour ? shiftDay(date, -1) : date
   }
-  const { date, hour } = zonedDateHour(ms, timeZone)
-  return hour < dayStartHour ? shiftDay(date, -1) : date
+  // Called for every answer by the statistics (100 000 and more): plain Date fields, no formatting library.
+  const date = new Date(ms)
+  if (date.getHours() < dayStartHour) date.setDate(date.getDate() - 1)
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`
 }
+
+const pad2 = (value: number) => (value < 10 ? `0${value}` : `${value}`)
 
 /** The study day `days` after `day` (negative: before). */
 export function shiftDay(day: StudyDay, days: number): StudyDay {

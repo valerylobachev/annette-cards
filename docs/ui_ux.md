@@ -471,10 +471,21 @@ this device only".
 
 ## 8. Accessibility
 
-- All swipe actions have button equivalents.
+- All swipe actions have button equivalents: a row's revealed actions are hidden from VoiceOver (`inert`) while
+  the row is closed, and the same actions are visible buttons elsewhere (deck "…" menu: Archive, Delete; card list
+  select mode: Delete, Move, Tag; study: the answer buttons).
 - VoiceOver labels for card sides ("Word: to take off. Double-tap to reveal translation.").
-- Contrast ≥ 4.5:1; color is never the only signal (icons + text labels on overlays).
-- Dynamic type: respects user font scaling up to 200 % without clipping (cards scroll).
+- Contrast ≥ 4.5:1; color is never the only signal (icons + text labels on overlays). The light theme's destructive
+  red is `oklch(0.505 0.213 27.518)` (red-700): red-600 on its 10 % tint was 3.98:1.
+- **axe gate** (`tests/e2e/a11y.spec.ts`, P4-T06): axe-core (WCAG 2.1 A/AA rules) runs on every main screen, the
+  study start and each study mode, and the summary, in light and dark themes; any serious or critical violation
+  fails `just e2e`.
+- Dynamic type: on iOS the root font follows Settings → Text Size (`font: -apple-system-body` on `html`, only where
+  `-webkit-touch-callout` exists, since macOS Safari's body font is 13 px; 17 px at the default size) and every size
+  is in rem: text, spacing, deck list rows (`4.25rem`), study card text (`FitText` sizes). Text buttons grow with
+  their label (`min-h-*`, wrapping) instead of overflowing; the deck filter chips drop to two per row. Checked at
+  100 % and 200 % (`tests/e2e/dynamic-type.spec.ts`): no sideways scrolling, a 200-character front scrolls inside the
+  card and the answer buttons stay below it.
 - Reduced motion: flip and fly-out animations replaced by cross-fades.
 
 ## 9. Localization notes

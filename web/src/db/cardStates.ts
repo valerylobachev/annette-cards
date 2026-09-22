@@ -1,6 +1,7 @@
+import type { Table } from 'dexie'
 import { activeDirections, newCardState } from '@/domain/directions'
 import type { Card, CardState, Deck, Direction } from '@/domain/types'
-import { addToOutbox, cardStateEntityId } from './outbox'
+import { addAllToOutbox, addToOutbox, cardStateEntityId } from './outbox'
 import { db } from './schema'
 import { mutate, stamp, type WriteContext } from './write'
 
@@ -12,8 +13,35 @@ export async function writeCardState(ctx: WriteContext, state: CardState): Promi
   return stamped
 }
 
+/** `writeCardState` for many states with bulk operations. */
+export async function writeCardStates(ctx: WriteContext, states: CardState[]): Promise<void> {
+  const stamped = states.map((state) => stamp(ctx, state))
+  await ctx.db.card_states.bulkPut(stamped)
+  await addAllToOutbox(
+    ctx,
+    'card_states',
+    stamped.map((state) => cardStateEntityId(state.card_id, state.direction)),
+  )
+}
+
 export function saveCardState(state: CardState): Promise<CardState> {
   return mutate(['card_states'], (ctx) => writeCardState(ctx, state))
+}
+
+/**
+ * Up to this many cards, `where('card_id').anyOf(ids)` is the fastest way to read their states; for more, reading
+ * every state and filtering is (WebKit, 10 000 cards: about 50 ms instead of over 500 ms).
+ */
+const ANY_OF_LIMIT = 500
+
+/** All states (soft-deleted included) of the cards, from `table` (the global one or a transaction's). */
+export async function statesOfCards(
+  table: Table<CardState, [string, Direction]>,
+  card_ids: string[],
+): Promise<CardState[]> {
+  if (card_ids.length <= ANY_OF_LIMIT) return table.where('card_id').anyOf(card_ids).toArray()
+  const ids = new Set(card_ids)
+  return (await table.toArray()).filter((state) => ids.has(state.card_id))
 }
 
 /** States of one card (forward first); soft-deleted states are excluded. */
@@ -31,10 +59,14 @@ export async function ensureStatesForCards(ctx: WriteContext, cards: Card[], dec
   const directions = activeDirections(deck.directions)
   const keys = cards.flatMap((card) => directions.map((direction): [string, Direction] => [card.id, direction]))
   const existing = await ctx.db.card_states.bulkGet(keys)
-  for (const [i, [card_id, direction]] of keys.entries()) {
+  const missing = keys.filter((_, i) => {
     const state = existing[i]
-    if (!state || state.deleted_at !== null) await writeCardState(ctx, newCardState(card_id, direction, ctx.now))
-  }
+    return !state || state.deleted_at !== null
+  })
+  await writeCardStates(
+    ctx,
+    missing.map(([card_id, direction]) => newCardState(card_id, direction, ctx.now)),
+  )
 }
 
 export function ensureStatesForCard(ctx: WriteContext, card: Card, deck: Deck): Promise<void> {
@@ -57,9 +89,12 @@ export async function applyDeckDirections(ctx: WriteContext, deck: Deck): Promis
  */
 export function resetProgress(card_ids: string[]): Promise<void> {
   return mutate(['card_states'], async (ctx) => {
-    const states = await ctx.db.card_states.where('card_id').anyOf(card_ids).toArray()
-    for (const state of states) {
-      if (state.deleted_at === null) await writeCardState(ctx, newCardState(state.card_id, state.direction, ctx.now))
-    }
+    const states = await statesOfCards(ctx.db.card_states, card_ids)
+    await writeCardStates(
+      ctx,
+      states
+        .filter((state) => state.deleted_at === null)
+        .map((state) => newCardState(state.card_id, state.direction, ctx.now)),
+    )
   })
 }

@@ -118,6 +118,10 @@ Every mutation runs in a single Dexie `rw` transaction:
 5. Sync engine is notified (`db/changes.ts`, called by `mutate` after the commit; debounced 2 s) and syncs if the
    user is signed in and online.
 
+Batches write in bulk (P4-T06): `writeCards` / `writeCardStates` stamp every row, `bulkPut` them, and
+`addAllToOutbox` replaces the batch's outbox entries with one `anyOf` delete and one `bulkAdd`. Import (500 rows per
+transaction) and "Reset progress" use them; single edits keep the per-row path above.
+
 Rows pulled from the server take another path (`db/remote.ts`): they are written with their own stamps, in one
 transaction per page together with `sync_cursor`, never outboxed and never announced as local changes.
 
@@ -303,6 +307,26 @@ flowchart TD
 | Reminders | `push`: a `{ "type": "reminder", "due": n }` payload becomes a notification in the UI language (`ui_language` of the settings row read with plain IndexedDB, else the device language), text from `notifications.reminder` of the bundled `en.json`/`ru.json` with `Intl.PluralRules`; tag `reminder`, so a new one replaces an unread one. Other payloads are ignored. `notificationclick`: focuses an open window and sends it `open-today` (the app navigates to Today), otherwise opens `/` |
 | Storage | `navigator.storage.persist()` on first run; show a warning if denied and the user is not signed in |
 | Install hint | If not `standalone` on iOS, show a one-time "Add to Home Screen" guide |
+
+### 4.8 Performance with 10 000 cards
+
+Measured in P4-T06 (`tests/e2e/performance.spec.ts`, the Playwright `performance` project: WebKit on the development
+MacBook, after the other tests, one test at a time): a
+deck of 10 000 cards studied in both directions (20 000 states) with 100 000 answers over a year
+(`tests/fixtures/bigDeck.ts`).
+
+| What | Target | Measured |
+| --- | --- | --- |
+| Study session: read cards and states, build the queue (215 items) | < 100 ms | 66 ms (build alone 4–5 ms) |
+| Import of a 10 000-row CSV (parse in the worker, 5 % duplicates skipped, write) | < 10 s | 2.6 s (was 15.6 s before bulk writes) |
+| Deck list (S-06): rendered rows while scrolling to the end | < 100 | 19 (window virtualization) |
+| Deck list search / alphabetical sort | < 200 ms | 35 ms / 25 ms (one shared `Intl.Collator`; `localeCompare` took 3.5 s) |
+| Statistics (S-13) with 100 000 answers | < 500 ms | 640–700 ms: open question (§15) |
+
+Findings fixed on the way: `where('card_id').anyOf(ids)` over thousands of ids walks a cursor key by key (570–1100 ms
+for 10 000 cards in WebKit), so `statesOfCards` reads the whole table and filters when there are more than 500 cards
+(50 ms); `studyDayOf` no longer creates an `Intl.DateTimeFormat` or formats with date-fns per call (100 000 calls:
+152 → 22 ms), and `buildStats` computes each answer's study day once (542 → 79 ms in Node).
 
 ## 5. Server architecture
 
@@ -1009,7 +1033,7 @@ All files are in `deploy/`; step-by-step provisioning, deploy, backup and restor
 | ADR-3 | LWW row-level sync with server cursor | CRDTs — unnecessary complexity for single-user data |
 | ADR-4 | SQLite + Litestream | PostgreSQL — extra ops for no benefit at this scale |
 | ADR-5 | Opaque sessions in cookies | JWT — key management and revocation complexity |
-| ADR-6 | Audio as BLOBs in SQLite | Filesystem/S3 — separate backup path |
+| ADR-6 | Audio as BLOBs in SQLite; kept after the P4-T06 size estimate (§15), revisit above 2 GB | Filesystem/S3 — separate backup path |
 | ADR-7 | PWA instead of native app | SwiftUI — better iOS integration, but new language and no web/desktop use |
 | ADR-8 | Code-first OpenAPI (utoipa) | Spec-first — no mature Rust server generator |
 
@@ -1023,5 +1047,17 @@ All files are in `deploy/`; step-by-step provisioning, deploy, backup and restor
   PWA) during the Phase 3 acceptance.
 - Should decks be shareable between users (e.g. the owner prepares a deck for a family member)? Current model:
   copy via JSON export/import.
-- Is 1 GB SQLite size (mostly audio) a realistic limit for the expected vocabulary volume, or should audio move
-  to object storage earlier?
+- ~~Is 1 GB SQLite size (mostly audio) a realistic limit for the expected vocabulary volume, or should audio move
+  to object storage earlier?~~ **Decided 2026-09-22 (P4-T06): keep audio as BLOBs in SQLite (ADR-6).** 1 GB is not a
+  SQLite limit (the limit per BLOB is 1 GB; the database can grow to terabytes); it was a rough budget for backups.
+  Clip sizes: Azure TTS is 48 kbit/s mono MP3, about 6 KB per second, so a word is 9–15 KB; Commons MP3 transcodes
+  measured 13.6 KB and 25.7 KB. At about 20 KB per clip, one learner with 5 000 words with audio needs 100 MB; five
+  such learners 500 MB; the owner's expected 2 000–3 000 words per language, 40–60 MB per language. Litestream
+  replicates only changed pages, so the size mainly affects a full restore (minutes at this size). Revisit when the
+  database passes 2 GB or the VPS disk is half full; check with
+  `SELECT count(*), avg(length(bytes)), sum(length(bytes)) FROM audio_assets` (the production numbers were not
+  available in P4-T06; measure them in P4-T08).
+- Statistics with 100 000 answers take 640–700 ms in WebKit (target 500 ms, P4-T06): reading every answer from
+  IndexedDB costs about 290 ms, because the longest streak needs each answer's day and whether it was undone. Options:
+  load the period first and the streaks after it, or a Dexie schema version 2 index that makes undone answers cheap to
+  find. Owner decision pending.
